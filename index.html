@@ -2829,23 +2829,77 @@
             });
         }
         const COMMENTS_API_URL = 'https://script.google.com/macros/s/AKfycbwkSryiL98ofeLE13KhjqrzD8NtgxwVUEu6dvLiNAgO-i9O8bphnxy-bQ0yc6KXlyHV/exec';
+        const COMMENTS_QUEUE_KEY = 'nontonGratisan_comments_queue_v1';
         let commentsJsonpCounter = 0;
         let commentsSubmitFrame = null;
+        let commentsSyncRunning = false;
+
+        function getCommentQueue() {
+            try {
+                const raw = safeStorageGet(COMMENTS_QUEUE_KEY, '[]');
+                const parsed = JSON.parse(raw);
+                return Array.isArray(parsed) ? parsed : [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveCommentQueue(queue) {
+            try {
+                safeStorageSet(COMMENTS_QUEUE_KEY, JSON.stringify(Array.isArray(queue) ? queue : []));
+            } catch (e) {}
+        }
+
+        function queueComment(comment) {
+            const queue = getCommentQueue();
+            queue.push(comment);
+            saveCommentQueue(queue);
+        }
+
+        function removeQueuedComment(clientId) {
+            const queue = getCommentQueue().filter(item => item.clientId !== clientId);
+            saveCommentQueue(queue);
+        }
+
+        function getPendingCommentsForMedia(mediaId) {
+            return getCommentQueue().filter(item => String(item.mediaId) === String(mediaId));
+        }
+
+        function renderPendingComments(mediaId) {
+            const list = document.getElementById('comments-list');
+            if (!list) return;
+            const pending = getPendingCommentsForMedia(mediaId);
+            if (!pending.length) return;
+
+            const pendingHtml = pending.map(comment => {
+                const name = escapeHtml(comment.name || 'Anonim');
+                const text = escapeHtml(comment.text || '');
+                const date = escapeHtml(comment.dateLabel || 'baru saja');
+                const initial = escapeHtml((comment.name || 'A').charAt(0).toUpperCase());
+                return `<div class="comment-item flex gap-2 sm:gap-3 items-start p-2 rounded-lg border border-brand-500/30 bg-brand-500/5"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs sm:text-sm font-bold text-brand-500 shrink-0">${initial}</div><div class="space-y-1 min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs sm:text-sm font-bold text-white">${name}</span><span class="text-[10px] text-zinc-500">${date}</span><span class="text-[10px] text-brand-400">Menunggu sinkronisasi</span></div><p class="text-xs sm:text-sm text-zinc-300 break-words">${text}</p></div></div>`;
+            }).join('');
+
+            if (list.innerHTML.includes('Belum ada komentar')) {
+                list.innerHTML = pendingHtml;
+            } else {
+                list.insertAdjacentHTML('beforeend', pendingHtml);
+            }
+        }
 
         function renderOnlineComments(comments) {
             const list = document.getElementById('comments-list');
             if (!list) return;
             if (!Array.isArray(comments) || comments.length === 0) {
                 list.innerHTML = `<p class="text-xs sm:text-sm text-zinc-500">Belum ada komentar. Jadilah yang pertama!</p>`;
-                return;
+            } else {
+                list.innerHTML = comments.map(comment => {
+                    const name = escapeHtml(comment.name || 'Anonim');
+                    const text = escapeHtml(comment.text || '');
+                    const date = escapeHtml(comment.date || '');
+                    const initial = escapeHtml((comment.name || 'A').charAt(0).toUpperCase());
+                    return `<div class="comment-item flex gap-2 sm:gap-3 items-start p-2 rounded-lg"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs sm:text-sm font-bold text-brand-500 shrink-0">${initial}</div><div class="space-y-1 min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs sm:text-sm font-bold text-white">${name}</span><span class="text-[10px] text-zinc-500">${date}</span></div><p class="text-xs sm:text-sm text-zinc-300 break-words">${text}</p></div></div>`;
+                }).join('');
             }
-            list.innerHTML = comments.map(comment => {
-                const name = escapeHtml(comment.name || 'Anonim');
-                const text = escapeHtml(comment.text || '');
-                const date = escapeHtml(comment.date || '');
-                const initial = escapeHtml((comment.name || 'A').charAt(0).toUpperCase());
-                return `<div class="comment-item flex gap-2 sm:gap-3 items-start p-2 rounded-lg"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs sm:text-sm font-bold text-brand-500 shrink-0">${initial}</div><div class="space-y-1 min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs sm:text-sm font-bold text-white">${name}</span><span class="text-[10px] text-zinc-500">${date}</span></div><p class="text-xs sm:text-sm text-zinc-300 break-words">${text}</p></div></div>`;
-            }).join('');
         }
 
         function loadCommentsOnline(mediaId) {
@@ -2855,10 +2909,12 @@
             const endpoint = String(COMMENTS_API_URL || '').trim();
             if (!/^https:\/\//i.test(endpoint)) {
                 list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">URL server komentar tidak valid.</p>`;
+                renderPendingComments(mediaId);
                 return;
             }
 
             list.innerHTML = `<p class="text-xs sm:text-sm text-zinc-500">Memuat komentar online...</p>`;
+            renderPendingComments(mediaId);
 
             const callbackName = `rf21CommentsCallback_${Date.now()}_${++commentsJsonpCounter}`;
             const script = document.createElement('script');
@@ -2880,28 +2936,25 @@
 
             window[callbackName] = (data) => {
                 if (settled) return;
-
                 if (data && data.ok === true) {
                     cleanup();
                     renderOnlineComments(Array.isArray(data.comments) ? data.comments : []);
+                    renderPendingComments(mediaId);
+                    syncCommentQueue();
                     return;
                 }
 
-                const message = escapeHtml(
-                    data?.error || 'Kesalahan server tidak diketahui.'
-                );
+                const message = escapeHtml(data?.error || 'Kesalahan server tidak diketahui.');
                 cleanup();
                 list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Komentar gagal dimuat: ${message}</p>`;
+                renderPendingComments(mediaId);
             };
 
-            script.onload = () => {
-                loaded = true;
-                // Jangan hapus callback pada onload; JSONP callback bisa dieksekusi terlambat.
-            };
-
+            script.onload = () => { loaded = true; };
             script.onerror = () => {
                 cleanup();
-                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Server komentar tidak dapat dihubungi. Periksa deployment Apps Script dengan akses “Anyone”.</p>`;
+                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Server komentar tidak dapat dihubungi. Komentar baru tetap disimpan dan akan dicoba lagi otomatis.</p>`;
+                renderPendingComments(mediaId);
             };
 
             const url = new URL(endpoint);
@@ -2916,15 +2969,64 @@
                 cleanup();
                 const reason = loaded
                     ? 'Server komentar merespons tetapi callback tidak diterima.'
-                    : 'Server komentar tidak merespons tepat waktu. Periksa koneksi atau deployment Apps Script.';
-                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Komentar online belum dapat dimuat. ${reason}</p>`;
+                    : 'Server komentar tidak merespons tepat waktu.';
+                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Komentar online belum dapat dimuat. ${reason} Komentar baru tetap tersimpan.</p>`;
+                renderPendingComments(mediaId);
             }, 30000);
 
             document.body.appendChild(script);
         }
 
+        async function sendQueuedComment(comment) {
+            const endpoint = String(COMMENTS_API_URL || '').trim();
+            if (!/^https:\/\//i.test(endpoint)) return false;
+            if (navigator.onLine === false) return false;
+
+            const fields = {
+                action: 'add',
+                mediaId: String(comment.mediaId),
+                title: String(comment.title || ''),
+                name: String(comment.name || 'Anonim'),
+                text: String(comment.text || ''),
+                clientId: String(comment.clientId || '')
+            };
+
+            try {
+                await fetch(endpoint, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    body: new URLSearchParams(fields),
+                    keepalive: true
+                });
+                return true;
+            } catch (e) {
+                return false;
+            }
+        }
+
+        async function syncCommentQueue() {
+            if (commentsSyncRunning || navigator.onLine === false) return;
+            const queue = getCommentQueue();
+            if (!queue.length) return;
+
+            commentsSyncRunning = true;
+            try {
+                for (const comment of queue) {
+                    if (navigator.onLine === false) break;
+                    const sent = await sendQueuedComment(comment);
+                    if (!sent) break;
+                    removeQueuedComment(comment.clientId);
+                }
+            } finally {
+                commentsSyncRunning = false;
+                const state = store.getState();
+                if (state.currentMedia) renderPendingComments(state.currentMedia.id);
+            }
+        }
+
         function renderComments(mediaId) {
             loadCommentsOnline(mediaId);
+            setTimeout(syncCommentQueue, 250);
         }
 
         function submitComment() {
@@ -2937,42 +3039,45 @@
             const text = textInput?.value.trim() || '';
             if (!text) { showToast('Tulis komentar terlebih dahulu', '⚠️'); textInput?.focus(); return; }
 
-            if (!commentsSubmitFrame) {
-                commentsSubmitFrame = document.createElement('iframe');
-                commentsSubmitFrame.name = 'rf21-comment-submit-frame';
-                commentsSubmitFrame.style.display = 'none';
-                document.body.appendChild(commentsSubmitFrame);
-            }
-
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = COMMENTS_API_URL;
-            form.target = commentsSubmitFrame.name;
-            form.style.display = 'none';
-            const fields = {
-                action: 'add',
+            const queuedComment = {
+                clientId: `comment_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`,
                 mediaId: String(state.currentMedia.id),
                 title: String(state.currentMedia.title || ''),
                 name,
-                text
+                text,
+                createdAt: Date.now(),
+                dateLabel: 'baru saja'
             };
-            Object.entries(fields).forEach(([key, value]) => {
-                const input = document.createElement('input');
-                input.type = 'hidden'; input.name = key; input.value = value;
-                form.appendChild(input);
-            });
-            document.body.appendChild(form);
-            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Mengirim...'; }
-            form.submit();
+
+            // Simpan dulu di perangkat. Jadi komentar tidak hilang saat server sedang offline.
+            queueComment(queuedComment);
+            if (nameInput) nameInput.value = '';
+            if (textInput) textInput.value = '';
+            renderPendingComments(state.currentMedia.id);
+
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Menyimpan...'; }
             setTimeout(() => {
-                form.remove();
                 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Kirim Komentar'; }
-                if (nameInput) nameInput.value = '';
-                if (textInput) textInput.value = '';
-                loadCommentsOnline(state.currentMedia.id);
-                showToast('Komentar dikirim. Memperbarui komentar...', '💬');
-            }, 1400);
+            }, 500);
+
+            if (navigator.onLine === false) {
+                showToast('Komentar tersimpan. Akan dikirim saat online.', '📥');
+            } else {
+                showToast('Komentar tersimpan, sedang dikirim...', '💬');
+                syncCommentQueue();
+            }
         }
+
+        window.addEventListener('online', () => {
+            syncCommentQueue();
+            const state = store.getState();
+            if (state.currentMedia) loadCommentsOnline(state.currentMedia.id);
+        });
+
+        window.addEventListener('offline', () => {
+            const state = store.getState();
+            if (state.currentMedia) renderPendingComments(state.currentMedia.id);
+        });
 
         // ================= FILTER, MODAL, POPUP, MOBILE MENU =================
         function applyFilters() { showToast('Filter genre & tahun diterapkan', '🔍'); fetchTMDBCatalogs(); }
