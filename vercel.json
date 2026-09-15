@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/movie/:path*", "destination": "/" },
+    { "source": "/tv/:path*", "destination": "/" },
+    { "source": "/collection/:path*", "destination": "/" },
+    { "source": "/movies", "destination": "/" },
+    { "source": "/watchlist", "destination": "/" }
+  ]
+}
