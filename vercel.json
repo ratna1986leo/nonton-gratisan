@@ -4,7 +4,8 @@
     { "source": "/tv/:path*", "destination": "/" },
     { "source": "/collection/:path*", "destination": "/" },
     { "source": "/movies", "destination": "/" },
-    { "source": "/watchlist", "destination": "/" }
+    { "source": "/watchlist", "destination": "/" },
+    { "source": "/kategori.php", "destination": "/kategori.html" }
   ],
   "headers": [
     {
