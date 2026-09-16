@@ -53,10 +53,11 @@ jobs:
           h = h.replace('const parsedData = parseCSV(csvText);', 'const parsedData = filterExcludedTraditionalGenres(parseCSV(csvText));', 1)
           h = re.sub(r'(store\.setState\(\{\s*libraryData:\s*)fallbackData(\s*,\s*isLibraryLoaded:\s*true)', r'\1filterExcludedTraditionalGenres(fallbackData)\2', h, count=1)
           p.write_text(h, encoding='utf-8')
-      - name: Commit changes
+      - name: Commit changes and clean up
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
+          git rm -f .genre-update-trigger .github/workflows/remove-traditional-genres.yml 2>/dev/null || true
           git diff --cached --quiet || git commit -m "Remove Wayang, Ludruk, and Ketoprak genres"
           git push
