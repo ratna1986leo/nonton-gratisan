@@ -30,9 +30,19 @@
     });
   }
 
+  function loadSeoCleanup() {
+    if (document.querySelector('script[data-phase4-seo]')) return;
+    const s = document.createElement('script');
+    s.src = '/phase4-seo.js?v=1';
+    s.defer = true;
+    s.dataset.phase4Seo = '1';
+    document.head.appendChild(s);
+  }
+
   function boot() {
     addBackToTop();
     optimizeImages();
+    loadSeoCleanup();
     const observer = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         mutation.addedNodes.forEach(node => {
