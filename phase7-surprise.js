@@ -80,9 +80,9 @@
   }
 
   function inject() {
-    if (document.getElementById(SECTION_ID)) return;
+    if (document.getElementById(SECTION_ID)) return true;
     const anchor = document.getElementById('movies-section') || document.getElementById('trending-section');
-    if (!anchor?.parentNode) return;
+    if (!anchor?.parentNode) return false;
     const section = document.createElement('section');
     section.id = SECTION_ID;
     section.className = 'space-y-3 sm:space-y-4 fade-in';
@@ -106,14 +106,16 @@
       const genre = section.querySelector('#phase7-surprise-genre')?.value || 'all';
       choose(genre);
     });
+    return true;
   }
 
   function boot() {
-    inject();
+    const retry = [0, 300, 1000, 2500, 5000, 9000];
+    retry.forEach(delay => setTimeout(() => inject(), delay));
     if (typeof store !== 'undefined' && store?.subscribe) store.subscribe(() => inject());
   }
 
-  window.NontonGratisanSurprise = { choose, getPool };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
-  else setTimeout(boot, 0);
+  window.NontonGratisanSurprise = { choose, getPool, inject };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
