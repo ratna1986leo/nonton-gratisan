@@ -39,10 +39,20 @@
     document.head.appendChild(s);
   }
 
+  function loadPhase5Pwa() {
+    if (document.querySelector('script[data-phase5-pwa]')) return;
+    const s = document.createElement('script');
+    s.src = '/phase5-pwa.js?v=1';
+    s.defer = true;
+    s.dataset.phase5Pwa = '1';
+    document.head.appendChild(s);
+  }
+
   function boot() {
     addBackToTop();
     optimizeImages();
     loadSeoCleanup();
+    loadPhase5Pwa();
     const observer = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         mutation.addedNodes.forEach(node => {
