@@ -1,0 +1,62 @@
+name: Remove traditional genres
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Remove Wayang, Ludruk, Ketoprak
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          p = Path('index.html')
+          h = p.read_text(encoding='utf-8')
+          h = h.replace('reviewfilm21, lk21, nonton film gratis, bioskop21, streaming film sub indo, drakor sub indo, anime sub indo, smart tv streaming, pustaka film, seni wayang, ludruk, ketoprak', 'reviewfilm21, lk21, nonton film gratis, bioskop21, streaming film sub indo, drakor sub indo, anime sub indo, smart tv streaming, pustaka film')
+          for s in [
+              "                            <button onclick=\"navigateToCollection('seni-wayang')\">Seni Wayang</button>\n",
+              "                            <button onclick=\"navigateToCollection('seni-ludruk')\">Seni Ludruk</button>\n",
+              "                            <button onclick=\"navigateToCollection('seni-ketoprak')\">Seni Ketoprak</button>\n",
+              "                    <button onclick=\"navigateToCollection('seni-wayang'); toggleMobileMenu();\" class=\"focusable block w-full text-left px-3 py-2.5 rounded-lg text-zinc-400 hover:bg-zinc-900 touch-target\">• Seni Wayang</button>\n",
+              "                    <button onclick=\"navigateToCollection('seni-ludruk'); toggleMobileMenu();\" class=\"focusable block w-full text-left px-3 py-2.5 rounded-lg text-zinc-400 hover:bg-zinc-900 touch-target\">• Seni Ludruk</button>\n",
+              "                    <button onclick=\"navigateToCollection('seni-ketoprak'); toggleMobileMenu();\" class=\"focusable block w-full text-left px-3 py-2.5 rounded-lg text-zinc-400 hover:bg-zinc-900 touch-target\">• Seni Ketoprak</button>\n",
+              "                'seni-wayang': ['wayang'], 'seni-ludruk': ['ludruk'], 'seni-ketoprak': ['ketoprak']\n",
+          ]:
+              h = h.replace(s, '')
+          h = re.sub(r'\s*\{ Judul: "\[1\] CAK KARTOLO NYETRIP bag \[1\]".*?\},', '', h, flags=re.I|re.S)
+          h = re.sub(r'\s*\{ Judul: "\[2\] CAK KARTOLO NYETRIP bag \[2\]".*?\},', '', h, flags=re.I|re.S)
+          h = re.sub(r'\s*\{ Judul: "Wayang Golek-Asep Sunandar - Panca Tunggal".*?\},', '', h, flags=re.I|re.S)
+          h = re.sub(r'\s*\{ Judul: "JOKO KENDIL VIRAL TIKTOK- KETHOPRAK MINI SLAMET BUDOYO".*?\},', '', h, flags=re.I|re.S)
+          if 'function filterExcludedTraditionalGenres(items)' not in h:
+              marker = 'function isLibrarySeries(item) {'
+              fn = """function filterExcludedTraditionalGenres(items) {
+    const excluded = ['wayang', 'ludruk', 'ketoprak', 'kethoprak'];
+    if (!Array.isArray(items)) return [];
+    return items.filter(item => {
+        const genre = String(item?.Genre || item?.genre || '').toLowerCase();
+        const title = String(item?.Judul || item?.judul || item?.Title || '').toLowerCase();
+        return !excluded.some(k => genre.includes(k) || title.includes(k));
+    });
+}
+
+"""
+              h = h.replace(marker, fn + marker, 1)
+          h = h.replace('const parsedData = parseCSV(csvText);', 'const parsedData = filterExcludedTraditionalGenres(parseCSV(csvText));', 1)
+          h = re.sub(r'(store\.setState\(\{\s*libraryData:\s*)fallbackData(\s*,\s*isLibraryLoaded:\s*true)', r'\1filterExcludedTraditionalGenres(fallbackData)\2', h, count=1)
+          p.write_text(h, encoding='utf-8')
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Remove Wayang, Ludruk, and Ketoprak genres"
+          git push
