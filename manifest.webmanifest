@@ -1,0 +1,20 @@
+{
+  "name": "NontonGratisan",
+  "short_name": "NontonGratisan",
+  "description": "Nonton film dan series subtitle Indonesia dengan pengalaman seperti aplikasi.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "lang": "id-ID",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
