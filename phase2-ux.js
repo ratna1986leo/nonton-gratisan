@@ -101,7 +101,6 @@
     };
   }
 
-  // Keep episode selection synchronized with the tracker when the site's season/episode controls change.
   document.addEventListener('change', e => {
     const el = e.target;
     if (!el || !el.matches('select')) return;
@@ -119,6 +118,10 @@
   function boot() {
     injectHistorySection();
     renderHistory();
+    const s = document.createElement('script');
+    s.src = '/phase3-ux.js?v=1';
+    s.defer = true;
+    document.head.appendChild(s);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
   else setTimeout(boot, 0);
