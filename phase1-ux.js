@@ -4,202 +4,23 @@
   const KEY = 'ng_continue_watching_v1';
   const MAX = 12;
   const EXCLUDED = ['wayang', 'ludruk', 'ketoprak', 'kethoprak'];
-
-  const read = () => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      const data = raw ? JSON.parse(raw) : [];
-      return Array.isArray(data) ? data : [];
-    } catch (_) { return []; }
-  };
-  const write = (items) => {
-    try { localStorage.setItem(KEY, JSON.stringify(items.slice(0, MAX))); } catch (_) {}
-  };
-  const cleanTitle = (title) => String(title || 'Film').replace(/^Nonton\s*/i, '').replace(/Sub\s*Indo(?:nesia)?/i, '').trim();
-  const escape = (text) => typeof escapeHtml === 'function' ? escapeHtml(text) : String(text || '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]));
-  const isExcluded = (item) => {
-    const title = String(item?.Judul || item?.judul || item?.Title || item?.title || '').toLowerCase();
-    const genre = String(item?.Genre || item?.genre || '').toLowerCase();
-    return EXCLUDED.some(k => title.includes(k) || genre.includes(k));
-  };
-
-  function save(item, progress = 0) {
-    if (!item || item.id == null || isExcluded(item)) return;
-    const key = `${item.type || 'movie'}-${item.id}`;
-    const list = read().filter(x => x.key !== key);
-    list.unshift({
-      key, id: item.id, type: item.type || 'movie', title: cleanTitle(item.title),
-      poster_path: item.poster_path || '', backdrop_path: item.backdrop_path || '',
-      year: item.year || '', rating: item.rating || '', genre: item.genre || '',
-      overview: item.overview || '', link: item.link || '', actors: item.actors || '',
-      isLibraryItem: Boolean(item.isLibraryItem), progress: Math.max(0, Math.min(99, Number(progress) || 0)),
-      updatedAt: Date.now()
-    });
-    write(list);
-    render();
-  }
-
-  function remove(key) {
-    write(read().filter(x => x.key !== key));
-    render();
-  }
-
-  function render() {
-    const section = document.getElementById('continue-watching-section');
-    const grid = document.getElementById('continue-watching-carousel');
-    if (!section || !grid) return;
-    const items = read().filter(x => !isExcluded(x)).sort((a,b) => b.updatedAt - a.updatedAt).slice(0, MAX);
-    section.classList.toggle('hidden', items.length === 0);
-    grid.innerHTML = items.map(item => {
-      const key = `${item.type}-${item.id}`;
-      const progress = Math.round(item.progress || 0);
-      const poster = typeof getOptimizedImage === 'function' ? getOptimizedImage(item.poster_path, 500) : item.poster_path;
-      if (typeof mediaCache !== 'undefined') mediaCache.set(key, item);
-      return `<div class="relative shrink-0 w-28 sm:w-40 md:w-44 bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800/80 group snap-start">
-        <button type="button" onclick="continueWatchingPlay('${escape(key)}')" class="block w-full text-left focusable">
-          <div class="relative aspect-[2/3] overflow-hidden bg-zinc-950">
-            <img src="${escape(poster)}" alt="Poster ${escape(item.title)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x600/18181b/2563eb?text=Poster'">
-            <div class="absolute inset-0 bg-black/20 group-hover:bg-black/5 transition-colors"></div>
-            <div class="absolute bottom-0 left-0 right-0 h-1 bg-zinc-700"><div class="h-full bg-brand-500" style="width:${progress}%"></div></div>
-            <div class="absolute inset-0 flex items-center justify-center"><span class="w-10 h-10 rounded-full bg-brand-500/90 text-white flex items-center justify-center shadow-lg">▶</span></div>
-          </div>
-          <div class="p-2 sm:p-3"><h3 class="text-[10px] sm:text-xs font-bold text-white truncate">${escape(item.title)}</h3><div class="text-[8px] sm:text-[10px] text-zinc-500 mt-1">Lanjut ${progress}%</div></div>
-        </button>
-        <button type="button" onclick="event.stopPropagation(); removeContinueWatching('${escape(key)}')" class="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-black/75 text-zinc-300 hover:text-white hover:bg-red-600" aria-label="Hapus riwayat">×</button>
-      </div>`;
-    }).join('');
-  }
-
-  window.continueWatchingPlay = (key) => {
-    const item = read().find(x => x.key === key);
-    if (!item) return;
-    if (typeof mediaCache !== 'undefined') mediaCache.set(key, item);
-    if (typeof navigateToDetail === 'function') navigateToDetail(key);
-  };
-  window.removeContinueWatching = remove;
-  window.NontonGratisanPhase1 = { save, remove, read, render };
-
-  function injectSections() {
-    if (document.getElementById('continue-watching-section')) return;
-    const trending = document.getElementById('trending-section');
-    if (!trending || !trending.parentNode) return;
-    const section = document.createElement('section');
-    section.id = 'continue-watching-section';
-    section.className = 'hidden space-y-3 sm:space-y-4 fade-in';
-    section.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-base sm:text-xl font-bold text-white flex items-center gap-1.5 sm:gap-2"><span class="text-brand-500">▶️</span> Lanjutkan Menonton</h2><button onclick="NontonGratisanPhase1.render()" class="text-[10px] sm:text-xs text-zinc-500 hover:text-white">Refresh</button></div><div id="continue-watching-carousel" class="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-1 sm:py-2 scroll-smooth snap-x snap-mandatory"></div>`;
-    trending.parentNode.insertBefore(section, trending);
-  }
-
-  function injectRecentlyAdded() {
-    if (document.getElementById('recently-added-section')) return;
-    const movies = document.getElementById('movies-section');
-    if (!movies || !movies.parentNode) return;
-    const section = document.createElement('section');
-    section.id = 'recently-added-section';
-    section.className = 'space-y-3 sm:space-y-4';
-    section.innerHTML = `<div class="flex items-center justify-between"><h2 class="text-base sm:text-xl font-bold text-white flex items-center gap-1.5 sm:gap-2"><span class="text-brand-500">🆕</span> Baru Ditambahkan</h2><button onclick="document.getElementById('recently-added-section')?.scrollIntoView({behavior:'smooth'})" class="text-[10px] sm:text-xs text-zinc-500">Terbaru</button></div><div id="recently-added-carousel" class="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-1 sm:py-2 scroll-smooth snap-x snap-mandatory"></div>`;
-    movies.parentNode.insertBefore(section, movies);
-  }
-
-  function makeLibraryMedia(item) {
-    const isSeries = typeof isLibrarySeries === 'function' ? isLibrarySeries(item) : /series|episode|season/i.test(item.Judul || '');
-    const id = typeof getStableLibraryMediaId === 'function'
-      ? getStableLibraryMediaId(item.Judul || '', isSeries ? 'tv' : 'movie', item.Link || '')
-      : Math.abs((item.Judul || '').split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0));
-    return {
-      id, type: isSeries ? 'tv' : 'movie', title: cleanTitle(item.Judul), year: item.Tahun || '',
-      rating: String(item.Rating || '8.0').replace(',','.'), genre: item.Genre || '',
-      overview: item.Deskripsi || '', poster_path: typeof enforceHttps === 'function' ? enforceHttps(item.Poster) : item.Poster || '',
-      backdrop_path: typeof enforceHttps === 'function' ? enforceHttps(item.Poster) : item.Poster || '',
-      link: item.Link || '', actors: item.Aktor || '', isLibraryItem: true, libraryEpisodes: []
-    };
-  }
-
-  function renderRecentlyAdded() {
-    const grid = document.getElementById('recently-added-carousel');
-    if (!grid || typeof store === 'undefined') return;
-    const state = store.getState();
-    const library = Array.isArray(state.libraryData) ? state.libraryData.filter(item => !isExcluded(item)) : [];
-    let items = library.length ? [...library].reverse().slice(0, 12).map(makeLibraryMedia) : [];
-
-    if (!items.length) {
-      const fallback = [...(state.moviesData || []), ...(state.seriesData || [])]
-        .filter(item => !isExcluded(item))
-        .slice(0, 12);
-      items = fallback;
-    }
-
-    grid.innerHTML = items.map(item => {
-      const key = `${item.type}-${item.id}`;
-      if (typeof mediaCache !== 'undefined') mediaCache.set(key, item);
-      return typeof createCardHTML === 'function' ? createCardHTML(item) : '';
-    }).join('');
-  }
-
-  function removeTraditionalMenu() {
-    const selectors = [
-      "button[onclick*=\"seni-wayang\"]",
-      "button[onclick*=\"seni-ludruk\"]",
-      "button[onclick*=\"seni-ketoprak\"]"
-    ];
-    document.querySelectorAll(selectors.join(',')).forEach(el => el.remove());
-    document.querySelectorAll('p,div,span').forEach(el => {
-      const text = String(el.textContent || '').trim();
-      if (text === 'Seni Tradisional' && !el.querySelector('button')) el.remove();
-    });
-  }
-
-  function fuzzyScore(text, query) {
-    const t = String(text || '').toLowerCase();
-    const q = String(query || '').toLowerCase().trim();
-    if (!q) return 0;
-    if (t === q) return 100;
-    if (t.includes(q)) return 80;
-    const words = q.split(/\s+/).filter(Boolean);
-    const hits = words.filter(w => t.includes(w)).length;
-    return hits ? 50 + Math.round((hits / words.length) * 25) : 0;
-  }
-
-  const originalExecuteSearch = window.executeSearch;
-  window.executeSearch = async function(query) {
-    if (typeof originalExecuteSearch === 'function') {
-      await originalExecuteSearch(query);
-      try {
-        const state = store.getState();
-        const ranked = [...(state.searchAllResults || [])].filter(item => !isExcluded(item)).map(item => ({ item, score: fuzzyScore(item.title, query) + fuzzyScore(item.genre, query) * 0.15 })).sort((a,b)=>b.score-a.score).map(x=>x.item);
-        store.setState({ searchAllResults: ranked });
-        if (typeof renderSearchPage === 'function') renderSearchPage();
-      } catch (_) {}
-    }
-  };
-
-  if (typeof openDetailPage === 'function') {
-    const originalOpenDetailPage = openDetailPage;
-    window.openDetailPage = async function(item) {
-      try { save(item, 5); } catch (_) {}
-      return originalOpenDetailPage(item);
-    };
-  }
-
-  const boot = () => {
-    injectSections();
-    injectRecentlyAdded();
-    removeTraditionalMenu();
-    render();
-    renderRecentlyAdded();
-    if (typeof store !== 'undefined' && store.subscribe) {
-      store.subscribe(() => { render(); renderRecentlyAdded(); removeTraditionalMenu(); });
-    }
-    [1500, 4000, 8000, 12000].forEach(ms => setTimeout(renderRecentlyAdded, ms));
-    // Phase 2: load the standalone Episode Tracker + Watch History module.
-    if (!document.querySelector('script[data-phase2-ux]')) {
-      const s = document.createElement('script');
-      s.src = '/phase2-ux.js?v=1';
-      s.defer = true;
-      s.dataset.phase2Ux = '1';
-      document.head.appendChild(s);
-    }
-  };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
-  else setTimeout(boot, 0);
+  const read = () => { try { const raw = localStorage.getItem(KEY); const data = raw ? JSON.parse(raw) : []; return Array.isArray(data) ? data : []; } catch (_) { return []; } };
+  const write = items => { try { localStorage.setItem(KEY, JSON.stringify(items.slice(0, MAX))); } catch (_) {} };
+  const cleanTitle = title => String(title || 'Film').replace(/^Nonton\s*/i, '').replace(/Sub\s*Indo(?:nesia)?/i, '').trim();
+  const escape = text => typeof escapeHtml === 'function' ? escapeHtml(text) : String(text || '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]));
+  const isExcluded = item => { const title = String(item?.Judul || item?.judul || item?.Title || item?.title || '').toLowerCase(); const genre = String(item?.Genre || item?.genre || '').toLowerCase(); return EXCLUDED.some(k => title.includes(k) || genre.includes(k)); };
+  function save(item, progress = 0) { if (!item || item.id == null || isExcluded(item)) return; const key = `${item.type || 'movie'}-${item.id}`; const list = read().filter(x => x.key !== key); list.unshift({key,id:item.id,type:item.type||'movie',title:cleanTitle(item.title),poster_path:item.poster_path||'',backdrop_path:item.backdrop_path||'',year:item.year||'',rating:item.rating||'',genre:item.genre||'',overview:item.overview||'',link:item.link||'',actors:item.actors||'',isLibraryItem:Boolean(item.isLibraryItem),progress:Math.max(0,Math.min(99,Number(progress)||0)),updatedAt:Date.now()}); write(list); render(); }
+  function remove(key) { write(read().filter(x => x.key !== key)); render(); }
+  function render() { const section=document.getElementById('continue-watching-section'),grid=document.getElementById('continue-watching-carousel'); if(!section||!grid)return; const items=read().filter(x=>!isExcluded(x)).sort((a,b)=>b.updatedAt-a.updatedAt).slice(0,MAX); section.classList.toggle('hidden',items.length===0); grid.innerHTML=items.map(item=>{const key=`${item.type}-${item.id}`,progress=Math.round(item.progress||0),poster=typeof getOptimizedImage==='function'?getOptimizedImage(item.poster_path,500):item.poster_path;if(typeof mediaCache!=='undefined')mediaCache.set(key,item);return `<div class="relative shrink-0 w-28 sm:w-40 md:w-44 bg-zinc-900 rounded-xl overflow-hidden border border-zinc-800/80 group snap-start"><button type="button" onclick="continueWatchingPlay('${escape(key)}')" class="block w-full text-left focusable"><div class="relative aspect-[2/3] overflow-hidden bg-zinc-950"><img src="${escape(poster)}" alt="Poster ${escape(item.title)}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x600/18181b/2563eb?text=Poster'"><div class="absolute bottom-0 left-0 right-0 h-1 bg-zinc-700"><div class="h-full bg-brand-500" style="width:${progress}%"></div></div><div class="absolute inset-0 flex items-center justify-center"><span class="w-10 h-10 rounded-full bg-brand-500/90 text-white flex items-center justify-center shadow-lg">▶</span></div></div><div class="p-2 sm:p-3"><h3 class="text-[10px] sm:text-xs font-bold text-white truncate">${escape(item.title)}</h3><div class="text-[8px] sm:text-[10px] text-zinc-500 mt-1">Lanjut ${progress}%</div></div></button><button type="button" onclick="event.stopPropagation(); removeContinueWatching('${escape(key)}')" class="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-full bg-black/75 text-zinc-300 hover:text-white hover:bg-red-600" aria-label="Hapus riwayat">×</button></div>`;}).join(''); }
+  window.continueWatchingPlay=key=>{const item=read().find(x=>x.key===key);if(!item)return;if(typeof mediaCache!=='undefined')mediaCache.set(key,item);if(typeof navigateToDetail==='function')navigateToDetail(key);}; window.removeContinueWatching=remove; window.NontonGratisanPhase1={save,remove,read,render};
+  function injectSections(){if(document.getElementById('continue-watching-section'))return;const trending=document.getElementById('trending-section');if(!trending?.parentNode)return;const s=document.createElement('section');s.id='continue-watching-section';s.className='hidden space-y-3 sm:space-y-4 fade-in';s.innerHTML=`<div class="flex items-center justify-between"><h2 class="text-base sm:text-xl font-bold text-white flex items-center gap-1.5 sm:gap-2"><span class="text-brand-500">▶️</span> Lanjutkan Menonton</h2><button onclick="NontonGratisanPhase1.render()" class="text-[10px] sm:text-xs text-zinc-500 hover:text-white">Refresh</button></div><div id="continue-watching-carousel" class="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-1 sm:py-2 scroll-smooth snap-x snap-mandatory"></div>`;trending.parentNode.insertBefore(s,trending);}
+  function injectRecentlyAdded(){if(document.getElementById('recently-added-section'))return;const movies=document.getElementById('movies-section');if(!movies?.parentNode)return;const s=document.createElement('section');s.id='recently-added-section';s.className='space-y-3 sm:space-y-4';s.innerHTML=`<div class="flex items-center justify-between"><h2 class="text-base sm:text-xl font-bold text-white flex items-center gap-1.5 sm:gap-2"><span class="text-brand-500">🆕</span> Baru Ditambahkan</h2><span class="text-[9px] sm:text-xs text-zinc-500">Geser untuk melihat lainnya</span></div><div id="recently-added-carousel" class="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar py-1 sm:py-2 scroll-smooth snap-x snap-mandatory"></div>`;movies.parentNode.insertBefore(s,movies);}
+  function makeLibraryMedia(item){const isSeries=typeof isLibrarySeries==='function'?isLibrarySeries(item):/series|episode|season/i.test(item.Judul||'');const id=typeof getStableLibraryMediaId==='function'?getStableLibraryMediaId(item.Judul||'',isSeries?'tv':'movie',item.Link||''):Math.abs((item.Judul||'').split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0));return{id,type:isSeries?'tv':'movie',title:cleanTitle(item.Judul),year:item.Tahun||'',rating:String(item.Rating||'8.0').replace(',','.'),genre:item.Genre||'',overview:item.Deskripsi||'',poster_path:typeof enforceHttps==='function'?enforceHttps(item.Poster):item.Poster||'',backdrop_path:typeof enforceHttps==='function'?enforceHttps(item.Poster):item.Poster||'',link:item.Link||'',actors:item.Aktor||'',isLibraryItem:true,libraryEpisodes:[]};}
+  function renderRecentlyAdded(){const grid=document.getElementById('recently-added-carousel');if(!grid||typeof store==='undefined')return;const state=store.getState(),library=Array.isArray(state.libraryData)?state.libraryData.filter(item=>!isExcluded(item)):[];let items=library.length?[...library].reverse().slice(0,12).map(makeLibraryMedia):[];if(!items.length)items=[...(state.moviesData||[]),...(state.seriesData||[])].filter(item=>!isExcluded(item)).slice(0,12);grid.innerHTML=items.map(item=>{const key=`${item.type}-${item.id}`;if(typeof mediaCache!=='undefined')mediaCache.set(key,item);return typeof createCardHTML==='function'?createCardHTML(item):'';}).join('');}
+  function removeTraditionalMenu(){["button[onclick*=\"seni-wayang\"]","button[onclick*=\"seni-ludruk\"]","button[onclick*=\"seni-ketoprak\"]"].forEach(sel=>document.querySelectorAll(sel).forEach(el=>el.remove()));document.querySelectorAll('p,div,span').forEach(el=>{const text=String(el.textContent||'').trim();if(text==='Seni Tradisional'&&!el.querySelector('button'))el.remove();});}
+  function fuzzyScore(text,query){const t=String(text||'').toLowerCase(),q=String(query||'').toLowerCase().trim();if(!q)return 0;if(t===q)return 100;if(t.includes(q))return 80;const words=q.split(/\s+/).filter(Boolean),hits=words.filter(w=>t.includes(w)).length;return hits?50+Math.round(hits/words.length*25):0;}
+  const originalExecuteSearch=window.executeSearch;window.executeSearch=async function(query){if(typeof originalExecuteSearch==='function'){await originalExecuteSearch(query);try{const state=store.getState(),ranked=[...(state.searchAllResults||[])].filter(item=>!isExcluded(item)).map(item=>({item,score:fuzzyScore(item.title,query)+fuzzyScore(item.genre,query)*.15})).sort((a,b)=>b.score-a.score).map(x=>x.item);store.setState({searchAllResults:ranked});if(typeof renderSearchPage==='function')renderSearchPage();}catch(_){}}};
+  if(typeof openDetailPage==='function'){const originalOpenDetailPage=openDetailPage;window.openDetailPage=async function(item){try{save(item,5);}catch(_){}return originalOpenDetailPage(item);};}
+  const boot=()=>{injectSections();injectRecentlyAdded();removeTraditionalMenu();render();renderRecentlyAdded();if(typeof store!=='undefined'&&store.subscribe)store.subscribe(()=>{render();renderRecentlyAdded();removeTraditionalMenu();});[1500,4000,8000,12000].forEach(ms=>setTimeout(renderRecentlyAdded,ms));if(!document.querySelector('script[data-phase2-ux]')){const s=document.createElement('script');s.src='/phase2-ux.js?v=1';s.defer=true;s.dataset.phase2Ux='1';document.head.appendChild(s);}if(!document.querySelector('script[data-carousel-controls]')){const s=document.createElement('script');s.src='/new-features-carousel.js?v=1';s.defer=true;s.dataset.carouselControls='1';document.head.appendChild(s);}};
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(boot,0));else setTimeout(boot,0);
 })();
