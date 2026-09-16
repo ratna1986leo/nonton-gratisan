@@ -3,6 +3,7 @@
   'use strict';
   const KEY = 'ng_continue_watching_v1';
   const MAX = 12;
+  const EXCLUDED = ['wayang', 'ludruk', 'ketoprak', 'kethoprak'];
 
   const read = () => {
     try {
@@ -15,10 +16,15 @@
     try { localStorage.setItem(KEY, JSON.stringify(items.slice(0, MAX))); } catch (_) {}
   };
   const cleanTitle = (title) => String(title || 'Film').replace(/^Nonton\s*/i, '').replace(/Sub\s*Indo(?:nesia)?/i, '').trim();
-  const escape = (text) => typeof escapeHtml === 'function' ? escapeHtml(text) : String(text || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+  const escape = (text) => typeof escapeHtml === 'function' ? escapeHtml(text) : String(text || '').replace(/[&<>\"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;',"'":'&#039;'}[c]));
+  const isExcluded = (item) => {
+    const title = String(item?.Judul || item?.judul || item?.Title || item?.title || '').toLowerCase();
+    const genre = String(item?.Genre || item?.genre || '').toLowerCase();
+    return EXCLUDED.some(k => title.includes(k) || genre.includes(k));
+  };
 
   function save(item, progress = 0) {
-    if (!item || item.id == null) return;
+    if (!item || item.id == null || isExcluded(item)) return;
     const key = `${item.type || 'movie'}-${item.id}`;
     const list = read().filter(x => x.key !== key);
     list.unshift({
@@ -42,7 +48,7 @@
     const section = document.getElementById('continue-watching-section');
     const grid = document.getElementById('continue-watching-carousel');
     if (!section || !grid) return;
-    const items = read().sort((a,b) => b.updatedAt - a.updatedAt).slice(0, MAX);
+    const items = read().filter(x => !isExcluded(x)).sort((a,b) => b.updatedAt - a.updatedAt).slice(0, MAX);
     section.classList.toggle('hidden', items.length === 0);
     grid.innerHTML = items.map(item => {
       const key = `${item.type}-${item.id}`;
@@ -95,25 +101,53 @@
     movies.parentNode.insertBefore(section, movies);
   }
 
+  function makeLibraryMedia(item) {
+    const isSeries = typeof isLibrarySeries === 'function' ? isLibrarySeries(item) : /series|episode|season/i.test(item.Judul || '');
+    const id = typeof getStableLibraryMediaId === 'function'
+      ? getStableLibraryMediaId(item.Judul || '', isSeries ? 'tv' : 'movie', item.Link || '')
+      : Math.abs((item.Judul || '').split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0));
+    return {
+      id, type: isSeries ? 'tv' : 'movie', title: cleanTitle(item.Judul), year: item.Tahun || '',
+      rating: String(item.Rating || '8.0').replace(',','.'), genre: item.Genre || '',
+      overview: item.Deskripsi || '', poster_path: typeof enforceHttps === 'function' ? enforceHttps(item.Poster) : item.Poster || '',
+      backdrop_path: typeof enforceHttps === 'function' ? enforceHttps(item.Poster) : item.Poster || '',
+      link: item.Link || '', actors: item.Aktor || '', isLibraryItem: true, libraryEpisodes: []
+    };
+  }
+
   function renderRecentlyAdded() {
     const grid = document.getElementById('recently-added-carousel');
     if (!grid || typeof store === 'undefined') return;
     const state = store.getState();
-    const library = Array.isArray(state.libraryData) ? state.libraryData : [];
-    if (!library.length) { grid.innerHTML = ''; return; }
-    const items = [...library].reverse().filter(item => {
-      const title = String(item.Judul || '').toLowerCase();
-      const genre = String(item.Genre || '').toLowerCase();
-      return !['wayang','ludruk','ketoprak','kethoprak'].some(k => title.includes(k) || genre.includes(k));
-    }).slice(0, 12).map(item => {
-      const isSeries = typeof isLibrarySeries === 'function' ? isLibrarySeries(item) : /series|episode|season/i.test(item.Judul || '');
-      const id = typeof getStableLibraryMediaId === 'function' ? getStableLibraryMediaId(item.Judul || '', isSeries ? 'tv' : 'movie', item.Link || '') : Math.abs((item.Judul || '').split('').reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0));
-      const obj = { id, type: isSeries ? 'tv' : 'movie', title: cleanTitle(item.Judul), year: item.Tahun || '', rating: String(item.Rating || '8.0').replace(',','.'), genre: item.Genre || '', overview: item.Deskripsi || '', poster_path: enforceHttps(item.Poster), backdrop_path: enforceHttps(item.Poster), link: item.Link || '', actors: item.Aktor || '', isLibraryItem: true, libraryEpisodes: [] };
-      const key = `${obj.type}-${obj.id}`;
-      if (typeof mediaCache !== 'undefined') mediaCache.set(key, obj);
-      return obj;
+    const library = Array.isArray(state.libraryData) ? state.libraryData.filter(item => !isExcluded(item)) : [];
+    let items = library.length ? [...library].reverse().slice(0, 12).map(makeLibraryMedia) : [];
+
+    // Jika Google Sheets belum siap, tetap tampilkan section memakai katalog terbaru yang sudah ada.
+    if (!items.length) {
+      const fallback = [...(state.moviesData || []), ...(state.seriesData || [])]
+        .filter(item => !isExcluded(item))
+        .slice(0, 12);
+      items = fallback;
+    }
+
+    grid.innerHTML = items.map(item => {
+      const key = `${item.type}-${item.id}`;
+      if (typeof mediaCache !== 'undefined') mediaCache.set(key, item);
+      return typeof createCardHTML === 'function' ? createCardHTML(item) : '';
+    }).join('');
+  }
+
+  function removeTraditionalMenu() {
+    const selectors = [
+      "button[onclick*=\"seni-wayang\"]",
+      "button[onclick*=\"seni-ludruk\"]",
+      "button[onclick*=\"seni-ketoprak\"]"
+    ];
+    document.querySelectorAll(selectors.join(',')).forEach(el => el.remove());
+    document.querySelectorAll('p,div,span').forEach(el => {
+      const text = String(el.textContent || '').trim();
+      if (text === 'Seni Tradisional' && !el.querySelector('button')) el.remove();
     });
-    grid.innerHTML = items.map(item => typeof createCardHTML === 'function' ? createCardHTML(item) : '').join('');
   }
 
   function fuzzyScore(text, query) {
@@ -133,7 +167,7 @@
       await originalExecuteSearch(query);
       try {
         const state = store.getState();
-        const ranked = [...(state.searchAllResults || [])].map(item => ({ item, score: fuzzyScore(item.title, query) + fuzzyScore(item.genre, query) * 0.15 })).sort((a,b)=>b.score-a.score).map(x=>x.item);
+        const ranked = [...(state.searchAllResults || [])].filter(item => !isExcluded(item)).map(item => ({ item, score: fuzzyScore(item.title, query) + fuzzyScore(item.genre, query) * 0.15 })).sort((a,b)=>b.score-a.score).map(x=>x.item);
         store.setState({ searchAllResults: ranked });
         if (typeof renderSearchPage === 'function') renderSearchPage();
       } catch (_) {}
@@ -151,11 +185,14 @@
   const boot = () => {
     injectSections();
     injectRecentlyAdded();
+    removeTraditionalMenu();
     render();
     renderRecentlyAdded();
     if (typeof store !== 'undefined' && store.subscribe) {
-      store.subscribe(() => { render(); renderRecentlyAdded(); });
+      store.subscribe(() => { render(); renderRecentlyAdded(); removeTraditionalMenu(); });
     }
+    // Google Sheets dapat selesai setelah Phase 1 boot; coba lagi beberapa kali.
+    [1500, 4000, 8000, 12000].forEach(ms => setTimeout(renderRecentlyAdded, ms));
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
   else setTimeout(boot, 0);
