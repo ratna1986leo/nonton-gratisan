@@ -45,8 +45,18 @@
     });
   }
 
+  function loadPhase4() {
+    if (document.querySelector('script[data-phase4-ux]')) return;
+    const s = document.createElement('script');
+    s.src = '/phase4-ux.js?v=1';
+    s.defer = true;
+    s.dataset.phase4Ux = '1';
+    document.head.appendChild(s);
+  }
+
   function boot() {
     addControls();
+    loadPhase4();
     [800, 1800, 3500, 6000].forEach(ms => setTimeout(addControls, ms));
   }
 
