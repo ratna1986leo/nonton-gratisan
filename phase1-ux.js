@@ -122,7 +122,6 @@
     const library = Array.isArray(state.libraryData) ? state.libraryData.filter(item => !isExcluded(item)) : [];
     let items = library.length ? [...library].reverse().slice(0, 12).map(makeLibraryMedia) : [];
 
-    // Jika Google Sheets belum siap, tetap tampilkan section memakai katalog terbaru yang sudah ada.
     if (!items.length) {
       const fallback = [...(state.moviesData || []), ...(state.seriesData || [])]
         .filter(item => !isExcluded(item))
@@ -191,8 +190,15 @@
     if (typeof store !== 'undefined' && store.subscribe) {
       store.subscribe(() => { render(); renderRecentlyAdded(); removeTraditionalMenu(); });
     }
-    // Google Sheets dapat selesai setelah Phase 1 boot; coba lagi beberapa kali.
     [1500, 4000, 8000, 12000].forEach(ms => setTimeout(renderRecentlyAdded, ms));
+    // Phase 2: load the standalone Episode Tracker + Watch History module.
+    if (!document.querySelector('script[data-phase2-ux]')) {
+      const s = document.createElement('script');
+      s.src = '/phase2-ux.js?v=1';
+      s.defer = true;
+      s.dataset.phase2Ux = '1';
+      document.head.appendChild(s);
+    }
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
   else setTimeout(boot, 0);
