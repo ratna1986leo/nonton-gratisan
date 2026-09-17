@@ -1,4 +1,4 @@
-/* NontonGratisan Smart Search v3 — typo-tolerant titles + actor/person search. */
+/* NontonGratisan Smart Search v4 — typo-tolerant titles + actor/person search. */
 (() => {
   'use strict';
   const EXCLUDED = ['wayang', 'ludruk', 'ketoprak', 'kethoprak'];
@@ -8,10 +8,9 @@
     spderman: 'spiderman', spidrman: 'spider-man',
     batmn: 'batman', supsrman: 'superman',
     harrypoter: 'harry potter', potter: 'harry potter',
-    hollan: 'holland', tomholland: 'tom holland'
+    hollan: 'holland', holand: 'holland', tomholland: 'tom holland'
   };
   let searchTimer = null;
-
   const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9\s-]/g, ' ').replace(/\s+/g, ' ').trim();
   const correctedQuery = query => norm(query).split(' ').map(w => COMMON_TYPOS[w] || w).join(' ').trim();
 
@@ -148,18 +147,31 @@
     const key = typeof DEFAULT_API_KEY !== 'undefined' ? DEFAULT_API_KEY : '';
     if (!key || query.length < 3) return false;
     try {
-      const personQueries = [query, correctedQuery(query)].filter(Boolean);
-      let people = [];
-      for (const q of [...new Set(personQueries)]) {
-        const res = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${encodeURIComponent(key)}&language=id-ID&query=${encodeURIComponent(q)}&include_adult=false`);
-        if (res.ok) people.push(...((await res.json()).results || []));
+      const corrected = correctedQuery(query);
+      const baseQueries = [query, corrected, ...corrected.split(' ').filter(w => w.length >= 3)];
+      const personQueries = [...new Set(baseQueries)].slice(0, 5);
+      const peopleMap = new Map();
+      for (const q of personQueries) {
+        const res = await fetch(`https://api.themoviedb.org/3/search/person?api_key=${encodeURIComponent(key)}&language=id-ID&query=${encodeURIComponent(q)}&page=1&include_adult=false`);
+        if (!res.ok) continue;
+        const data = await res.json();
+        for (const person of (data.results || []).slice(0, 20)) peopleMap.set(person.id, person);
       }
-      const person = people.sort((a,b) => tokenScore(query,b.name)-tokenScore(query,a.name))[0];
-      if (!person || tokenScore(query, person.name) < 58) return false;
+      const people = [...peopleMap.values()];
+      const person = people.sort((a,b) => {
+        const sb = tokenScore(query, b.name) + tokenScore(corrected, b.name) * 0.35 + (b.popularity || 0) * 0.02;
+        const sa = tokenScore(query, a.name) + tokenScore(corrected, a.name) * 0.35 + (a.popularity || 0) * 0.02;
+        return sb - sa;
+      })[0];
+      if (!person) return false;
+      const confidence = Math.max(tokenScore(query, person.name), tokenScore(corrected, person.name));
+      if (confidence < 58) return false;
+
       const creditsRes = await fetch(`https://api.themoviedb.org/3/person/${person.id}/combined_credits?api_key=${encodeURIComponent(key)}&language=id-ID`);
       if (!creditsRes.ok) return false;
       const credits = await creditsRes.json();
-      const local = catalog().filter(x => new Set((credits.cast||[]).map(c=>`${c.media_type}-${c.id}`)).has(`${x.type||x.media_type||'movie'}-${x.id}`));
+      const creditIds = new Set((credits.cast||[]).map(c=>`${c.media_type}-${c.id}`));
+      const local = catalog().filter(x => creditIds.has(`${x.type||x.media_type||'movie'}-${x.id}`));
       const external = (credits.cast||[]).filter(x=>['movie','tv'].includes(x.media_type)&&!isExcluded(x)).map(x=>({id:x.id,type:x.media_type,media_type:x.media_type,title:x.title||x.name||'',year:String(x.release_date||x.first_air_date||'').slice(0,4),rating:x.vote_average||0,genre:'',overview:x.overview||'',poster_path:x.poster_path?`https://image.tmdb.org/t/p/w500${x.poster_path}`:'',backdrop_path:x.backdrop_path?`https://image.tmdb.org/t/p/w1280${x.backdrop_path}`:'',popularity:x.popularity||0,actorSearch:person.name}));
       const seen = new Set();
       const combined = [...local,...external].filter(x=>{const k=`${x.type||x.media_type}-${x.id}`;if(seen.has(k))return false;seen.add(k);return true;});
@@ -172,12 +184,16 @@
   async function smartSearch(query) {
     const q = String(query||'').trim(); if (!q) return;
     const corrected = correctedQuery(q);
+    const actorDone = await actorSearch(q);
+    if (actorDone) return;
+
     const local = catalog();
-    const titleRanked = local.map(item=>({item,score:scoreTitle(item,q)})).filter(x=>x.score>=50).sort((a,b)=>b.score-a.score).map(x=>x.item);
-    if (titleRanked[0] && scoreTitle(titleRanked[0],q)>=72) { renderResults(titleRanked,q,'title'); return; }
+    const titleRanked = local.map(item=>({item,score:Math.max(scoreTitle(item,q), scoreTitle(item,corrected))})).filter(x=>x.score>=50).sort((a,b)=>b.score-a.score).map(x=>x.item);
+    const strongTitle = titleRanked[0] && Math.max(scoreTitle(titleRanked[0],q), scoreTitle(titleRanked[0],corrected)) >= 72;
+    if (strongTitle) { renderResults(titleRanked,q,'title'); return; }
+
     const tmdbMatches = await tmdbSearch(corrected);
     if (tmdbMatches.length) { renderResults([...titleRanked,...tmdbMatches], q, 'title'); return; }
-    if (await actorSearch(q)) return;
     if (titleRanked.length) renderResults(titleRanked,q,'title');
     else { store.setState({searchAllResults:[],searchQuery:q,searchCurrentPage:1}); setSearchVisible(q,0); renderSearchPage?.(); window.showToast?.('Tidak ada hasil ditemukan','🔍'); }
   }
