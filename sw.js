@@ -1,4 +1,4 @@
-const CACHE = 'nontongratisan-pwa-v2';
+const CACHE = 'nontongratisan-pwa-v3';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
@@ -10,7 +10,8 @@ const STATIC = [
   '/new-features-carousel.js',
   '/mature-genre.js',
   '/phase4-seo.js',
-  '/phase7-surprise.js'
+  '/phase7-surprise.js',
+  '/comments-enhancer.js'
 ];
 
 const FRESH_MODULES = new Set([
@@ -21,8 +22,23 @@ const FRESH_MODULES = new Set([
   '/new-features-carousel.js',
   '/mature-genre.js',
   '/phase4-seo.js',
-  '/phase7-surprise.js'
+  '/phase7-surprise.js',
+  '/comments-enhancer.js'
 ]);
+
+async function injectCommentsEnhancer(response) {
+  try {
+    if (!response || !response.ok || !response.headers.get('content-type')?.includes('text/html')) return response;
+    const html = await response.text();
+    if (html.includes('/comments-enhancer.js')) {
+      return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
+    }
+    const injected = html.replace(/<\/body>/i, '<script src="/comments-enhancer.js?v=1" defer></script></body>');
+    return new Response(injected, { status: response.status, statusText: response.statusText, headers: response.headers });
+  } catch (_) {
+    return response;
+  }
+}
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC).catch(() => {})));
@@ -46,10 +62,11 @@ self.addEventListener('fetch', event => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then(response => {
-          const copy = response.clone();
+        .then(async response => {
+          const finalResponse = await injectCommentsEnhancer(response);
+          const copy = finalResponse.clone();
           caches.open(CACHE).then(cache => cache.put('/', copy));
-          return response;
+          return finalResponse;
         })
         .catch(() => caches.match('/'))
     );
