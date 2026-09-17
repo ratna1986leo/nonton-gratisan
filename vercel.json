@@ -3,6 +3,8 @@
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/movie/:id/:slug", "destination": "/api/seo?type=movie&id=:id" },
+    { "source": "/tv/:id/:slug", "destination": "/api/seo?type=tv&id=:id" },
     { "source": "/movie/:path*", "destination": "/" },
     { "source": "/tv/:path*", "destination": "/" },
     { "source": "/collection/:path*", "destination": "/" },
@@ -17,7 +19,7 @@
         { "key": "X-Content-Type-Options", "value": "nosniff" },
         { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=()" }
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=(), payment=() }
       ]
     },
     {
