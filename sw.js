@@ -1,4 +1,4 @@
-const CACHE = 'nontongratisan-pwa-v1';
+const CACHE = 'nontongratisan-pwa-v2';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
@@ -9,8 +9,20 @@ const STATIC = [
   '/phase4-ux.js',
   '/new-features-carousel.js',
   '/mature-genre.js',
-  '/phase4-seo.js'
+  '/phase4-seo.js',
+  '/phase7-surprise.js'
 ];
+
+const FRESH_MODULES = new Set([
+  '/phase1-ux.js',
+  '/phase2-ux.js',
+  '/phase3-ux.js',
+  '/phase4-ux.js',
+  '/new-features-carousel.js',
+  '/mature-genre.js',
+  '/phase4-seo.js',
+  '/phase7-surprise.js'
+]);
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC).catch(() => {})));
@@ -40,6 +52,21 @@ self.addEventListener('fetch', event => {
           return response;
         })
         .catch(() => caches.match('/'))
+    );
+    return;
+  }
+
+  if (FRESH_MODULES.has(url.pathname)) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
