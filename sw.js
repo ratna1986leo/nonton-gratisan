@@ -1,4 +1,4 @@
-const CACHE = 'nontongratisan-pwa-v3';
+const CACHE = 'nontongratisan-pwa-v4';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
@@ -11,6 +11,7 @@ const STATIC = [
   '/mature-genre.js',
   '/phase4-seo.js',
   '/phase7-surprise.js',
+  '/smart-search.js',
   '/comments-enhancer.js'
 ];
 
@@ -23,6 +24,7 @@ const FRESH_MODULES = new Set([
   '/mature-genre.js',
   '/phase4-seo.js',
   '/phase7-surprise.js',
+  '/smart-search.js',
   '/comments-enhancer.js'
 ]);
 
