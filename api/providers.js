@@ -54,6 +54,19 @@ function sanitizeProvider(p) {
 }
 
 module.exports = async function(req, res) {
+  const expected=process.env.NOVA_ADMIN_KEY;
+  if(!expected || req.headers['x-nova-key']!==expected) return res.status(401).json({error:'Admin key salah atau belum diisi'});
+  if (req.method === 'POST') {
+    try {
+      const url=String(req.body?.url||'').trim();
+      if(!isSafeHttpUrl(url)) return res.status(400).json({error:'URL provider tidak valid'});
+      const started=Date.now();
+      const r=await fetch(url,{method:'HEAD',redirect:'follow',signal:AbortSignal.timeout(10000)});
+      return res.status(200).json({ok:true,status:r.status,reachable:r.ok,ms:Date.now()-started,finalUrl:r.url});
+    } catch(e) {
+      return res.status(200).json({ok:true,status:0,reachable:false,ms:null,error:e.message});
+    }
+  }
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   const providers = getProviders().map(sanitizeProvider).filter(p => p.url || p.movieTemplate || p.tvTemplate);
   res.setHeader('Cache-Control', 'no-store, max-age=0');
