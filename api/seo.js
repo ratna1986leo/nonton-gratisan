@@ -134,6 +134,33 @@ module.exports = async function handler(req, res) {
     html = html.replace(/<meta name="description"[^>]*>/i, head.match(/<meta name="description"[^>]*>/i)[0]);
     html = html.replace('</head>', `${head}</head>`);
 
+    // Internal links server-side: crawler dapat menemukan halaman film/TV lain
+    // walaupun JavaScript katalog belum dijalankan.
+    const relatedLinks = rows
+      .map(item => {
+        const rawTitle = titleOf(item);
+        if (!rawTitle) return null;
+        const itemType = isSeries(item) ? 'tv' : 'movie';
+        const link = item.link || item.player || item.url || '';
+        const itemId = stableMediaId(rawTitle, itemType, link);
+        if (itemType !== type || String(itemId) === id) return null;
+        const itemTitle = displayTitle(rawTitle);
+        return { itemId, itemType, itemTitle };
+      })
+      .filter(Boolean)
+      .slice(0, 12);
+
+    if (relatedLinks.length) {
+      const linksHtml = relatedLinks.map(item =>
+        '<li><a href="/' + item.itemType + '/' + encodeURIComponent(String(item.itemId)) + '/' + (slugify(item.itemTitle) || 'film') + '">' + esc(item.itemTitle) + '</a></li>'
+      ).join('');
+      const internalLinksSection =
+        '<section id="seo-internal-links" aria-label="Film lainnya" style="max-width:1100px;margin:2rem auto;padding:1rem 1.25rem;border:1px solid #27272a;border-radius:1rem;background:#121217">' +
+        '<h2 style="font-size:1.1rem;font-weight:700;margin:0 0 .75rem">Film lainnya</h2>' +
+        '<ul style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.5rem 1.25rem;margin:0;padding-left:1.25rem">' +
+        linksHtml + '</ul></section>';
+      html = html.replace('</body>', internalLinksSection + '</body>');
+    }
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
     return res.status(200).send(html);
