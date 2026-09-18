@@ -58,7 +58,7 @@ module.exports=async(req,res)=>{
   try{
     const action=String(req.method==='GET'?(req.query?.action||'list'):(req.body?.action||'list'));
     if(action==='list'){
-      const rows=await getRows();
+      await ensureSheet();const rows=await getRows();
       const out=rows.filter(active).map(({row,impressions,clicks,createdAt,...p})=>p);
       return res.status(200).json({ok:true,promotions:out});
     }
