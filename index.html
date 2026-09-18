@@ -1197,7 +1197,7 @@
         const PUSTAKA_SERVER_3 = "https://paceboook21.blogspot.com/p/live-hot-box-sizing-border-box-margin-0.html";
 
         const VIDEO_PROVIDERS = [
-            { name: 'Vidsrc', movie: (id) => `https://vidsrc.to/embed/movie/${id}`, tv: (id, season, episode) => `https://vidsrc.to/embed/tv/${id}/${season}/${episode}` },
+            { name: 'Vidsrc', movie: (id) => `https://vidsrc.sh/embed/movie/${id}`, tv: (id, season, episode) => `https://vidsrc.sh/embed/tv/${id}/${season}/${episode}` },
             { name: 'Server 2', movie: () => PUSTAKA_SERVER_2, tv: () => PUSTAKA_SERVER_2 },
             { name: 'Server 3', movie: () => PUSTAKA_SERVER_3, tv: () => PUSTAKA_SERVER_3 }
         ];
@@ -2436,7 +2436,7 @@
                 // Tambahkan domain milik sendiri atau provider yang memberi izin embed.
                 const allowedHosts = new Set([
                     'youtube.com', 'youtu.be', 'youtube-nocookie.com',
-                    'mxdrop.sx','vidsrc.to','vinovo.to','vidsrc.me'
+                    'mxdrop.sx','vidsrc.sh','vinovo.to','vidsrc.me'
                     // 'player.domain-resmi-kamu.com'
                 ]);
                 if (!allowedHosts.has(host)) {
