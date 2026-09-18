@@ -35,9 +35,9 @@ async function scanSeries(){const b=$('seriesScanBtn');b.disabled=true;b.textCon
 let allComments=[];
 function commentScore(x){
   const t=String(x.text||'').toLowerCase();
-  const linkCount=(t.match(/https?:\\/\\/|www\\./g)||[]).length;
+  const linkCount=(t.match(/https?:\/\/|www\./g)||[]).length;
   const bad=/(casino|judi|slot|viagra|crypto|porn|xxx|free money|klik link|whatsapp|telegram)/i.test(t);
-  const repeated=/(.)\\1{6,}/.test(t);
+  const repeated=/(.)\1{6,}/.test(t);
   let score=0;if(linkCount)score+=2;if(bad)score+=3;if(repeated)score+=2;if(t.length<3)score+=1;
   return {score,reason:[linkCount?'mengandung link':'',bad?'kata/promosi mencurigakan':'',repeated?'teks berulang':'',t.length<3?'terlalu pendek':''].filter(Boolean).join(', ')||'Tidak ada sinyal spam kuat'};
 }
