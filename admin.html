@@ -28,7 +28,7 @@
 <div><h2 class="font-bold">Audit & Saran Perbaikan</h2><p class="text-xs text-zinc-500 mt-1">Identifikasi masalah dan lihat tindakan yang disarankan. Belum ada perubahan data otomatis.</p></div>
 <button id="auditBtn" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-bold">Jalankan Audit</button></div>
 <div id="audit" class="hidden mt-4"></div></div>
-<div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-5">
+<div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-5 mb-5">
 <h2 class="font-bold text-lg">🛰️ Provider Manager</h2>
 <p class="text-xs text-zinc-500 mt-1">Pantau provider yang aktif dan uji koneksinya. Konfigurasi utama tetap dikendalikan dari registry environment.</p>
 <div id="providers" class="mt-4 space-y-3"><div class="text-sm text-zinc-500">Memuat provider...</div></div>
@@ -38,22 +38,41 @@
 <div><h2 class="font-bold">➕ Tambah Video dengan NOVA</h2><p class="text-xs text-zinc-500 mt-1">Ketik judul → NOVA mencari metadata → pilih sumber embed yang sudah Anda izinkan → simpan ke Google Sheet.</p></div>
 <div class="mt-4 flex flex-col sm:flex-row gap-2"><input id="videoTitle" class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3" placeholder="Contoh: The Wild Robot"><button id="findVideoBtn" class="px-4 py-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 font-bold">Cari Data</button></div>
 <div id="videoPreview" class="hidden mt-4"></div></div>
+
 <div class="card rounded-2xl overflow-hidden">
-<div class="p-4 border-b border-zinc-800"><h2 class="font-bold">Tanya NOVA</h2><p class="text-xs text-zinc-500 mt-1">Contoh: “Berapa film tanpa player?” atau “Cari film yang judulnya mengandung Batman.”</p></div>
+<div class="p-4 border-b border-zinc-800"><div class="flex items-start justify-between gap-3"><div><h2 class="font-bold">Tanya NOVA</h2><p class="text-xs text-zinc-500 mt-1">Contoh: “Berapa film tanpa player?” atau “Cari film yang judulnya mengandung Batman.”</p></div><div class="flex gap-2"><button id="voiceBtn" type="button" title="Mulai bicara" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-lg">🎙️</button><button id="speakBtn" type="button" title="Aktif/nonaktif suara NOVA" class="px-3 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-lg">🔊</button></div></div></div>
 <div id="messages" class="p-4 space-y-4 min-h-[280px] max-h-[55vh] overflow-auto"></div>
-<form id="chat" class="p-4 border-t border-zinc-800 flex gap-2"><input id="prompt" autocomplete="off" placeholder="Tulis perintah atau pertanyaan..." class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3"><button id="send" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">Kirim</button></form>
+<form id="chat" class="p-4 border-t border-zinc-800 flex gap-2"><input id="prompt" autocomplete="off" placeholder="Tulis perintah atau tekan 🎙️..." class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3"><button id="send" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">Kirim</button></form>
+<div id="voiceStatus" class="px-4 pb-4 text-xs text-zinc-500">Suara: aktif. 🎙️ Bicara untuk mengisi perintah, 🔊 untuk membaca jawaban NOVA.</div>
 </div><p id="status" class="text-xs text-zinc-500 mt-3"></p>
 </div></div>
 <script>
 const $=id=>document.getElementById(id);let key=sessionStorage.getItem('nova_admin_key')||'';
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const fmt=n=>Number(n||0).toLocaleString('id-ID');
 function setLoggedIn(v){$('login').classList.toggle('hidden',v);$('app').classList.toggle('hidden',!v)}
-function add(role,text){const d=document.createElement('div');d.className=role==='user'?'ml-auto max-w-[85%] rounded-2xl bg-blue-600/20 border border-blue-900/50 p-3':'max-w-[90%] rounded-2xl bg-zinc-900 border border-zinc-800 p-3';d.innerHTML='<div class="text-xs text-zinc-500 mb-1">'+(role==='user'?'Anda':'NOVA')+'</div><div class="whitespace-pre-wrap text-sm leading-6">'+esc(text)+'</div>';$('messages').appendChild(d);$('messages').scrollTop=$('messages').scrollHeight}
+let voiceEnabled=true, recognition=null, listening=false;
+function speak(text){
+ if(!voiceEnabled||!('speechSynthesis' in window))return;
+ window.speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(String(text||'').replace(/https?:\/\/\S+/g,''));
+ u.lang='id-ID';u.rate=.95;u.pitch=1;
+ const voices=window.speechSynthesis.getVoices();const id=voices.find(v=>/^id(-|_)/i.test(v.lang));if(id)u.voice=id;
+ window.speechSynthesis.speak(u);
+}
+function setupVoice(){
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SR){$('voiceBtn').disabled=true;$('voiceBtn').classList.add('opacity-40');$('voiceStatus').textContent='Suara masuk tidak didukung browser ini. Gunakan Chrome/Edge atau ketik manual.';return}
+ recognition=new SR();recognition.lang='id-ID';recognition.interimResults=true;recognition.continuous=false;
+ recognition.onstart=()=>{listening=true;$('voiceBtn').textContent='⏹️';$('voiceBtn').title='Hentikan rekaman';$('voiceStatus').textContent='Mendengarkan... silakan bicara dalam Bahasa Indonesia.'};
+ recognition.onresult=e=>{let finalText='';let interim='';for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;if(e.results[i].isFinal)finalText+=t;else interim+=t}$('prompt').value=(finalText||interim).trim()};
+ recognition.onend=()=>{listening=false;$('voiceBtn').textContent='🎙️';$('voiceBtn').title='Mulai bicara';if($('prompt').value.trim())$('voiceStatus').textContent='Perintah suara diterima. Mengirim ke NOVA...';else $('voiceStatus').textContent='Siap mendengarkan.';if($('prompt').value.trim())$('chat').requestSubmit()};
+ recognition.onerror=e=>{listening=false;$('voiceBtn').textContent='🎙️';$('voiceStatus').textContent='Voice error: '+e.error};
+}
+function add(role,text){const d=document.createElement('div');d.className=role==='user'?'ml-auto max-w-[85%] rounded-2xl bg-blue-600/20 border border-blue-900/50 p-3':'max-w-[90%] rounded-2xl bg-zinc-900 border border-zinc-800 p-3';d.innerHTML='<div class="text-xs text-zinc-500 mb-1">'+(role==='user'?'Anda':'NOVA')+'</div><div class="whitespace-pre-wrap text-sm leading-6">'+esc(text)+'</div>';$('messages').appendChild(d);$('messages').scrollTop=$('messages').scrollHeight;if(role==='assistant')speak(text)}
 async function api(body){const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify(body)});let j={};try{j=await r.json()}catch{}if(!r.ok)throw Error(j.error||'Permintaan gagal ('+r.status+')');return j}
 function setStats(j){$('total').textContent=fmt(j.total);$('films').textContent=fmt(j.films);$('series').textContent=fmt(j.series);$('noplayer').textContent=fmt(j.noPlayer)}
 function renderAudit(j){
- const m=j.missing||{},d=j.duplicates||[],s=j.suggestions||[];
- const rows=[['Judul kosong',m.title],['Poster kosong',m.poster],['Genre kosong',m.genre],['Tahun kosong',m.year],['Player tidak valid/kosong',m.player]];
+ const m=j.missing||{},d=j.duplicates||[],s=j.suggestions||[];const rows=[['Judul kosong',m.title],['Poster kosong',m.poster],['Genre kosong',m.genre],['Tahun kosong',m.year],['Player tidak valid/kosong',m.player]];
  const cards='<div class="grid grid-cols-2 md:grid-cols-5 gap-2">'+rows.map(x=>'<div class="rounded-xl bg-zinc-950 border border-zinc-800 p-3"><div class="text-xs text-zinc-500">'+esc(x[0])+'</div><div class="text-xl font-bold mt-1">'+fmt(x[1])+'</div></div>').join('')+'</div>';
  const sug='<div class="mt-4"><div class="text-sm font-bold mb-2">Saran tindakan</div><div class="space-y-2">'+s.map(x=>'<div class="rounded-xl bg-zinc-950 border border-zinc-800 p-3"><div class="flex items-center gap-2"><span class="text-xs rounded-full px-2 py-1 bg-zinc-800">'+esc(x.priority)+'</span><span class="text-sm font-bold">'+esc(x.issue)+'</span></div><div class="text-sm text-zinc-400 mt-2">'+esc(x.action)+'</div></div>').join('')+'</div></div>';
  const dup='<div class="mt-4"><div class="text-sm font-bold mb-2">Duplikat judul: '+fmt(j.duplicateGroups)+'</div>'+(d.length?'<div class="max-h-52 overflow-auto rounded-xl border border-zinc-800 divide-y divide-zinc-800">'+d.map(x=>'<div class="px-3 py-2 text-sm flex justify-between gap-3"><span>'+esc(x.title)+'</span><span class="text-zinc-500">muncul '+fmt(x.count)+'×</span></div>').join('')+'</div>':'<div class="text-sm text-zinc-500">Tidak ada duplikat judul yang terdeteksi.</div>')+'</div>';
@@ -63,19 +82,19 @@ function renderVideoPreview(j){const d=j.data||{},rs=j.embedResults||[];$('video
 async function findVideo(){const t=$('videoTitle').value.trim();if(!t)return;const b=$('findVideoBtn');b.disabled=true;b.textContent='Mencari...';$('videoPreview').classList.remove('hidden');$('videoPreview').innerHTML='<div class="text-sm text-zinc-400">NOVA sedang mencari metadata dan sumber embed...</div>';try{renderVideoPreview(await api({action:'prepare_video',title:t}))}catch(e){$('videoPreview').innerHTML='<div class="text-sm text-red-300">'+esc(e.message)+'</div>'}finally{b.disabled=false;b.textContent='Cari Data'}}
 
 async function loadProviders(){
- try{
-  const r=await fetch('/api/providers',{headers:{'x-nova-key':key},cache:'no-store'});
-  const j=await r.json(); if(!r.ok) throw Error(j.error||'Provider gagal dimuat');
-  $('providers').innerHTML=(j.providers||[]).map(p=>'<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><div class="flex items-center justify-between gap-3"><div><div class="font-bold">'+esc(p.name)+'</div><div class="text-xs text-zinc-500">'+esc(p.id)+'</div></div><button class="testProvider px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold" data-url="'+esc(p.url||p.movieTemplate||'')+'">Test</button></div><div class="text-xs text-zinc-500 mt-2 break-all">'+esc(p.movieTemplate||p.url||'')+'</div><div class="providerStatus text-xs mt-2 text-zinc-500">Belum diuji</div></div>').join('')||'<div class="text-sm text-zinc-500">Belum ada provider aktif.</div>';
-  document.querySelectorAll('.testProvider').forEach(b=>b.onclick=async()=>{const box=b.parentElement.parentElement;const s=box.querySelector('.providerStatus');b.disabled=true;s.textContent='Menguji...';try{const x=await fetch('/api/providers',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({url:b.dataset.url})}).then(r=>r.json());s.textContent=x.reachable?'✅ Terjangkau • HTTP '+x.status+' • '+x.ms+'ms':'❌ Tidak terjangkau'+(x.error?' • '+x.error:'')}catch(e){s.textContent='❌ '+e.message}finally{b.disabled=false}});
+ try{const r=await fetch('/api/providers',{headers:{'x-nova-key':key},cache:'no-store'});const j=await r.json();if(!r.ok)throw Error(j.error||'Provider gagal dimuat');
+ $('providers').innerHTML=(j.providers||[]).map(p=>'<div class="rounded-xl border border-zinc-800 bg-zinc-900/60 p-4"><div class="flex items-center justify-between gap-3"><div><div class="font-bold">'+esc(p.name)+'</div><div class="text-xs text-zinc-500">'+esc(p.id)+'</div></div><button class="testProvider px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-bold" data-url="'+esc(p.url||p.movieTemplate||'')+'">Test</button></div><div class="text-xs text-zinc-500 mt-2 break-all">'+esc(p.movieTemplate||p.url||'')+'</div><div class="providerStatus text-xs mt-2 text-zinc-500">Belum diuji</div></div>').join('')||'<div class="text-sm text-zinc-500">Belum ada provider aktif.</div>';
+ document.querySelectorAll('.testProvider').forEach(b=>b.onclick=async()=>{const box=b.parentElement.parentElement,s=box.querySelector('.providerStatus');b.disabled=true;s.textContent='Menguji...';try{const x=await fetch('/api/providers',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({url:b.dataset.url})}).then(r=>r.json());s.textContent=x.reachable?'✅ Terjangkau • HTTP '+x.status+' • '+x.ms+'ms':'❌ Tidak terjangkau'+(x.error?' • '+x.error:'')}catch(e){s.textContent='❌ '+e.message}finally{b.disabled=false}});
  }catch(e){$('providers').innerHTML='<div class="text-sm text-red-300">'+esc(e.message)+'</div>'}
 }
 async function load(){try{setStats(await api({action:'catalog_summary'}));$('status').textContent='Katalog tersambung • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}}
-
-async function runAudit(){ $('auditBtn').disabled=true;$('auditBtn').textContent='Mengaudit...';try{renderAudit(await api({action:'catalog_suggestions'}));$('status').textContent='Audit & saran selesai • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}finally{$('auditBtn').disabled=false;$('auditBtn').textContent='Jalankan Audit'}}
+async function runAudit(){$('auditBtn').disabled=true;$('auditBtn').textContent='Mengaudit...';try{renderAudit(await api({action:'catalog_suggestions'}));$('status').textContent='Audit & saran selesai • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}finally{$('auditBtn').disabled=false;$('auditBtn').textContent='Jalankan Audit'}}
 async function login(){key=$('key').value.trim();if(!key)return;$('loginErr').classList.add('hidden');try{await api({action:'ping'});sessionStorage.setItem('nova_admin_key',key);setLoggedIn(true);add('assistant','Halo! Saya NOVA. Saya siap membantu membaca dan menganalisis katalog.');load();loadProviders()}catch(e){$('loginErr').textContent=e.message;$('loginErr').classList.remove('hidden')}}
-$('loginBtn').onclick=login;$('findVideoBtn').onclick=findVideo;$('videoTitle').onkeydown=e=>{if(e.key==='Enter')findVideo()};$('key').onkeydown=e=>{if(e.key==='Enter')login()};$('clearKey').onclick=()=>{sessionStorage.removeItem('nova_admin_key');key='';setLoggedIn(false);$('key').value='';};$('auditBtn').onclick=runAudit;
-$('chat').onsubmit=async e=>{e.preventDefault();const p=$('prompt').value.trim();if(!p)return;$('prompt').value='';add('user',p);$('send').disabled=true;$('status').textContent='NOVA sedang memproses...';try{const j=await api({action:'chat',message:p});add('assistant',j.answer);if(j.stats)setStats(j.stats)}catch(e){add('assistant','Error: '+e.message)}finally{$('send').disabled=false;$('status').textContent=''}}
-if(key){$('key').value=key;setLoggedIn(true);load()}else setLoggedIn(false);
+$('loginBtn').onclick=login;$('findVideoBtn').onclick=findVideo;$('videoTitle').onkeydown=e=>{if(e.key==='Enter')findVideo()};$('key').onkeydown=e=>{if(e.key==='Enter')login()};$('clearKey').onclick=()=>{sessionStorage.removeItem('nova_admin_key');key='';setLoggedIn(false);$('key').value=''};$('auditBtn').onclick=runAudit;
+$('voiceBtn').onclick=()=>{if(!recognition)return;if(listening)recognition.stop();else{ $('prompt').value='';try{recognition.start()}catch(e){$('voiceStatus').textContent='Tidak dapat memulai mikrofon: '+e.message}}};
+$('speakBtn').onclick=()=>{voiceEnabled=!voiceEnabled;$('speakBtn').textContent=voiceEnabled?'🔊':'🔇';$('voiceStatus').textContent=voiceEnabled?'Suara NOVA aktif.':'Suara NOVA nonaktif.';if(!voiceEnabled&&'speechSynthesis'in window)window.speechSynthesis.cancel()};
+$('chat').onsubmit=async e=>{e.preventDefault();const p=$('prompt').value.trim();if(!p)return;$('prompt').value='';add('user',p);$('send').disabled=true;$('status').textContent='NOVA sedang memproses...';try{const j=await api({action:'chat',message:p});add('assistant',j.answer);if(j.stats)setStats(j.stats)}catch(e){add('assistant','Error: '+e.message)}finally{$('send').disabled=false;$('status').textContent=''}};
+setupVoice();if('speechSynthesis'in window)window.speechSynthesis.onvoiceschanged=()=>{};
+if(key){$('key').value=key;setLoggedIn(true);load();loadProviders()}else setLoggedIn(false);
 </script>
 </body></html>
