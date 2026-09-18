@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="id" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>NOVA Admin — NontonGratisan</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+body{background:#09090b;color:#f4f4f5;font-family:Inter,system-ui,sans-serif}
+.card{background:#121217;border:1px solid #27272a}
+</style>
+</head>
+<body>
+<div class="max-w-6xl mx-auto px-4 py-6">
+<header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+<div><p class="text-xs text-zinc-500">NontonGratisan</p><h1 class="text-3xl font-extrabold">🤖 NOVA Admin</h1><p class="text-sm text-zinc-400 mt-1">Asisten AI untuk membantu mengelola katalog dan memantau situs.</p></div>
+<div class="flex gap-2"><button id="clearKey" class="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm">Ganti Key</button><a href="/" class="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm">← Situs</a></div>
+</header>
+
+<div id="login" class="card rounded-2xl p-5 mb-5">
+<h2 class="font-bold text-lg mb-1">Akses Admin</h2>
+<p class="text-sm text-zinc-400 mb-4">Masukkan NOVA admin key. Key hanya disimpan selama sesi browser.</p>
+<div class="flex gap-2"><input id="key" type="password" autocomplete="off" placeholder="NOVA_ADMIN_KEY" class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3"><button id="loginBtn" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">Masuk</button></div>
+<div id="loginErr" class="hidden mt-3 text-sm text-red-300"></div>
+</div>
+
+<div id="app" class="hidden">
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+<div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Total</div><div id="total" class="text-2xl font-extrabold mt-1">—</div></div>
+<div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Film</div><div id="films" class="text-2xl font-extrabold mt-1">—</div></div>
+<div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Series</div><div id="series" class="text-2xl font-extrabold mt-1">—</div></div>
+<div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Tanpa Player</div><div id="noplayer" class="text-2xl font-extrabold mt-1">—</div></div>
+</div>
+
+<div class="card rounded-2xl overflow-hidden">
+<div class="p-4 border-b border-zinc-800"><h2 class="font-bold">Tanya NOVA</h2><p class="text-xs text-zinc-500 mt-1">Contoh: “Berapa film tanpa player?” atau “Cari film yang judulnya mengandung Batman.”</p></div>
+<div id="messages" class="p-4 space-y-4 min-h-[280px] max-h-[55vh] overflow-auto"></div>
+<form id="chat" class="p-4 border-t border-zinc-800 flex gap-2">
+<input id="prompt" autocomplete="off" placeholder="Tulis perintah atau pertanyaan..." class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3">
+<button id="send" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">Kirim</button>
+</form>
+</div>
+<p id="status" class="text-xs text-zinc-500 mt-3"></p>
+</div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+let key=sessionStorage.getItem('nova_admin_key')||'';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function setLoggedIn(v){$('login').classList.toggle('hidden',v);$('app').classList.toggle('hidden',!v)}
+function add(role,text){const d=document.createElement('div');d.className=role==='user'?'ml-auto max-w-[85%] rounded-2xl bg-blue-600/20 border border-blue-900/50 p-3':'max-w-[90%] rounded-2xl bg-zinc-900 border border-zinc-800 p-3';d.innerHTML='<div class="text-xs text-zinc-500 mb-1">'+(role==='user'?'Anda':'NOVA')+'</div><div class="whitespace-pre-wrap text-sm leading-6">'+esc(text)+'</div>';$('messages').appendChild(d);$('messages').scrollTop=$('messages').scrollHeight}
+async function api(body){const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify(body)});let j={};try{j=await r.json()}catch{}if(!r.ok)throw Error(j.error||'Permintaan gagal ('+r.status+')');return j}
+async function load(){try{const j=await api({action:'catalog_summary'});$('total').textContent=j.total.toLocaleString('id-ID');$('films').textContent=j.films.toLocaleString('id-ID');$('series').textContent=j.series.toLocaleString('id-ID');$('noplayer').textContent=j.noPlayer.toLocaleString('id-ID');$('status').textContent='Katalog tersambung • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}}
+async function login(){key=$('key').value.trim();if(!key)return;$('loginErr').classList.add('hidden');try{await api({action:'ping'});sessionStorage.setItem('nova_admin_key',key);setLoggedIn(true);add('assistant','Halo! Saya NOVA. Saya siap membantu membaca dan menganalisis katalog.');load()}catch(e){$('loginErr').textContent=e.message;$('loginErr').classList.remove('hidden');}}
+$('loginBtn').onclick=login;$('key').onkeydown=e=>{if(e.key==='Enter')login()};$('clearKey').onclick=()=>{sessionStorage.removeItem('nova_admin_key');key='';setLoggedIn(false);$('key').value='';};
+$('chat').onsubmit=async e=>{e.preventDefault();const p=$('prompt').value.trim();if(!p)return;$('prompt').value='';add('user',p);$('send').disabled=true;$('status').textContent='NOVA sedang memproses...';try{const j=await api({action:'chat',message:p});add('assistant',j.answer);if(j.stats){$('total').textContent=j.stats.total.toLocaleString('id-ID');$('films').textContent=j.stats.films.toLocaleString('id-ID');$('series').textContent=j.stats.series.toLocaleString('id-ID');$('noplayer').textContent=j.stats.noPlayer.toLocaleString('id-ID')}}catch(e){add('assistant','Error: '+e.message)}finally{$('send').disabled=false;$('status').textContent=''}}
+if(key){$('key').value=key;setLoggedIn(true);load()}else setLoggedIn(false)
+</script>
+</body>
+</html>
