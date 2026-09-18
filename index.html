@@ -1196,11 +1196,29 @@
         const PUSTAKA_SERVER_2 = "https://paceboook21.blogspot.com/p/video-preview-body-margin-0-padding-0_0619822090.html";
         const PUSTAKA_SERVER_3 = "https://paceboook21.blogspot.com/p/live-hot-box-sizing-border-box-margin-0.html";
 
-        const VIDEO_PROVIDERS = [
+        const DEFAULT_VIDEO_PROVIDERS = [
             { name: 'Vidsrc', movie: (id) => `https://vidsrc.sh/embed/movie/${id}`, tv: (id, season, episode) => `https://vidsrc.sh/embed/tv/${id}/${season}/${episode}` },
             { name: 'Server 2', movie: () => PUSTAKA_SERVER_2, tv: () => PUSTAKA_SERVER_2 },
             { name: 'Server 3', movie: () => PUSTAKA_SERVER_3, tv: () => PUSTAKA_SERVER_3 }
         ];
+        let VIDEO_PROVIDERS = DEFAULT_VIDEO_PROVIDERS;
+        async function loadDynamicProviders() {
+            try {
+                const res = await fetch('/api/providers', { cache: 'no-store' });
+                if (!res.ok) throw new Error('Provider registry unavailable');
+                const data = await res.json();
+                if (Array.isArray(data.providers) && data.providers.length) {
+                    const dynamic = data.providers.map(p => ({
+                        name: p.name,
+                        movie: p.movieTemplate ? (id => p.movieTemplate.replaceAll('{id}', encodeURIComponent(String(id)))) : (() => p.url || '#'),
+                        tv: p.tvTemplate ? ((id, season, episode) => p.tvTemplate.replaceAll('{id}', encodeURIComponent(String(id))).replaceAll('{season}', encodeURIComponent(String(season))).replaceAll('{episode}', encodeURIComponent(String(episode)))) : (() => p.url || '#')
+                    }));
+                    if (dynamic.length) VIDEO_PROVIDERS = dynamic;
+                }
+            } catch (e) {
+                console.warn('Provider registry gagal, menggunakan provider bawaan:', e);
+            }
+        }
 
         const FALLBACK_MOVIES = [
             { id: 939243, title: "Avatar: Fire and Ash", type: "movie", rating: "8.9", year: "2026", genre: "Sci-Fi, Adventure", overview: "Lanjutan epik petualangan di Pandora dengan visual memukau dan pertempuran klan baru.", poster_path: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg" },
@@ -2436,7 +2454,7 @@
                 // Tambahkan domain milik sendiri atau provider yang memberi izin embed.
                 const allowedHosts = new Set([
                     'youtube.com', 'youtu.be', 'youtube-nocookie.com',
-                    'mxdrop.sx','vidsrc.sh','vinovo.to','vidsrc.me'
+                    'mxdrop.sx','vidsrc.sh','vidsrc.to','vinovo.to','vidsrc.me'
                     // 'player.domain-resmi-kamu.com'
                 ]);
                 if (!allowedHosts.has(host)) {
@@ -3299,6 +3317,7 @@
             if (cachedThriller) cachedState.thrillerData = cachedThriller;
             if (Object.keys(cachedState).length > 0) store.setState(cachedState);
 
+            await loadDynamicProviders();
             setupHeroCarousel();
             renderAllSections();
 
