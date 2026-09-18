@@ -685,7 +685,9 @@
             .poster-card:hover { transform: none; }
             .poster-card:active { transform: scale(.975) !important; }
         }
-    </style>
+    
+.promo-card{display:flex;align-items:center;gap:1rem;min-height:110px;padding:1rem;border:1px solid #27272a;border-radius:1rem;background:linear-gradient(135deg,#111827,#09090b);overflow:hidden}.promo-card img{width:150px;height:84px;object-fit:cover;border-radius:.7rem}.promo-card .promo-copy{min-width:0;flex:1}.promo-card .promo-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#71717a;font-weight:800}.promo-card h3{font-weight:800;font-size:1rem;margin:.2rem 0}.promo-card p{font-size:.78rem;color:#a1a1aa;line-height:1.45}.promo-card a{display:inline-flex;margin-top:.55rem;padding:.5rem .8rem;border-radius:.6rem;background:#2563eb;color:#fff;font-size:.75rem;font-weight:800}@media(max-width:640px){.promo-card img{width:105px;height:70px}.promo-card{min-height:90px;padding:.7rem;gap:.7rem}}
+</style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-16 lg:pb-0">
 
@@ -880,6 +882,7 @@
             <span class="separator">›</span>
             <span id="breadcrumb-current">Semua Film</span>
         </nav>
+<div id="promo-slot" class="hidden" aria-label="Promosi"></div>
 
         <article id="hero-section" class="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 min-h-[280px] sm:min-h-[420px] lg:min-h-[460px] border border-zinc-800/80 shadow-2xl flex items-end">
             <div id="hero-backdrop" class="absolute inset-0 bg-cover bg-center transition-all duration-700 filter brightness-90" style="background-image: url('https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg')"></div>
@@ -973,7 +976,7 @@
             <div id="watchlist-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"></div>
         </section>
 
-        <section id="detail-section" class="hidden space-y-4 sm:space-y-6 fade-in">
+        <section id="detail-section" class="hidden space-y-4 sm:space-y-6 fade-in"><div id="detail-promo-slot" class="hidden" aria-label="Promosi detail"></div>
             <div class="flex items-center justify-between gap-2 flex-wrap">
                 <button onclick="closeDetailPage()" class="focusable flex items-center gap-2 text-sm sm:text-base text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 transition-all touch-target">
                     <span>←</span> Kembali
@@ -1189,18 +1192,39 @@
     </div>
 
     <script>
+function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}function escAttr(s){return escHtml(s).replace(/'/g,'&#39;')}
+async function loadPromotions(placement='home'){try{const r=await fetch('/api/promotions?placement='+encodeURIComponent(placement),{cache:'no-store'}),j=await r.json();if(!r.ok)return;const ps=j.promotions||[];const slot=document.getElementById(placement==='detail'?'detail-promo-slot':'promo-slot');if(!slot)return;if(!ps.length){slot.innerHTML='';slot.classList.add('hidden');return}slot.innerHTML=ps.map(p=>'<div class="promo-card"><img src="'+escAttr(p.image||'https://placehold.co/300x170/18181b/2563eb?text=Promo')+'" alt="'+escAttr(p.title)+'" loading="lazy"><div class="promo-copy"><div class="promo-label">Promosi / Sponsored</div><h3>'+escHtml(p.title)+'</h3><p>'+escHtml(p.description||'')+'</p><a href="'+escAttr(p.link||'#')+'" target="_blank" rel="sponsored noopener" data-promo-id="'+escAttr(p.id)+'">Lihat Promosi</a></div></div>').join('');slot.classList.remove('hidden');ps.forEach(p=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:p.id,type:'impression'})}).catch(()=>{}));slot.querySelectorAll('a[data-promo-id]').forEach(a=>a.addEventListener('click',()=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:a.dataset.promoId,type:'click'})}).catch(()=>{}))}catch(e){console.warn('Promosi gagal dimuat',e)}}
+
         // ================= KONSTANTA & STATE =================
         const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
         
-        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv";
+        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA/gviz/tq?tqx=out:csv&gid=0";
         const PUSTAKA_SERVER_2 = "https://paceboook21.blogspot.com/p/video-preview-body-margin-0-padding-0_0619822090.html";
         const PUSTAKA_SERVER_3 = "https://paceboook21.blogspot.com/p/live-hot-box-sizing-border-box-margin-0.html";
 
-        const VIDEO_PROVIDERS = [
-            { name: 'Vidsrc', movie: (id) => `https://vidsrc.to/embed/movie/${id}`, tv: (id, season, episode) => `https://vidsrc.to/embed/tv/${id}/${season}/${episode}` },
+        const DEFAULT_VIDEO_PROVIDERS = [
+            { name: 'Vidsrc', movie: (id) => `https://vidsrc.sh/embed/movie/${id}`, tv: (id, season, episode) => `https://vidsrc.sh/embed/tv/${id}/${season}/${episode}` },
             { name: 'Server 2', movie: () => PUSTAKA_SERVER_2, tv: () => PUSTAKA_SERVER_2 },
             { name: 'Server 3', movie: () => PUSTAKA_SERVER_3, tv: () => PUSTAKA_SERVER_3 }
         ];
+        let VIDEO_PROVIDERS = DEFAULT_VIDEO_PROVIDERS;
+        async function loadDynamicProviders() {
+            try {
+                const res = await fetch('/api/providers', { cache: 'no-store' });
+                if (!res.ok) throw new Error('Provider registry unavailable');
+                const data = await res.json();
+                if (Array.isArray(data.providers) && data.providers.length) {
+                    const dynamic = data.providers.map(p => ({
+                        name: p.name,
+                        movie: p.movieTemplate ? (id => p.movieTemplate.replaceAll('{id}', encodeURIComponent(String(id)))) : (() => p.url || '#'),
+                        tv: p.tvTemplate ? ((id, season, episode) => p.tvTemplate.replaceAll('{id}', encodeURIComponent(String(id))).replaceAll('{season}', encodeURIComponent(String(season))).replaceAll('{episode}', encodeURIComponent(String(episode)))) : (() => p.url || '#')
+                    }));
+                    if (dynamic.length) VIDEO_PROVIDERS = dynamic;
+                }
+            } catch (e) {
+                console.warn('Provider registry gagal, menggunakan provider bawaan:', e);
+            }
+        }
 
         const FALLBACK_MOVIES = [
             { id: 939243, title: "Avatar: Fire and Ash", type: "movie", rating: "8.9", year: "2026", genre: "Sci-Fi, Adventure", overview: "Lanjutan epik petualangan di Pandora dengan visual memukau dan pertempuran klan baru.", poster_path: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg" },
@@ -2384,6 +2408,7 @@
             }
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
             document.getElementById('detail-section').classList.remove('hidden');
+            loadPromotions('detail');
             setupVideoSource(item);
             if (!item.isLibraryItem) {
                 try {
@@ -2436,7 +2461,7 @@
                 // Tambahkan domain milik sendiri atau provider yang memberi izin embed.
                 const allowedHosts = new Set([
                     'youtube.com', 'youtu.be', 'youtube-nocookie.com',
-                    'mxdrop.sx','vidsrc.to','vinovo.to','vidsrc.me'
+                    'mxdrop.sx','vidsrc.sh','vidsrc.to','vinovo.to','vidsrc.me'
                     // 'player.domain-resmi-kamu.com'
                 ]);
                 if (!allowedHosts.has(host)) {
@@ -2587,6 +2612,7 @@
                 showToast('Fullscreen ditolak browser', '⚠️');
             }
             updateFullscreenButton();
+            loadPromotions();
         }
 
         function updateFullscreenButton() {
@@ -3299,6 +3325,7 @@
             if (cachedThriller) cachedState.thrillerData = cachedThriller;
             if (Object.keys(cachedState).length > 0) store.setState(cachedState);
 
+            await loadDynamicProviders();
             setupHeroCarousel();
             renderAllSections();
 
