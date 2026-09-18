@@ -34,6 +34,17 @@ function audit(items){
   }
   return{...stats(items),missing,duplicates:duplicates.slice(0,30),duplicateGroups:duplicates.length};
 }
+function suggestions(items){
+  const a=audit(items),s=[];
+  if(a.missing.title)s.push({priority:'tinggi',issue:'Judul kosong',count:a.missing.title,action:'Lengkapi judul dari sumber katalog yang sah sebelum dipublikasikan.'});
+  if(a.missing.poster)s.push({priority:'sedang',issue:'Poster kosong',count:a.missing.poster,action:'Lengkapi poster menggunakan aset yang penggunaannya berizin.'});
+  if(a.missing.genre)s.push({priority:'sedang',issue:'Genre kosong',count:a.missing.genre,action:'Lengkapi genre berdasarkan metadata dari sumber yang sah.'});
+  if(a.missing.year)s.push({priority:'sedang',issue:'Tahun kosong',count:a.missing.year,action:'Lengkapi tahun rilis berdasarkan sumber metadata yang sah.'});
+  if(a.missing.player)s.push({priority:'tinggi',issue:'Player/link kosong atau tidak valid',count:a.missing.player,action:'Periksa dan ganti hanya dengan URL sumber/player yang berizin.'});
+  if(a.duplicateGroups)s.push({priority:'sedang',issue:'Judul duplikat',count:a.duplicateGroups,action:'Tinjau grup duplikat dan gabungkan/hapus hanya setelah konfirmasi admin.'});
+  if(!s.length)s.push({priority:'info',issue:'Tidak ada masalah dasar terdeteksi',count:0,action:'Katalog lolos pemeriksaan dasar; tetap lakukan pengecekan berkala.'});
+  return{...a,suggestions:s};
+}
 async function catalog(){
   const r=await fetch(CSV_URL,{cache:'no-store'});if(!r.ok)throw new Error('Katalog tidak bisa diakses: HTTP '+r.status);
   const text=await r.text();const items=parseCSV(text);if(!items.length)throw new Error('Katalog kosong atau format CSV tidak valid');return items;
@@ -61,6 +72,7 @@ module.exports=async function(req,res){
     if(action==='ping')return res.status(200).json({ok:true});
     if(action==='catalog_summary')return res.status(200).json(stats(items));
     if(action==='catalog_audit')return res.status(200).json(audit(items));
+    if(action==='catalog_suggestions')return res.status(200).json(suggestions(items));
     if(action==='chat'){
       const message=String(req.body?.message||'').trim();if(!message)return res.status(400).json({error:'Pesan kosong'});
       return res.status(200).json(await askAI(message,items));
