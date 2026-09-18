@@ -1,6 +1,6 @@
 const crypto=require('crypto');
 
-const DEFAULT_HEADERS=['ID','Status','Title','Description','Image','Link','Placement','Start','End','Impressions','Clicks','Created At'];
+const DEFAULT_HEADERS=['ID','Status','Title','Description','Image','Link','Placement','Start','End','Impressions','Clicks','Created At','Model','Rate','Currency'];
 
 function auth(req){
   const expected=process.env.NOVA_ADMIN_KEY;
@@ -37,7 +37,7 @@ async function getRows(){
   return rows.slice(1).map((r,i)=>mapRow(r,i+2)).filter(x=>x.id);
 }
 function mapRow(r,row){
-  return {id:String(r[0]||''),status:String(r[1]||'draft'),title:String(r[2]||''),description:String(r[3]||''),image:String(r[4]||''),link:String(r[5]||''),placement:String(r[6]||'home'),start:String(r[7]||''),end:String(r[8]||''),impressions:Number(r[9]||0),clicks:Number(r[10]||0),createdAt:String(r[11]||''),row};
+  return {id:String(r[0]||''),status:String(r[1]||'draft'),title:String(r[2]||''),description:String(r[3]||''),image:String(r[4]||''),link:String(r[5]||''),placement:String(r[6]||'home'),start:String(r[7]||''),end:String(r[8]||''),impressions:Number(r[9]||0),clicks:Number(r[10]||0),createdAt:String(r[11]||''),model:String(r[12]||'cpc'),rate:Number(r[13]||0),currency:String(r[14]||'IDR'),row};
 }
 function active(p){
   const now=Date.now(),s=p.start?Date.parse(p.start):NaN,e=p.end?Date.parse(p.end):NaN;
@@ -48,10 +48,10 @@ async function ensureSheet(){
   const exists=(meta.sheets||[]).some(s=>s.properties?.title==='Promotions');
   if(exists)return;
   await sheets(':batchUpdate',{method:'POST',body:JSON.stringify({requests:[{addSheet:{properties:{title:'Promotions'}}}]})});
-  await sheets('/values/Promotions!A1:L1',{method:'PUT',body:JSON.stringify({range:'Promotions!A1:L1',majorDimension:'ROWS',values:[DEFAULT_HEADERS]})});
+  await sheets('/values/Promotions!A1:O1',{method:'PUT',body:JSON.stringify({range:'Promotions!A1:L1',majorDimension:'ROWS',values:[DEFAULT_HEADERS]})});
 }
 async function writeRow(row,values){
-  return sheets('/values/Promotions!A'+row+':L'+row,{method:'PUT',body:JSON.stringify({range:'Promotions!A'+row+':L'+row,majorDimension:'ROWS',values:[values]})});
+  return sheets('/values/Promotions!A'+row+':O'+row,{method:'PUT',body:JSON.stringify({range:'Promotions!A'+row+':L'+row,majorDimension:'ROWS',values:[values]})});
 }
 function clean(v,n=500){return String(v??'').trim().slice(0,n)}
 module.exports=async(req,res)=>{
@@ -66,18 +66,18 @@ module.exports=async(req,res)=>{
     if(action==='admin_list')return res.status(200).json({ok:true,promotions:rows});
     if(action==='save'){
       const b=req.body||{},id=clean(b.id,80)||crypto.randomUUID(),old=rows.find(x=>x.id===id);
-      const values=[id,clean(b.status,20)||'draft',clean(b.title,120),clean(b.description,500),clean(b.image,1000),clean(b.link,1000),clean(b.placement,30)||'home',clean(b.start,40),clean(b.end,40),old?.impressions||0,old?.clicks||0,old?.createdAt||new Date().toISOString()];
+      const values=[id,clean(b.status,20)||'draft',clean(b.title,120),clean(b.description,500),clean(b.image,1000),clean(b.link,1000),clean(b.placement,30)||'home',clean(b.start,40),clean(b.end,40),old?.impressions||0,old?.clicks||0,old?.createdAt||new Date().toISOString(),clean(b.model,20)||'cpc',Number(b.rate)||0,clean(b.currency,8)||'IDR'];
       const row=old?.row||Math.max(2,rows.length+2);await writeRow(row,values);return res.status(200).json({ok:true,promotion:mapRow(values,row)});
     }
     if(action==='delete'){
       const id=clean(req.body?.id,80),p=rows.find(x=>x.id===id);if(!p)throw new Error('Promosi tidak ditemukan');
-      await sheets('/values/Promotions!A'+p.row+':L'+p.row,{method:'PUT',body:JSON.stringify({range:'Promotions!A'+p.row+':L'+p.row,majorDimension:'ROWS',values:[['','','','','','','','','','','','']]})});
+      await sheets('/values/Promotions!A'+p.row+':O'+p.row,{method:'PUT',body:JSON.stringify({range:'Promotions!A'+p.row+':L'+p.row,majorDimension:'ROWS',values:[['','','','','','','','','','','','','','','']]})});
       return res.status(200).json({ok:true});
     }
     if(action==='track'){
       const id=clean(req.body?.id,80),type=req.body?.type==='click'?'click':'impression',p=rows.find(x=>x.id===id);
       if(!p)return res.status(404).json({ok:false,error:'Promosi tidak ditemukan'});
-      const values=[p.id,p.status,p.title,p.description,p.image,p.link,p.placement,p.start,p.end,(p.impressions||0)+(type==='impression'?1:0),(p.clicks||0)+(type==='click'?1:0),p.createdAt];
+      const values=[p.id,p.status,p.title,p.description,p.image,p.link,p.placement,p.start,p.end,(p.impressions||0)+(type==='impression'?1:0),(p.clicks||0)+(type==='click'?1:0),p.createdAt,p.model,p.rate,p.currency];
       await writeRow(p.row,values);return res.status(200).json({ok:true});
     }
     throw new Error('Action tidak dikenali');
