@@ -1191,9 +1191,7 @@
 
     <script>
 function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}function escAttr(s){return escHtml(s).replace(/'/g,'&#39;')}
-async function loadPromotions(placement='home'){try{const r=await fetch('/api/promotions?placement='+encodeURIComponent(placement),{cache:'no-store'}),j=await r.json();if(!r.ok)return;const ps=j.promotions||[];const slot=document.getElementById(placement==='detail'?'detail-promo-slot':'promo-slot');if(!slot)return;if(!ps.length){slot.innerHTML='';slot.classList.add('hidden');return}slot.innerHTML=ps.map(p=>'<div class="promo-card"><img src="'+escAttr(p.image||'https://placehold.co/300x170/18181b/2563eb?text=Promo')+'" alt="'+escAttr(p.title)+'" loading="lazy"><div class="promo-copy"><div class="promo-label">Promosi / Sponsored</div><h3>'+escHtml(p.title)+'</h3><p>'+escHtml(p.description||'')+'</p><a href="'+escAttr(p.link||'#')+'" target="_blank" rel="sponsored noopener" data-promo-id="'+escAttr(p.id)+'">Lihat Promosi</a></div></div>').join('');slot.classList.remove('hidden');ps.forEach(p=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:p.id,type:'impression'})}).catch(()=>{}));slot.querySelectorAll('a[data-promo-id]').forEach(a=>a.addEventListener('click',()=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:a.dataset.promoId,type:'click'})}).catch(()=>{}))}catch(e){console.warn('Promosi gagal dimuat',e)}}
-
-        // ================= KONSTANTA & STATE =================
+// ================= KONSTANTA & STATE =================
         const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
         
         const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA/gviz/tq?tqx=out:csv&gid=0";
