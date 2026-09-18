@@ -1,15 +1,10 @@
 <!doctype html>
 <html lang="id" class="dark">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<title>NOVA Admin — NontonGratisan</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive"><title>NOVA Admin — NontonGratisan</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<style>
-body{background:#09090b;color:#f4f4f5;font-family:Inter,system-ui,sans-serif}
-.card{background:#121217;border:1px solid #27272a}
-</style>
+<style>body{background:#09090b;color:#f4f4f5;font-family:Inter,system-ui,sans-serif}.card{background:#121217;border:1px solid #27272a}</style>
 </head>
 <body>
 <div class="max-w-6xl mx-auto px-4 py-6">
@@ -17,65 +12,49 @@ body{background:#09090b;color:#f4f4f5;font-family:Inter,system-ui,sans-serif}
 <div><p class="text-xs text-zinc-500">NontonGratisan</p><h1 class="text-3xl font-extrabold">🤖 NOVA Admin</h1><p class="text-sm text-zinc-400 mt-1">Asisten AI untuk membantu mengelola katalog dan memantau situs.</p></div>
 <div class="flex gap-2"><button id="clearKey" class="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm">Ganti Key</button><a href="/" class="px-3 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-sm">← Situs</a></div>
 </header>
-
 <div id="login" class="card rounded-2xl p-5 mb-5">
-<h2 class="font-bold text-lg mb-1">Akses Admin</h2>
-<p class="text-sm text-zinc-400 mb-4">Masukkan NOVA admin key. Key hanya disimpan selama sesi browser.</p>
+<h2 class="font-bold text-lg mb-1">Akses Admin</h2><p class="text-sm text-zinc-400 mb-4">Masukkan NOVA admin key. Key hanya disimpan selama sesi browser.</p>
 <div class="flex gap-2"><input id="key" type="password" autocomplete="off" placeholder="NOVA_ADMIN_KEY" class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3"><button id="loginBtn" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">Masuk</button></div>
-<div id="loginErr" class="hidden mt-3 text-sm text-red-300"></div>
-</div>
-
+<div id="loginErr" class="hidden mt-3 text-sm text-red-300"></div></div>
 <div id="app" class="hidden">
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
 <div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Total</div><div id="total" class="text-2xl font-extrabold mt-1">—</div></div>
 <div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Film</div><div id="films" class="text-2xl font-extrabold mt-1">—</div></div>
 <div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Series</div><div id="series" class="text-2xl font-extrabold mt-1">—</div></div>
-<div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Tanpa Player</div><div id="noplayer" class="text-2xl font-extrabold mt-1">—</div></div>
-</div>
+<div class="card rounded-2xl p-4"><div class="text-xs text-zinc-500">Tanpa Player</div><div id="noplayer" class="text-2xl font-extrabold mt-1">—</div></div></div>
 
 <div class="card rounded-2xl p-4 mb-5">
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-<div><h2 class="font-bold">Audit Katalog</h2><p class="text-xs text-zinc-500 mt-1">Cek data kosong dan judul duplikat sebelum melakukan perubahan.</p></div>
-<button id="auditBtn" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-bold">Jalankan Audit</button>
-</div>
-<div id="audit" class="hidden mt-4"></div>
-</div>
+<div><h2 class="font-bold">Audit & Saran Perbaikan</h2><p class="text-xs text-zinc-500 mt-1">Identifikasi masalah dan lihat tindakan yang disarankan. Belum ada perubahan data otomatis.</p></div>
+<button id="auditBtn" class="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-sm font-bold">Jalankan Audit</button></div>
+<div id="audit" class="hidden mt-4"></div></div>
 
 <div class="card rounded-2xl overflow-hidden">
 <div class="p-4 border-b border-zinc-800"><h2 class="font-bold">Tanya NOVA</h2><p class="text-xs text-zinc-500 mt-1">Contoh: “Berapa film tanpa player?” atau “Cari film yang judulnya mengandung Batman.”</p></div>
 <div id="messages" class="p-4 space-y-4 min-h-[280px] max-h-[55vh] overflow-auto"></div>
-<form id="chat" class="p-4 border-t border-zinc-800 flex gap-2">
-<input id="prompt" autocomplete="off" placeholder="Tulis perintah atau pertanyaan..." class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3">
-<button id="send" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">Kirim</button>
-</form>
-</div>
-<p id="status" class="text-xs text-zinc-500 mt-3"></p>
-</div>
-</div>
-
+<form id="chat" class="p-4 border-t border-zinc-800 flex gap-2"><input id="prompt" autocomplete="off" placeholder="Tulis perintah atau pertanyaan..." class="flex-1 rounded-xl bg-zinc-950 border border-zinc-800 px-4 py-3"><button id="send" class="px-5 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 font-bold">Kirim</button></form>
+</div><p id="status" class="text-xs text-zinc-500 mt-3"></p>
+</div></div>
 <script>
-const $=id=>document.getElementById(id);
-let key=sessionStorage.getItem('nova_admin_key')||'';
-const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $=id=>document.getElementById(id);let key=sessionStorage.getItem('nova_admin_key')||'';
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));const fmt=n=>Number(n||0).toLocaleString('id-ID');
 function setLoggedIn(v){$('login').classList.toggle('hidden',v);$('app').classList.toggle('hidden',!v)}
 function add(role,text){const d=document.createElement('div');d.className=role==='user'?'ml-auto max-w-[85%] rounded-2xl bg-blue-600/20 border border-blue-900/50 p-3':'max-w-[90%] rounded-2xl bg-zinc-900 border border-zinc-800 p-3';d.innerHTML='<div class="text-xs text-zinc-500 mb-1">'+(role==='user'?'Anda':'NOVA')+'</div><div class="whitespace-pre-wrap text-sm leading-6">'+esc(text)+'</div>';$('messages').appendChild(d);$('messages').scrollTop=$('messages').scrollHeight}
 async function api(body){const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify(body)});let j={};try{j=await r.json()}catch{}if(!r.ok)throw Error(j.error||'Permintaan gagal ('+r.status+')');return j}
-function fmt(n){return Number(n||0).toLocaleString('id-ID')}
+function setStats(j){$('total').textContent=fmt(j.total);$('films').textContent=fmt(j.films);$('series').textContent=fmt(j.series);$('noplayer').textContent=fmt(j.noPlayer)}
 function renderAudit(j){
-  const m=j.missing||{}, d=j.duplicates||[];
-  const rows=[['Judul kosong',m.title],['Poster kosong',m.poster],['Genre kosong',m.genre],['Tahun kosong',m.year],['Player tidak valid/kosong',m.player]];
-  $('audit').innerHTML='<div class="grid grid-cols-2 md:grid-cols-5 gap-2">'+rows.map(x=>'<div class="rounded-xl bg-zinc-950 border border-zinc-800 p-3"><div class="text-xs text-zinc-500">'+esc(x[0])+'</div><div class="text-xl font-bold mt-1">'+fmt(x[1])+'</div></div>').join('')+'</div>'+
-    '<div class="mt-4"><div class="text-sm font-bold mb-2">Duplikat judul: '+fmt(j.duplicateGroups)+'</div>'+
-    (d.length?'<div class="max-h-52 overflow-auto rounded-xl border border-zinc-800 divide-y divide-zinc-800">'+d.map(x=>'<div class="px-3 py-2 text-sm flex justify-between gap-3"><span>'+esc(x.title)+'</span><span class="text-zinc-500">muncul '+fmt(x.count)+'×</span></div>').join('')+'</div>':'<div class="text-sm text-zinc-500">Tidak ada duplikat judul yang terdeteksi.</div>')+
-    '<div class="text-xs text-zinc-500 mt-3">Audit bersifat baca-saja. Tidak ada data Google Sheet yang diubah.</div></div>';
-  $('audit').classList.remove('hidden');
+ const m=j.missing||{},d=j.duplicates||[],s=j.suggestions||[];
+ const rows=[['Judul kosong',m.title],['Poster kosong',m.poster],['Genre kosong',m.genre],['Tahun kosong',m.year],['Player tidak valid/kosong',m.player]];
+ const cards='<div class="grid grid-cols-2 md:grid-cols-5 gap-2">'+rows.map(x=>'<div class="rounded-xl bg-zinc-950 border border-zinc-800 p-3"><div class="text-xs text-zinc-500">'+esc(x[0])+'</div><div class="text-xl font-bold mt-1">'+fmt(x[1])+'</div></div>').join('')+'</div>';
+ const sug='<div class="mt-4"><div class="text-sm font-bold mb-2">Saran tindakan</div><div class="space-y-2">'+s.map(x=>'<div class="rounded-xl bg-zinc-950 border border-zinc-800 p-3"><div class="flex items-center gap-2"><span class="text-xs rounded-full px-2 py-1 bg-zinc-800">'+esc(x.priority)+'</span><span class="text-sm font-bold">'+esc(x.issue)+'</span></div><div class="text-sm text-zinc-400 mt-2">'+esc(x.action)+'</div></div>').join('')+'</div></div>';
+ const dup='<div class="mt-4"><div class="text-sm font-bold mb-2">Duplikat judul: '+fmt(j.duplicateGroups)+'</div>'+(d.length?'<div class="max-h-52 overflow-auto rounded-xl border border-zinc-800 divide-y divide-zinc-800">'+d.map(x=>'<div class="px-3 py-2 text-sm flex justify-between gap-3"><span>'+esc(x.title)+'</span><span class="text-zinc-500">muncul '+fmt(x.count)+'×</span></div>').join('')+'</div>':'<div class="text-sm text-zinc-500">Tidak ada duplikat judul yang terdeteksi.</div>')+'</div>';
+ $('audit').innerHTML=cards+sug+dup+'<div class="text-xs text-zinc-500 mt-3">Audit dan saran bersifat baca-saja. Tidak ada data Google Sheet yang diubah.</div>';$('audit').classList.remove('hidden');
 }
-async function load(){try{const j=await api({action:'catalog_summary'});$('total').textContent=fmt(j.total);$('films').textContent=fmt(j.films);$('series').textContent=fmt(j.series);$('noplayer').textContent=fmt(j.noPlayer);$('status').textContent='Katalog tersambung • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}}
-async function runAudit(){ $('auditBtn').disabled=true;$('auditBtn').textContent='Mengaudit...';try{renderAudit(await api({action:'catalog_audit'}));$('status').textContent='Audit katalog selesai • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}finally{$('auditBtn').disabled=false;$('auditBtn').textContent='Jalankan Audit'}}
-async function login(){key=$('key').value.trim();if(!key)return;$('loginErr').classList.add('hidden');try{await api({action:'ping'});sessionStorage.setItem('nova_admin_key',key);setLoggedIn(true);add('assistant','Halo! Saya NOVA. Saya siap membantu membaca dan menganalisis katalog.');load()}catch(e){$('loginErr').textContent=e.message;$('loginErr').classList.remove('hidden');}}
+async function load(){try{setStats(await api({action:'catalog_summary'}));$('status').textContent='Katalog tersambung • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}}
+async function runAudit(){ $('auditBtn').disabled=true;$('auditBtn').textContent='Mengaudit...';try{renderAudit(await api({action:'catalog_suggestions'}));$('status').textContent='Audit & saran selesai • '+new Date().toLocaleString('id-ID')}catch(e){$('status').textContent=e.message}finally{$('auditBtn').disabled=false;$('auditBtn').textContent='Jalankan Audit'}}
+async function login(){key=$('key').value.trim();if(!key)return;$('loginErr').classList.add('hidden');try{await api({action:'ping'});sessionStorage.setItem('nova_admin_key',key);setLoggedIn(true);add('assistant','Halo! Saya NOVA. Saya siap membantu membaca dan menganalisis katalog.');load()}catch(e){$('loginErr').textContent=e.message;$('loginErr').classList.remove('hidden')}}
 $('loginBtn').onclick=login;$('key').onkeydown=e=>{if(e.key==='Enter')login()};$('clearKey').onclick=()=>{sessionStorage.removeItem('nova_admin_key');key='';setLoggedIn(false);$('key').value='';};$('auditBtn').onclick=runAudit;
-$('chat').onsubmit=async e=>{e.preventDefault();const p=$('prompt').value.trim();if(!p)return;$('prompt').value='';add('user',p);$('send').disabled=true;$('status').textContent='NOVA sedang memproses...';try{const j=await api({action:'chat',message:p});add('assistant',j.answer);if(j.stats){$('total').textContent=fmt(j.stats.total);$('films').textContent=fmt(j.stats.films);$('series').textContent=fmt(j.stats.series);$('noplayer').textContent=fmt(j.stats.noPlayer)}}catch(e){add('assistant','Error: '+e.message)}finally{$('send').disabled=false;$('status').textContent=''}}
-if(key){$('key').value=key;setLoggedIn(true);load()}else setLoggedIn(false)
+$('chat').onsubmit=async e=>{e.preventDefault();const p=$('prompt').value.trim();if(!p)return;$('prompt').value='';add('user',p);$('send').disabled=true;$('status').textContent='NOVA sedang memproses...';try{const j=await api({action:'chat',message:p});add('assistant',j.answer);if(j.stats)setStats(j.stats)}catch(e){add('assistant','Error: '+e.message)}finally{$('send').disabled=false;$('status').textContent=''}}
+if(key){$('key').value=key;setLoggedIn(true);load()}else setLoggedIn(false);
 </script>
-</body>
-</html>
+</body></html>
