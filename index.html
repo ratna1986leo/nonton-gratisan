@@ -685,7 +685,9 @@
             .poster-card:hover { transform: none; }
             .poster-card:active { transform: scale(.975) !important; }
         }
-    </style>
+    
+.promo-card{display:flex;align-items:center;gap:1rem;min-height:110px;padding:1rem;border:1px solid #27272a;border-radius:1rem;background:linear-gradient(135deg,#111827,#09090b);overflow:hidden}.promo-card img{width:150px;height:84px;object-fit:cover;border-radius:.7rem}.promo-card .promo-copy{min-width:0;flex:1}.promo-card .promo-label{font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:#71717a;font-weight:800}.promo-card h3{font-weight:800;font-size:1rem;margin:.2rem 0}.promo-card p{font-size:.78rem;color:#a1a1aa;line-height:1.45}.promo-card a{display:inline-flex;margin-top:.55rem;padding:.5rem .8rem;border-radius:.6rem;background:#2563eb;color:#fff;font-size:.75rem;font-weight:800}@media(max-width:640px){.promo-card img{width:105px;height:70px}.promo-card{min-height:90px;padding:.7rem;gap:.7rem}}
+</style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-16 lg:pb-0">
 
@@ -880,6 +882,7 @@
             <span class="separator">›</span>
             <span id="breadcrumb-current">Semua Film</span>
         </nav>
+<div id="promo-slot" class="hidden" aria-label="Promosi"></div>
 
         <article id="hero-section" class="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 min-h-[280px] sm:min-h-[420px] lg:min-h-[460px] border border-zinc-800/80 shadow-2xl flex items-end">
             <div id="hero-backdrop" class="absolute inset-0 bg-cover bg-center transition-all duration-700 filter brightness-90" style="background-image: url('https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg')"></div>
@@ -1189,6 +1192,9 @@
     </div>
 
     <script>
+function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}function escAttr(s){return escHtml(s).replace(/'/g,'&#39;')}
+async function loadPromotions(){try{const r=await fetch('/api/promotions',{cache:'no-store'}),j=await r.json();if(!r.ok)return;const p=(j.promotions||[])[0];if(!p)return;const slot=document.getElementById('promo-slot');slot.innerHTML='<div class="promo-card"><img src="'+escAttr(p.image||'https://placehold.co/300x170/18181b/2563eb?text=Promo')+'" alt="'+escAttr(p.title)+'" loading="lazy"><div class="promo-copy"><div class="promo-label">Promosi / Sponsored</div><h3>'+escHtml(p.title)+'</h3><p>'+escHtml(p.description||'')+'</p><a href="'+escAttr(p.link)+'" target="_blank" rel="sponsored noopener" data-promo-id="'+escAttr(p.id)+'">Lihat Promosi</a></div></div>';slot.classList.remove('hidden');fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:p.id,type:'impression'})}).catch(()=>{});slot.querySelector('a')?.addEventListener('click',()=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:p.id,type:'click'})}).catch(()=>{}))}catch(e){console.warn('Promosi gagal dimuat',e)}}
+
         // ================= KONSTANTA & STATE =================
         const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
         
@@ -2605,6 +2611,7 @@
                 showToast('Fullscreen ditolak browser', '⚠️');
             }
             updateFullscreenButton();
+            loadPromotions();
         }
 
         function updateFullscreenButton() {
