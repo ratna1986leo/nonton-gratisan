@@ -976,7 +976,7 @@
             <div id="watchlist-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"></div>
         </section>
 
-        <section id="detail-section" class="hidden space-y-4 sm:space-y-6 fade-in">
+        <section id="detail-section" class="hidden space-y-4 sm:space-y-6 fade-in"><div id="detail-promo-slot" class="hidden" aria-label="Promosi detail"></div>
             <div class="flex items-center justify-between gap-2 flex-wrap">
                 <button onclick="closeDetailPage()" class="focusable flex items-center gap-2 text-sm sm:text-base text-zinc-300 hover:text-white bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 sm:px-4 sm:py-2.5 transition-all touch-target">
                     <span>←</span> Kembali
@@ -1193,7 +1193,7 @@
 
     <script>
 function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}function escAttr(s){return escHtml(s).replace(/'/g,'&#39;')}
-async function loadPromotions(){try{const r=await fetch('/api/promotions',{cache:'no-store'}),j=await r.json();if(!r.ok)return;const p=(j.promotions||[])[0];if(!p)return;const slot=document.getElementById('promo-slot');slot.innerHTML='<div class="promo-card"><img src="'+escAttr(p.image||'https://placehold.co/300x170/18181b/2563eb?text=Promo')+'" alt="'+escAttr(p.title)+'" loading="lazy"><div class="promo-copy"><div class="promo-label">Promosi / Sponsored</div><h3>'+escHtml(p.title)+'</h3><p>'+escHtml(p.description||'')+'</p><a href="'+escAttr(p.link)+'" target="_blank" rel="sponsored noopener" data-promo-id="'+escAttr(p.id)+'">Lihat Promosi</a></div></div>';slot.classList.remove('hidden');fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:p.id,type:'impression'})}).catch(()=>{});slot.querySelector('a')?.addEventListener('click',()=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:p.id,type:'click'})}).catch(()=>{}))}catch(e){console.warn('Promosi gagal dimuat',e)}}
+async function loadPromotions(placement='home'){try{const r=await fetch('/api/promotions?placement='+encodeURIComponent(placement),{cache:'no-store'}),j=await r.json();if(!r.ok)return;const ps=j.promotions||[];const slot=document.getElementById(placement==='detail'?'detail-promo-slot':'promo-slot');if(!slot)return;if(!ps.length){slot.innerHTML='';slot.classList.add('hidden');return}slot.innerHTML=ps.map(p=>'<div class="promo-card"><img src="'+escAttr(p.image||'https://placehold.co/300x170/18181b/2563eb?text=Promo')+'" alt="'+escAttr(p.title)+'" loading="lazy"><div class="promo-copy"><div class="promo-label">Promosi / Sponsored</div><h3>'+escHtml(p.title)+'</h3><p>'+escHtml(p.description||'')+'</p><a href="'+escAttr(p.link||'#')+'" target="_blank" rel="sponsored noopener" data-promo-id="'+escAttr(p.id)+'">Lihat Promosi</a></div></div>').join('');slot.classList.remove('hidden');ps.forEach(p=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:p.id,type:'impression'})}).catch(()=>{}));slot.querySelectorAll('a[data-promo-id]').forEach(a=>a.addEventListener('click',()=>fetch('/api/promotions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'track',id:a.dataset.promoId,type:'click'})}).catch(()=>{}))}catch(e){console.warn('Promosi gagal dimuat',e)}}
 
         // ================= KONSTANTA & STATE =================
         const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
@@ -2408,6 +2408,7 @@ async function loadPromotions(){try{const r=await fetch('/api/promotions',{cache
             }
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
             document.getElementById('detail-section').classList.remove('hidden');
+            loadPromotions('detail');
             setupVideoSource(item);
             if (!item.isLibraryItem) {
                 try {
