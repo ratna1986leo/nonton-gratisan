@@ -25,8 +25,10 @@ button{cursor:pointer;background:#27272a}
 <button id="send">Kirim ke NOVA</button>
 <button id="catalog" style="margin-top:8px">🔎 Cek Katalog (Read-Only)</button>
 <button id="analyze" style="margin-top:8px">🤖 Analisis Katalog (Preview)</button>
+<button id="actions" style="margin-top:8px">🧪 Buat Daftar Perbaikan (Preview)</button>
 <div id="catalogResult" class="card" style="display:none;margin-top:12px"></div>
 <div id="analysisResult" class="card" style="display:none;margin-top:12px"></div>
+<div id="actionsResult" class="card" style="display:none;margin-top:12px"></div>
 <div id="status"></div>
 </div>
 </main>
@@ -46,6 +48,7 @@ $('send').onclick=async()=>{
 };
 $('catalog').onclick=async()=>{const box=$('catalogResult');box.style.display='block';box.textContent='Membaca katalog...';try{const r=await fetch('/api/nova-catalog');const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Katalog gagal dibaca');const s=d.stats||{};box.textContent='Katalog berhasil dibaca (READ-ONLY)\\n\\nTotal: '+s.total+'\\nJudul terisi: '+s.withTitle+'\\nDuplikat judul: '+s.duplicates+'\\nFilm: '+(s.movies??'tidak terdeteksi')+'\\nSeries: '+(s.series??'tidak terdeteksi')+'\\n\\nTidak ada data yang diubah.';}catch(e){box.textContent='Error: '+e.message}};
 $('analyze').onclick=async()=>{const key=$('key').value.trim(),box=$('analysisResult');if(!key){box.style.display='block';box.textContent='Isi Admin Key terlebih dahulu.';return}box.style.display='block';box.textContent='NOVA sedang menganalisis katalog (READ-ONLY)...';try{const r=await fetch('/api/nova-catalog-analyze',{method:'POST',headers:{'x-nova-key':key}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Analisis gagal');box.textContent=d.analysis||'Tidak ada hasil analisis.';}catch(e){box.textContent='Error: '+e.message}};
+$('actions').onclick=async()=>{const key=$('key').value.trim(),box=$('actionsResult');if(!key){box.style.display='block';box.textContent='Isi Admin Key terlebih dahulu.';return}box.style.display='block';box.textContent='Menyusun daftar perbaikan (PREVIEW)...';try{const r=await fetch('/api/nova-catalog-actions',{method:'POST',headers:{'x-nova-key':key}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Preview gagal');box.textContent=d.preview||'Tidak ada tindakan yang terdeteksi.';}catch(e){box.textContent='Error: '+e.message}};
 </script>
 </body>
 </html>
