@@ -84,6 +84,60 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
 @keyframes float{50%{transform:translateY(-10px) rotate(.4deg)}}@keyframes pulse{50%{transform:scale(1.05);opacity:.72}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes blink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.08)}}
 @media(max-width:980px){.stageInner{grid-template-columns:1fr}.stage{min-height:1120px}.avatarSide{min-height:520px}.chat{min-height:520px}.sections{grid-template-columns:1fr}.card.full{grid-column:auto}.controls{bottom:20px;max-width:94%;overflow:auto}.stateBtn{min-width:64px}}
 @media(max-width:600px){.shell{padding:10px}.topbar{height:58px}.brandMark{width:34px;height:34px}.stage{border-radius:24px;min-height:980px}.stageInner{padding:14px;gap:14px}.avatarSide{min-height:410px}.avatarWrap{width:78%}.chat{min-height:470px;border-radius:22px}.controls{position:absolute;bottom:16px}.stateBtn{padding:8px 9px;min-width:57px}.stateIcon{font-size:16px}.neonText{top:3%;left:4%;font-size:17px}.sections{margin-top:12px}.card{padding:16px;border-radius:18px}}
+/* NOVA compact Android-style UI */
+@media(max-width:700px){
+  body{background:linear-gradient(180deg,#070816,#0b0d1d);overflow-x:hidden}
+  .shell{width:100%;padding:0 10px 12px}
+  .topbar{height:50px;padding:0 4px}
+  .brand{gap:8px;font-size:14px;letter-spacing:.08em}
+  .brandMark{width:30px;height:30px;border-radius:10px;font-size:15px}
+  .brand small{display:none}
+  .online{padding:6px 9px;font-size:10px}
+  .stage{min-height:0;height:auto;border-radius:18px;border-width:1px;box-shadow:0 12px 35px rgba(0,0,0,.28)}
+  .stageInner{display:flex;flex-direction:column;padding:8px;gap:8px;min-height:0}
+  .avatarSide{min-height:300px;height:300px;border-radius:15px;background:radial-gradient(circle at 50% 45%,rgba(113,81,255,.13),transparent 58%)}
+  .neonText{top:8px;left:10px;font-size:13px;transform:none;z-index:4}
+  .neonText span{display:none}
+  .nova3dStage{width:100%;height:295px;min-height:295px}
+  .novaTag{right:5px;top:12px;transform:scale(.76);transform-origin:top right}
+  .novaHint{display:none}
+  .novaFaceStatus{top:59%;font-size:7px;transform:translate(-50%,-50%) scale(.85)}
+  .stateBadge{bottom:5px;font-size:9px;padding:6px 9px}
+  .chat{min-height:0;height:310px;border-radius:15px;box-shadow:none}
+  .chatHead{padding:9px 10px;gap:8px}
+  .miniAvatar{width:30px;height:30px;font-size:12px}
+  .chatTitle{font-size:12px}.chatSub{font-size:9px}
+  .chatBody{padding:10px;font-size:11px}
+  .bubble{padding:9px 10px;border-radius:13px;margin-bottom:7px;font-size:11px;line-height:1.4}
+  .chatBody>.bubble.ai:first-child{display:none}
+  .quick{gap:5px;margin:5px 0 8px}
+  .quick button{padding:6px 8px;font-size:9px}
+  .chatBody>.bubble.user,.chatBody>.bubble.ai:nth-of-type(3){display:none}
+  .chatInput{padding:8px;gap:6px}
+  .chatInput input{padding:9px 10px;border-radius:11px;font-size:11px}
+  .sendBtn{width:36px;border-radius:11px}
+  .controls{position:static;transform:none;width:100%;max-width:none;overflow-x:auto;justify-content:flex-start;border-radius:13px;padding:4px;gap:3px}
+  .stateBtn{min-width:56px;padding:6px 5px;border-radius:10px;font-size:8px}
+  .stateIcon{font-size:13px;margin-bottom:1px}
+  .sections{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .card{padding:12px;border-radius:15px;box-shadow:none}
+  .card h2{font-size:14px;margin-bottom:5px}
+  .muted{font-size:10px;line-height:1.4}
+  label{font-size:9px;margin-top:8px}
+  input,textarea{padding:9px;border-radius:10px;margin-top:5px;font-size:11px}
+  button.action{padding:9px;border-radius:10px;margin-top:7px;font-size:11px}
+  #filmPreview{padding:10px!important}
+  .comment{padding:9px;border-radius:10px;margin-top:6px;font-size:10px}
+  .reply{padding:8px;margin-top:6px}
+  .card.full{order:3}
+}
+@media(min-width:701px) and (max-width:980px){
+  .stageInner{grid-template-columns:1fr;min-height:0}
+  .stage{min-height:0}
+  .avatarSide{min-height:430px}
+  .chat{min-height:430px}
+  .sections{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
