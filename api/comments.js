@@ -16,7 +16,14 @@ export default async function handler(req,res){
       for(const [k,v] of Object.entries(req.query||{})){
         if(v!==undefined&&v!==null&&String(v)!=='')u.searchParams.set(k,String(v));
       }
-      return res.status(200).json(await forward(u.toString()));
+      const data = await forward(u.toString());
+      const callback = String(u.searchParams.get('callback') || '');
+      if (callback && /^[A-Za-z_$][0-9A-Za-z_$]*$/.test(callback)) {
+        res.setHeader('content-type','application/javascript; charset=utf-8');
+        res.setHeader('cache-control','no-store');
+        return res.status(200).send(callback + '(' + JSON.stringify(data).replace(/</g,'\\u003c') + ');');
+      }
+      return res.status(200).json(data);
     }
     if(req.method==='POST'){
       const body=req.body&&typeof req.body==='object'?req.body:{};
