@@ -7,13 +7,13 @@ function parseCSV(text){
     if(quoted){ if(ch==='"'&&next==='"'){cell+='"';i++;} else if(ch==='"') quoted=false; else cell+=ch; }
     else if(ch==='"') quoted=true;
     else if(ch===','){row.push(cell);cell='';}
-    else if(ch==='\\n'){row.push(cell);rows.push(row);row=[];cell='';}
-    else if(ch!=='\\r') cell+=ch;
+    else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell='';}
+    else if(ch!=='\r') cell+=ch;
   }
   if(cell!==''||row.length){row.push(cell);rows.push(row);}
   return rows;
 }
-const norm=s=>String(s??'').trim().toLowerCase().replace(/\\s+/g,' ');
+const norm=s=>String(s??'').trim().toLowerCase().replace(/\s+/g,' ');
 function read(text){
   const rows=parseCSV(text); if(!rows.length)return {columns:[],objects:[]};
   const columns=rows[0].map(x=>String(x??'').trim());
@@ -58,7 +58,7 @@ export default async function handler(req,res){
       else if(type==='duplicate-link'){field=linkKey||'Link';oldValue=d[linkKey]||'';proposed='Tidak ada penggantian otomatis — cek kepemilikan link untuk episode ini';}
       else if(type==='year-conflict'){
         field=yearKey||'Tahun';oldValue=d[yearKey]||'';
-        const m=title.match(/\\b(?:19|20)\\d{2}\\b/);
+        const m=title.match(/\b(?:19|20)\d{2}\b/);
         proposed=m?'Perlu verifikasi terhadap tahun pada judul ('+m[0]+')':'Tidak ada usulan otomatis';
       }
       else if(type==='missing-title'){field=titleKey||'Judul';oldValue=title;proposed='Tidak ada nilai otomatis — perlu metadata terverifikasi';}
