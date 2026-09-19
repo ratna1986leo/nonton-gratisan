@@ -129,7 +129,8 @@ export default async function handler(req,res){
       ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
       : JSON.stringify(catalog);
     let tmdb={available:false,source:'TMDB',items:[]};
-    const tmdbSearch=extractTMDBSearch(message);\n    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
+    const tmdbSearch=extractTMDBSearch(message);
+    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
     if(wantsTMDB){
       try{ tmdb=await loadTMDBDiscovery(); }
       catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
@@ -164,7 +165,9 @@ export default async function handler(req,res){
       'Jika ditanya film yang bisa diputar, gunakan hanya bisaDiputar=true.',
       'Jika ditanya film TMDB yang belum tercatat di pustaka, gunakan comparison.belumTercatatDiPustaka. Jangan menyebutnya sebagai film yang belum bisa diputar; itu dua hal yang berbeda.',
       'Jika ditanya film yang belum bisa diputar, gunakan data PUSTAKA FILM dengan bisaDiputar=false. Jangan memakai daftar TMDB sebagai pengganti.',
-      'Jika pengguna meminta mencari film atau series di TMDB, gunakan hasil DATA TMDB yang dimuat dari pencarian. Sebutkan judul, tipe (Film/Series), tahun, rating jika tersedia, dan TMDB ID. Jangan menyebut hasil pencarian TMDB sebagai data pustaka atau sebagai film yang pasti bisa diputar.',\n      'Jika pencarian TMDB menghasilkan beberapa kandidat, tampilkan beberapa kandidat yang paling relevan dan biarkan pengguna memilih berdasarkan judul/tahun; jangan mengarang kandidat.',\n      'Jika ditanya perbandingan TMDB vs pustaka, jelaskan jumlah TMDB yang dimuat, jumlah yang sudah tercatat di pustaka, dan daftar yang belum tercatat jika tersedia.',
+      'Jika pengguna meminta mencari film atau series di TMDB, gunakan hasil DATA TMDB yang dimuat dari pencarian. Sebutkan judul, tipe (Film/Series), tahun, rating jika tersedia, dan TMDB ID. Jangan menyebut hasil pencarian TMDB sebagai data pustaka atau sebagai film yang pasti bisa diputar.',
+      'Jika pencarian TMDB menghasilkan beberapa kandidat, tampilkan beberapa kandidat yang paling relevan dan biarkan pengguna memilih berdasarkan judul/tahun; jangan mengarang kandidat.',
+      'Jika ditanya perbandingan TMDB vs pustaka, jelaskan jumlah TMDB yang dimuat, jumlah yang sudah tercatat di pustaka, dan daftar yang belum tercatat jika tersedia.',
       'Jika diminta jumlah katalog, gunakan total/playable/unplayable dari PUSTAKA FILM, bukan jumlah item yang dikirim dalam array (array dibatasi untuk menjaga ukuran request).',
       'Jangan menganggap film ada di TMDB berarti otomatis bisa diputar.',
       'Jangan mengklaim URL yang terisi pasti dapat diputar; data hanya menunjukkan player tercatat.',
