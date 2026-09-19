@@ -131,6 +131,7 @@ linear-gradient(145deg,#070914,#10152d)!important}
   .novaFaceStatus{top:56%;transform:translate(-50%,-50%) scale(.76)}
 }
 
+.novaNotifBtn{position:relative;border:1px solid rgba(154,124,255,.24);background:rgba(8,11,27,.72);color:#fff;border-radius:14px;width:42px;height:42px;font-size:18px;backdrop-filter:blur(14px)}.novaNotifCount{position:absolute;right:-4px;top:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:linear-gradient(135deg,#ff5fbd,#8f6bff);font-size:9px;display:grid;place-items:center}.novaNotifDrawer{position:fixed;top:74px;right:18px;width:min(390px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 92px));overflow:auto;z-index:80;padding:14px;border:1px solid rgba(154,124,255,.3);border-radius:22px;background:rgba(7,10,25,.94);backdrop-filter:blur(24px);box-shadow:0 24px 80px rgba(0,0,0,.55);display:none}.novaNotifDrawer.open{display:block}.novaNotifHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.novaNotifHead strong{font-size:15px}.novaNotifClear{border:0;background:transparent;color:#aaa7bd;font-size:10px}.novaNotifItem{display:flex;gap:10px;padding:11px 8px;border-bottom:1px solid rgba(255,255,255,.07)}.novaNotifIcon{width:34px;height:34px;flex:0 0 34px;border-radius:11px;display:grid;place-items:center;background:rgba(154,124,255,.13)}.novaNotifTitle{font-size:12px;font-weight:700}.novaNotifText{font-size:10px;color:#bbb8ca;line-height:1.45;margin-top:3px}.novaNotifTime{font-size:8px;color:#77758a;margin-top:4px}@media(max-width:700px){.novaNotifBtn{width:36px;height:36px;border-radius:11px;font-size:16px}.novaNotifDrawer{top:58px;right:10px;width:calc(100vw - 20px);border-radius:18px;max-height:calc(100vh - 72px)}}
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
@@ -454,6 +455,7 @@ linear-gradient(145deg,rgba(31,51,84,.55),rgba(77,28,76,.48) 55%,rgba(7,11,27,.7
     </section>
   </main>
 </div>
+<div class="novaNotifDrawer" id="novaNotifDrawer"><div class="novaNotifHead"><strong>🔔 Notifikasi NOVA</strong><button class="novaNotifClear" id="novaNotifClear">Tandai sudah dibaca</button></div><div id="novaNotifList">Memuat notifikasi...</div></div>
 <div class="novaToast" id="novaToast"></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -569,6 +571,30 @@ $('refreshComments').onclick=loadHighlights;
  document.getElementById('novaNewChat')?.addEventListener('click',()=>{view('chat');const body=document.querySelector('#view-chat .chatBody');if(body)body.scrollTop=0;});
  document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{view('chat');const input=document.getElementById('stageMessage');if(input){input.value=b.dataset.prompt;input.focus();}}));
 })();
+
+async function loadNovaNotifications(){
+ const key=$('key')?.value.trim(), list=$('novaNotifList'), count=$('novaNotifCount');
+ if(!key){if(list)list.innerHTML='<div class="novaNotifText">Masukkan Admin Key untuk memuat notifikasi.</div>';return}
+ try{
+  const r=await fetch('/api/nova-notifications',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:'{}'});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Notifikasi gagal dimuat');
+  const items=Array.isArray(d.notifications)?d.notifications:[];
+  const seen=JSON.parse(localStorage.getItem('novaNotifSeen')||'[]');
+  const unread=items.filter(x=>!seen.includes(x.id)).length;
+  count.textContent=String(Math.min(unread,99));
+  count.style.display=unread?'grid':'none';
+  list.innerHTML=items.length?items.map(x=>'<div class="novaNotifItem"><div class="novaNotifIcon">'+esc(x.icon||'🔔')+'</div><div><div class="novaNotifTitle">'+esc(x.title)+'</div><div class="novaNotifText">'+esc(x.text)+'</div><div class="novaNotifTime">'+esc(x.time||'')+'</div></div></div>').join(''):'<div class="novaNotifText">Belum ada notifikasi.</div>';
+  window.__novaNotifications=items;
+ }catch(e){list.innerHTML='<div class="novaNotifText">Error: '+esc(e.message)+'</div>'}
+}
+$('novaNotifBtn')?.addEventListener('click',()=>{$('novaNotifDrawer').classList.toggle('open');if($('novaNotifDrawer').classList.contains('open'))loadNovaNotifications()});
+$('novaNotifClear')?.addEventListener('click',()=>{
+ const items=window.__novaNotifications||[];
+ localStorage.setItem('novaNotifSeen',JSON.stringify(items.map(x=>x.id).slice(0,100)));
+ loadNovaNotifications();
+});
+setTimeout(loadNovaNotifications,1200);
+setInterval(loadNovaNotifications,60000);
 </script>
 </body>
 </html>
