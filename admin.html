@@ -2,50 +2,200 @@
 <html lang="id">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NOVA Admin</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a18">
+<title>NOVA — AI Movie Assistant</title>
 <style>
-body{margin:0;background:#09090b;color:#f4f4f5;font-family:system-ui,sans-serif}
-main{max-width:900px;margin:40px auto;padding:24px}
-.card{background:#18181b;border:1px solid #27272a;border-radius:16px;padding:20px;margin-top:16px}
-input,button,textarea{box-sizing:border-box;width:100%;padding:12px;border-radius:10px;border:1px solid #3f3f46;background:#09090b;color:#fff;margin-top:8px}
-button{cursor:pointer;background:#27272a}button:disabled{opacity:.55;cursor:wait}
-.muted{color:#a1a1aa;font-size:14px}.comment{border:1px solid #27272a;border-radius:12px;padding:14px;margin-top:10px}.reply{margin-top:10px;padding:10px;border-left:3px solid #71717a;background:#0f0f12;border-radius:8px}
-.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#27272a;color:#d4d4d8;font-size:11px;margin-left:5px}
+:root{
+  --bg:#050713;--panel:rgba(12,16,36,.78);--panel2:rgba(19,24,50,.68);
+  --line:rgba(151,126,255,.28);--text:#f7f5ff;--muted:#a8a7bd;
+  --violet:#9a7cff;--pink:#ff6bd6;--cyan:#62e8ff;--green:#38e6a2;
+  --shadow:0 24px 80px rgba(0,0,0,.42)
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:
+ radial-gradient(circle at 58% 18%,rgba(116,76,255,.22),transparent 28%),
+ radial-gradient(circle at 82% 62%,rgba(255,78,201,.12),transparent 24%),
+ linear-gradient(145deg,#050713,#0b0b1d 48%,#050713);
+ color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,textarea{font:inherit}
+button{cursor:pointer}
+.shell{width:min(1480px,100%);margin:auto;padding:18px}
+.topbar{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 8px 0 14px}
+.brand{display:flex;align-items:center;gap:12px;font-weight:800;letter-spacing:.12em}
+.brandMark{width:38px;height:38px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 0 30px rgba(154,124,255,.45);font-size:19px}
+.brand small{display:block;font-size:10px;color:var(--muted);font-weight:500;letter-spacing:.06em;margin-top:3px}
+.online{display:flex;align-items:center;gap:8px;padding:9px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(10,14,31,.72);backdrop-filter:blur(18px);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green)}
+.stage{position:relative;min-height:690px;border:1px solid var(--line);border-radius:34px;overflow:hidden;background:
+ radial-gradient(circle at 52% 46%,rgba(113,81,255,.20),transparent 28%),
+ linear-gradient(135deg,rgba(8,10,25,.9),rgba(10,12,29,.65));
+ box-shadow:var(--shadow)}
+.stage:before{content:"";position:absolute;inset:-30%;background:conic-gradient(from 90deg,transparent,rgba(154,124,255,.12),transparent 25%,rgba(98,232,255,.08),transparent 52%);animation:spin 22s linear infinite;pointer-events:none}
+.grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:46px 46px;mask-image:linear-gradient(to bottom,transparent,#000 20%,#000 80%,transparent);pointer-events:none}
+.stageInner{position:relative;z-index:2;display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:24px;min-height:690px;padding:28px}
+.avatarSide{position:relative;display:flex;align-items:center;justify-content:center;min-height:620px;overflow:hidden}
+.neonText{position:absolute;top:8%;left:8%;font-size:clamp(18px,2.2vw,32px);font-weight:700;line-height:1.2;color:#fff;text-shadow:0 0 20px rgba(255,107,214,.65);transform:rotate(-3deg);opacity:.9}
+.neonText span{display:block;color:#ff9be6;font-size:.58em;font-weight:500;margin-top:8px}
+.avatarWrap{position:relative;width:min(500px,74%);aspect-ratio:4/5;display:grid;place-items:center;filter:drop-shadow(0 28px 55px rgba(0,0,0,.55));animation:float 5s ease-in-out infinite}
+.halo{position:absolute;width:78%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(160,129,255,.38);box-shadow:0 0 70px rgba(139,93,255,.22),inset 0 0 60px rgba(139,93,255,.10);animation:pulse 3.5s ease-in-out infinite}
+.halo:before,.halo:after{content:"";position:absolute;inset:8%;border-radius:50%;border:1px dashed rgba(98,232,255,.23);animation:spin 16s linear infinite}
+.halo:after{inset:17%;border-color:rgba(255,107,214,.18);animation-direction:reverse;animation-duration:12s}
+.avatarCard{position:relative;width:82%;height:88%;border-radius:48% 48% 38% 38% / 38% 38% 52% 52%;overflow:hidden;background:
+ radial-gradient(circle at 50% 30%,#ffd7cf 0 8%,transparent 8.5%),
+ radial-gradient(ellipse at 50% 44%,#f2b3b9 0 13%,transparent 13.5%),
+ linear-gradient(160deg,#3d245a,#15172f 58%,#080a19);
+ border:1px solid rgba(255,255,255,.18);box-shadow:inset 0 0 45px rgba(255,255,255,.06),0 0 60px rgba(154,124,255,.24);transform:perspective(900px) rotateY(-7deg)}
+.avatarCard:before{content:"";position:absolute;width:70%;height:62%;left:15%;top:8%;border-radius:48% 52% 45% 55%;background:linear-gradient(145deg,#24162c,#090913 72%);box-shadow:inset 15px 0 22px rgba(255,107,214,.12)}
+.avatarCard:after{content:"NOVA";position:absolute;bottom:9%;left:50%;transform:translateX(-50%);font-weight:800;letter-spacing:.35em;color:#8ef2ff;text-shadow:0 0 15px rgba(98,232,255,.8)}
+.face{position:absolute;left:28%;top:20%;width:44%;height:39%;border-radius:46% 46% 48% 48%;background:linear-gradient(160deg,#ffe1d7,#d9939d);box-shadow:inset -12px -8px 18px rgba(110,46,76,.18)}
+.face:before{content:"";position:absolute;left:13%;top:39%;width:74%;height:20%;border-top:3px solid rgba(70,38,61,.55);border-radius:50%;box-shadow:0 -42px 0 -1px rgba(74,39,60,.8)}
+.face:after{content:"";position:absolute;left:39%;bottom:17%;width:22%;height:9%;border-bottom:3px solid rgba(112,48,78,.7);border-radius:50%}
+.eyes{position:absolute;left:18%;top:42%;width:64%;display:flex;justify-content:space-between}
+.eye{width:22%;height:9px;border-radius:50%;background:#28192d;box-shadow:0 0 8px rgba(98,232,255,.35);animation:blink 5s infinite}
+.shoulders{position:absolute;left:10%;right:10%;bottom:7%;height:30%;border-radius:50% 50% 20% 20%;background:linear-gradient(135deg,#26214c,#0e1630);border-top:1px solid rgba(98,232,255,.45);box-shadow:inset 0 12px 30px rgba(255,107,214,.08)}
+.stateBadge{position:absolute;bottom:5%;left:50%;transform:translateX(-50%);padding:8px 14px;border-radius:999px;border:1px solid rgba(98,232,255,.25);background:rgba(7,10,24,.75);backdrop-filter:blur(14px);font-size:12px;color:#bff8ff}
+.chat{border:1px solid rgba(154,124,255,.34);border-radius:28px;background:rgba(5,8,23,.76);backdrop-filter:blur(24px);display:flex;flex-direction:column;min-height:620px;box-shadow:0 20px 55px rgba(0,0,0,.35)}
+.chatHead{display:flex;align-items:center;gap:12px;padding:18px;border-bottom:1px solid rgba(255,255,255,.08)}
+.miniAvatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 50% 35%,#ffd8d1 0 17%,transparent 18%),linear-gradient(145deg,#4a2d68,#15152c);border:1px solid rgba(255,255,255,.22);box-shadow:0 0 20px rgba(154,124,255,.3);font-weight:800}
+.chatTitle{font-weight:750}.chatSub{font-size:11px;color:var(--muted);margin-top:2px}
+.chatBody{padding:18px;overflow:auto;flex:1}
+.bubble{padding:13px 14px;border-radius:18px;margin-bottom:12px;font-size:13px;line-height:1.55}
+.ai{background:linear-gradient(145deg,rgba(49,43,92,.75),rgba(19,24,48,.75));border:1px solid rgba(154,124,255,.2)}
+.user{margin-left:auto;max-width:88%;background:linear-gradient(135deg,#5e4aff,#8a45d8);border:1px solid rgba(255,255,255,.12)}
+.quick{display:flex;flex-wrap:wrap;gap:7px;margin:8px 0 16px}.quick button{width:auto;margin:0;padding:8px 10px;border-radius:999px;background:rgba(24,29,57,.85);border:1px solid rgba(154,124,255,.28);color:#ddd8ff;font-size:11px}
+.result{border:1px solid rgba(98,232,255,.18);border-radius:16px;padding:10px;margin-top:10px;background:rgba(4,9,22,.55)}
+.resultRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12px}.resultRow:last-child{border:0}.play{color:#75f1b8;font-size:10px;background:rgba(56,230,162,.12);padding:5px 8px;border-radius:999px;white-space:nowrap}
+.chatInput{display:flex;gap:8px;padding:14px;border-top:1px solid rgba(255,255,255,.08)}.chatInput input{flex:1;min-width:0;padding:12px 14px;border-radius:14px;border:1px solid rgba(154,124,255,.22);background:#080b1d;color:#fff;outline:none}.sendBtn{width:44px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff}
+.controls{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:6px;padding:8px;border:1px solid rgba(154,124,255,.3);border-radius:22px;background:rgba(7,9,25,.78);backdrop-filter:blur(18px);z-index:5}.stateBtn{border:0;background:transparent;color:#aaa6bf;padding:10px 13px;border-radius:16px;font-size:11px;min-width:72px}.stateBtn.active{color:#fff;background:linear-gradient(135deg,rgba(120,93,255,.35),rgba(255,107,214,.18));box-shadow:inset 0 0 18px rgba(154,124,255,.12)}.stateIcon{display:block;font-size:18px;margin-bottom:3px}
+.sections{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}.card{background:var(--panel);border:1px solid rgba(154,124,255,.2);border-radius:22px;padding:20px;backdrop-filter:blur(20px);box-shadow:var(--shadow)}.card.full{grid-column:1/-1}.card h2{margin:0 0 8px;font-size:18px}.muted{color:var(--muted);font-size:13px;line-height:1.5}
+input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(154,124,255,.2);background:#080b1a;color:#fff;margin-top:8px;outline:none}textarea{resize:vertical}label{display:block;font-size:12px;color:#bbb6d0;margin-top:12px}button.action{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(154,124,255,.24);background:linear-gradient(135deg,rgba(115,86,255,.25),rgba(255,107,214,.12));color:#fff;margin-top:10px}.comment{border:1px solid rgba(154,124,255,.14);border-radius:14px;padding:14px;margin-top:10px;background:rgba(7,10,22,.5)}.reply{margin-top:10px;padding:10px;border-left:3px solid var(--pink);background:rgba(255,107,214,.06);border-radius:8px}.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:rgba(154,124,255,.14);color:#d9d2ff;font-size:10px;margin-left:5px}
+@keyframes float{50%{transform:translateY(-10px) rotate(.4deg)}}@keyframes pulse{50%{transform:scale(1.05);opacity:.72}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes blink{0%,46%,50%,100%{transform:scaleY(1)}48%{transform:scaleY(.08)}}
+@media(max-width:980px){.stageInner{grid-template-columns:1fr}.stage{min-height:1120px}.avatarSide{min-height:520px}.chat{min-height:520px}.sections{grid-template-columns:1fr}.card.full{grid-column:auto}.controls{bottom:20px;max-width:94%;overflow:auto}.stateBtn{min-width:64px}}
+@media(max-width:600px){.shell{padding:10px}.topbar{height:58px}.brandMark{width:34px;height:34px}.stage{border-radius:24px;min-height:980px}.stageInner{padding:14px;gap:14px}.avatarSide{min-height:410px}.avatarWrap{width:78%}.chat{min-height:470px;border-radius:22px}.controls{position:absolute;bottom:16px}.stateBtn{padding:8px 9px;min-width:57px}.stateIcon{font-size:16px}.neonText{top:3%;left:4%;font-size:17px}.sections{margin-top:12px}.card{padding:16px;border-radius:18px}}
 </style>
 </head>
 <body>
-<main>
-<h1>🤖 NOVA Admin</h1>
-<p class="muted">NOVA berjalan otomatis untuk komentar. Dashboard ini hanya untuk melihat highlight. Perbaikan katalog sementara dilewati.</p>
+<div class="shell">
+<header class="topbar">
+  <div class="brand"><div class="brandMark">✦</div><div>NOVA<small>Your Movie AI Assistant</small></div></div>
+  <div class="online"><span class="dot"></span> Online <span style="opacity:.55">⌄</span></div>
+</header>
 
-<div class="card">
-<h2 style="margin:0 0 8px">🎬 Tambah Film</h2>
-<p class="muted">Cari metadata TMDB, cek hasilnya, lalu simpan metadata ke Google Sheet. Link player tetap diisi manual di Google Sheet.</p>
-<label>Judul film</label><input id="filmTitle" placeholder="Contoh: Resident Evil">
-<input id="filmYear" inputmode="numeric" maxlength="4" placeholder="Tahun (opsional, mis. 2026)">
-<button id="filmLookup">🔎 Cari & Ambil Metadata TMDB</button>
-<div id="filmPreview" class="card" style="display:none;margin-top:12px"></div>
+<section class="stage">
+  <div class="grid"></div>
+  <div class="stageInner">
+    <div class="avatarSide">
+      <div class="neonText">Halo Bro... ♡<span>Ada yang bisa NOVA bantu hari ini?</span></div>
+      <div class="avatarWrap">
+        <div class="halo"></div>
+        <div class="avatarCard">
+          <div class="face"><div class="eyes"><i class="eye"></i><i class="eye"></i></div></div>
+          <div class="shoulders"></div>
+          <div class="stateBadge" id="stateBadge">● Idle — NOVA siap menemani</div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="chat">
+      <div class="chatHead">
+        <div class="miniAvatar">N</div><div><div class="chatTitle">NOVA</div><div class="chatSub">AI Movie Assistant • Online</div></div>
+      </div>
+      <div class="chatBody">
+        <div class="bubble ai">Halo bro! 💜<br>Saya NOVA, asisten AI kamu di NontonGratisan.<br>Saya siap membantu mencari film, mengecek katalog, melihat status player, dan banyak lagi.<br><br>Ada yang ingin kamu tanyakan?</div>
+        <div class="quick">
+          <button data-prompt="Film apa saja yang bisa diputar?">Film yang bisa diputar</button>
+          <button data-prompt="Cek film di TMDB">Cek TMDB</button>
+          <button data-prompt="Cek pustaka film">Cek pustaka</button>
+          <button data-prompt="Lihat status player">Status player</button>
+        </div>
+        <div class="bubble user">Film action terbaru yang ada di pustaka?</div>
+        <div class="bubble ai">Baik, aku akan mengecek katalog pustaka film untuk mencari film yang sudah memiliki player. 🎬
+          <div class="result">
+            <div class="resultRow"><span>John Wick 4 (2023)</span><span class="play">● Ada Player</span></div>
+            <div class="resultRow"><span>The Batman (2022)</span><span class="play">● Ada Player</span></div>
+            <div class="resultRow"><span>Mission: Impossible</span><span class="play">● Ada Player</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="chatInput"><input id="stageMessage" placeholder="Tulis pesan ke NOVA..."><button class="sendBtn" id="stageSend">➤</button></div>
+    </aside>
+  </div>
+  <div class="controls">
+    <button class="stateBtn active" data-state="Idle"><span class="stateIcon">〰</span>Idle</button>
+    <button class="stateBtn" data-state="Listening"><span class="stateIcon">◉</span>Listening</button>
+    <button class="stateBtn" data-state="Thinking"><span class="stateIcon">✦</span>Thinking</button>
+    <button class="stateBtn" data-state="Speaking"><span class="stateIcon">◖</span>Speaking</button>
+    <button class="stateBtn" data-state="Happy"><span class="stateIcon">☺</span>Happy</button>
+    <button class="stateBtn" data-state="Error"><span class="stateIcon">!</span>Error</button>
+  </div>
+</section>
+
+<div class="sections">
+  <div class="card">
+    <h2>🎬 Tambah Film</h2>
+    <p class="muted">Cari metadata TMDB, cek hasilnya, lalu simpan metadata ke Google Sheet. Link player tetap diisi manual di Google Sheet.</p>
+    <label>Judul film</label><input id="filmTitle" placeholder="Contoh: Resident Evil">
+    <input id="filmYear" inputmode="numeric" maxlength="4" placeholder="Tahun (opsional, mis. 2026)">
+    <button class="action" id="filmLookup">🔎 Cari & Ambil Metadata TMDB</button>
+    <div id="filmPreview" class="card" style="display:none;margin-top:12px"></div>
+  </div>
+
+  <div class="card">
+    <h2>💬 Highlight Komentar</h2>
+    <p class="muted">Komentar terbaru dari seluruh web. NOVA membalas otomatis setelah komentar masuk.</p>
+    <button class="action" id="refreshComments">🔄 Muat Highlight</button>
+    <div id="commentsHighlight" style="margin-top:12px">Belum dimuat.</div>
+  </div>
+
+  <div class="card full">
+    <h2>🧠 Chat NOVA</h2>
+    <p class="muted">Panel ini tetap memakai otak NOVA produksi yang sama; tampilan visual di atas adalah layer baru.</p>
+    <label>Admin Key</label><input id="key" type="password" autocomplete="off">
+    <label>Pesan</label><textarea id="message" rows="4" placeholder="Contoh: Jelaskan fungsi NOVA..."></textarea>
+    <button class="action" id="send">Kirim ke NOVA</button>
+    <div id="status" style="margin-top:10px;white-space:pre-wrap"></div>
+  </div>
+</div>
 </div>
 
-<div class="card">
-<h2 style="margin:0 0 8px">💬 Highlight Komentar</h2>
-<p class="muted">Komentar terbaru dari seluruh web. NOVA membalas otomatis setelah komentar masuk.</p>
-<button id="refreshComments">🔄 Muat Highlight</button>
-<div id="commentsHighlight" style="margin-top:12px">Belum dimuat.</div>
-</div>
-
-<div class="card">
-<h2 style="margin:0 0 8px">🧠 Chat NOVA</h2>
-<label>Admin Key</label><input id="key" type="password" autocomplete="off">
-<label>Pesan</label><textarea id="message" rows="5" placeholder="Contoh: Jelaskan fungsi NOVA..."></textarea>
-<button id="send">Kirim ke NOVA</button>
-<div id="status" style="margin-top:10px;white-space:pre-wrap"></div>
-</div>
-</main>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const stateCopy={
+ Idle:'Idle — NOVA siap menemani',
+ Listening:'Listening — NOVA sedang mendengarkan',
+ Thinking:'Thinking — NOVA sedang berpikir',
+ Speaking:'Speaking — NOVA sedang menjawab',
+ Happy:'Happy — NOVA merespons dengan hangat',
+ Error:'Error — NOVA sedang memeriksa masalah'
+};
+document.querySelectorAll('.stateBtn').forEach(btn=>btn.onclick=()=>{
+ document.querySelectorAll('.stateBtn').forEach(x=>x.classList.remove('active'));
+ btn.classList.add('active');$('stateBadge').textContent='● '+stateCopy[btn.dataset.state];
+});
+function setState(name){
+ const b=[...document.querySelectorAll('.stateBtn')].find(x=>x.dataset.state===name);
+ if(b)b.click();
+}
+
+async function sendNova(message){
+ const key=$('key').value.trim();
+ if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
+ setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('send').disabled=true;
+ try{
+  const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
+  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Request gagal');
+  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
+  setTimeout(()=>setState('Happy'),900);
+ }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
+ finally{$('send').disabled=false}
+}
+$('send').onclick=()=>sendNova($('message').value.trim());
+$('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('message').value=m;sendNova(m)};
+document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const m=b.dataset.prompt;$('message').value=m;sendNova(m)});
 
 $('filmLookup').onclick=async()=>{
  const key=$('key').value.trim(),title=$('filmTitle').value.trim(),year=$('filmYear').value.trim(),box=$('filmPreview');
@@ -56,7 +206,7 @@ $('filmLookup').onclick=async()=>{
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Metadata gagal');
   const x=d.data||{},candidates=Array.isArray(d.candidates)?d.candidates:[];
   const candHtml=candidates.length?'<div style="margin-top:12px"><b>Hasil lain:</b><div>'+candidates.map(c=>'<div style="margin-top:6px;color:#a1a1aa">'+esc(c.judul)+' • '+esc(c.tahun||'-')+' • '+esc(c.tipe)+'</div>').join('')+'</div>':'';
-  box.innerHTML='<b>PREVIEW FILM — BELUM DISIMPAN</b><div style="margin-top:10px"><b>'+esc(x.judul)+'</b><br><small>'+esc(x.tipe)+' • '+esc(x.tahun||'-')+' • Rating '+esc(x.rating||'-')+' • '+esc(x.genre||'-')+'</small><p class="muted">'+esc(x.deskripsi||'Sinopsis tidak tersedia')+'</p><div class="muted">Aktor: '+esc(x.aktor||'Tidak tersedia')+'</div><div class="muted" style="margin-top:6px">Poster: '+esc(x.poster||'Tidak tersedia')+'</div></div>'+candHtml+'<small class="muted" style="display:block;margin-top:12px">Link player tidak diisi di sini. Isi kolom Link/Player langsung di Google Sheet.</small><button id="saveFilm" style="margin-top:10px">💾 Simpan Metadata ke Google Sheet</button><div id="saveFilmStatus" style="margin-top:10px"></div>';
+  box.innerHTML='<b>PREVIEW FILM — BELUM DISIMPAN</b><div style="margin-top:10px"><b>'+esc(x.judul)+'</b><br><small>'+esc(x.tipe)+' • '+esc(x.tahun||'-')+' • Rating '+esc(x.rating||'-')+' • '+esc(x.genre||'-')+'</small><p class="muted">'+esc(x.deskripsi||'Sinopsis tidak tersedia')+'</p><div class="muted">Aktor: '+esc(x.aktor||'Tidak tersedia')+'</div><div class="muted" style="margin-top:6px">Poster: '+esc(x.poster||'Tidak tersedia')+'</div></div>'+candHtml+'<small class="muted" style="display:block;margin-top:12px">Link player tidak diisi di sini. Isi kolom Link/Player langsung di Google Sheet.</small><button class="action" id="saveFilm">💾 Simpan Metadata ke Google Sheet</button><div id="saveFilmStatus" style="margin-top:10px"></div>';
   $('saveFilm').onclick=async()=>{
    const b=$('saveFilm'),st=$('saveFilmStatus');if(!confirm('Simpan metadata film ini ke Google Sheet?'))return;
    b.disabled=true;st.textContent='Menyimpan metadata...';
@@ -85,17 +235,6 @@ async function loadHighlights(){
  }catch(e){box.textContent='Error: '+e.message}
 }
 $('refreshComments').onclick=loadHighlights;
-$('send').onclick=async()=>{
- const key=$('key').value.trim(),message=$('message').value.trim();
- if(!key||!message){$('status').textContent='Isi Admin Key dan pesan.';return}
- $('send').disabled=true;$('status').textContent='Memproses...';
- try{
-  const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
-  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Request gagal');
-  $('status').textContent=data.reply||JSON.stringify(data,null,2);
- }catch(e){$('status').textContent='Error: '+e.message}
- finally{$('send').disabled=false}
-};
 </script>
 </body>
 </html>
