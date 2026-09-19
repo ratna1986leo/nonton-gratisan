@@ -89,13 +89,13 @@ async function loadAdminComments(){
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Komentar gagal dimuat');
   const comments=Array.isArray(d.comments)?d.comments:[];
   if(!comments.length){box.textContent='Belum ada komentar untuk media ID ini.';return}
-  box.innerHTML=comments.map((x,i)=>'<div class="card" style="margin-top:10px;padding:14px"><div><b>'+esc(x.name||'Anonim')+'</b> <small style="color:#71717a">'+esc(x.date||'')+'</small></div><div style="margin-top:8px;color:#d4d4d8;white-space:pre-wrap">'+esc(x.text||'')+'</div><button class="draftReply" data-i="'+i+'" style="margin-top:10px">🤖 Buat Draft Balasan</button><textarea id="reply_'+i+'" rows="3" placeholder="Draft balasan akan muncul di sini..." style="margin-top:8px"></textarea><button class="copyReply" data-i="'+i+'" style="margin-top:8px">📋 Salin Balasan</button><div id="replyStatus_'+i+'" style="margin-top:8px;color:#a1a1aa"></div></div>').join('');
+  box.innerHTML=comments.map((x,i)=>'<div class="card" style="margin-top:10px;padding:14px"><div><b>'+esc(x.name||'Anonim')+'</b> <small style="color:#71717a">'+esc(x.date||'')+'</small></div><div style="margin-top:8px;color:#d4d4d8;white-space:pre-wrap">'+esc(x.text||'')+'</div><button class="draftReply" data-i="'+i+'" style="margin-top:10px">🤖 Balas Otomatis</button><textarea id="reply_'+i+'" rows="3" placeholder="Draft balasan akan muncul di sini..." style="margin-top:8px"></textarea><button class="copyReply" data-i="'+i+'" style="margin-top:8px">📋 Salin Balasan</button><div id="replyStatus_'+i+'" style="margin-top:8px;color:#a1a1aa"></div></div>').join('');
   box.querySelectorAll('.draftReply').forEach(btn=>btn.onclick=async()=>{
-   const i=Number(btn.dataset.i),x=comments[i],st=$('replyStatus_'+i);btn.disabled=true;st.textContent='NOVA sedang membuat draft...';
+   const i=Number(btn.dataset.i),x=comments[i],st=$('replyStatus_'+i);btn.disabled=true;st.textContent='NOVA sedang membalas komentar...';
    try{
-    const r=await fetch('/api/nova-comments',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'draft',comment:{mediaId,title:x.title,name:x.name,text:x.text,commentId:x.commentId||x.id||''}})});
+    const r=await fetch('/api/nova-comments',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'auto_reply',comment:{mediaId,title:x.title,name:x.name,text:x.text,commentId:x.commentId||x.id||''}})});
     const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Draft gagal');
-    $('reply_'+i).value=d.reply||'';st.textContent='✅ Draft siap. Edit bila perlu sebelum digunakan.';
+    $('reply_'+i).value=d.reply||'';st.textContent='✅ NOVA sudah mengirim balasan langsung.';
    }catch(e){st.textContent='Error: '+e.message}
    finally{btn.disabled=false}
   });
