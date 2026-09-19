@@ -81,6 +81,56 @@ linear-gradient(145deg,#070914,#10152d)!important}
 .novaIdentityPulse{margin-left:auto;font-size:10px;color:#bff8ff}.novaIdentityPulse i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);margin-right:5px}
 .novaPresence{max-width:430px;margin-top:14px;padding:13px 16px;border-left:2px solid var(--pink);border-radius:0 14px 14px 0;background:rgba(255,107,214,.06);color:#d8d5e7;font-size:12px;line-height:1.55}
 @media(max-width:700px){.avatarSide{min-height:210px!important;height:210px!important}.novaCompactIdentity{max-width:none;padding:11px 13px;border-radius:15px}.novaIdentityIcon{width:40px;height:40px;border-radius:12px;font-size:21px}.novaIdentityText strong{font-size:16px}.novaIdentityText span{font-size:9px}.novaPresence{margin-top:9px;font-size:10px;padding:10px 12px}}
+/* NOVA cinematic avatar v4 — slim portrait, premium holographic composition */
+.nova3dStage{
+  width:min(390px,70%);
+  height:min(570px,72vh);
+  min-height:480px;
+  border-radius:48% 48% 34% 34% / 28% 28% 18% 18%;
+  isolation:isolate;
+}
+.nova3dStage:before{
+  content:"";
+  position:absolute;
+  inset:8% 8% 5%;
+  border-radius:45% 45% 28% 28%;
+  background:
+    radial-gradient(circle at 50% 24%,rgba(255,214,222,.20),transparent 18%),
+    radial-gradient(circle at 50% 52%,rgba(255,107,214,.14),transparent 32%),
+    linear-gradient(160deg,rgba(23,20,48,.92),rgba(5,8,23,.72));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 0 70px rgba(154,124,255,.20),inset 0 0 80px rgba(98,232,255,.07);
+  z-index:-1;
+}
+.nova3dStage:after{
+  content:"";
+  position:absolute;
+  width:72%;height:20%;
+  left:14%;bottom:5%;
+  background:radial-gradient(ellipse,rgba(154,124,255,.24),transparent 68%);
+  filter:blur(16px);
+  z-index:-1;
+}
+.nova3dStage .halo{width:86%;opacity:.72}
+.nova3dStage #novaCanvas{filter:saturate(1.08) contrast(1.05) drop-shadow(0 18px 34px rgba(0,0,0,.45))}
+.nova3dStage .novaTag{right:0;top:11%}
+.novaFaceStatus{top:54%}
+@media(max-width:700px){
+  .avatarSide{
+    min-height:310px;height:310px;
+    background:
+      radial-gradient(circle at 50% 42%,rgba(154,124,255,.16),transparent 42%),
+      linear-gradient(180deg,rgba(9,10,28,.18),rgba(3,5,16,.48));
+  }
+  .nova3dStage{
+    width:245px;height:310px;min-height:310px;
+    border-radius:48% 48% 30% 30% / 25% 25% 16% 16%;
+  }
+  .nova3dStage .halo{width:88%}
+  .nova3dStage .novaTag{right:-2px;top:10px;transform:scale(.72);transform-origin:top right}
+  .novaFaceStatus{top:56%;transform:translate(-50%,-50%) scale(.76)}
+}
+
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
