@@ -41,12 +41,20 @@ async function sheetsAppend(values){
   const r=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values]})});
   const j=await r.json(); if(!r.ok)throw new Error(j.error?.message||'Google Sheets append gagal'); return j;
 }
-async function tmdbLookup(title){
+async function tmdbLookup(title,year=''){
   if(!TMDB_API_KEY)throw new Error('TMDB_API_KEY belum disetel di Vercel');
   const u='https://api.themoviedb.org/3/search/multi?api_key='+encodeURIComponent(TMDB_API_KEY)+'&language=id-ID&query='+encodeURIComponent(title)+'&include_adult=false';
   const r=await fetch(u,{headers:{accept:'application/json'}}),j=await r.json();
   if(!r.ok)throw new Error(j.status_message||'TMDB gagal');
-  const item=(j.results||[]).find(x=>x.media_type==='movie'||x.media_type==='tv');
+  const results=(j.results||[]).filter(x=>x.media_type==='movie'||x.media_type==='tv');
+  const wanted=String(year||'').trim();
+  const getYear=x=>String((x.media_type==='tv'?x.first_air_date:x.release_date)||'').slice(0,4);
+  const ranked=results.slice().sort((a,b)=>{
+    const ay=getYear(a),by=getYear(b);
+    const am=wanted&&ay===wanted?1:0,bm=wanted&&by===wanted?1:0;
+    return bm-am;
+  });
+  const item=ranked[0];
   if(!item)throw new Error('Film/series tidak ditemukan di TMDB');
   const isTv=item.media_type==='tv',type=isTv?'tv':'movie';
   let d=item;
@@ -56,17 +64,15 @@ async function tmdbLookup(title){
   }catch{}
   const genres=Array.isArray(d.genres)?d.genres.map(x=>x.name).filter(Boolean).join(', '):'';
   const actors=Array.isArray(d.credits?.cast)?d.credits.cast.slice(0,8).map(x=>x.name).filter(Boolean).join(', '):'';
-  return {
+  const data={
     judul:isTv?(d.name||item.name||title):(d.title||item.title||title),
     tipe:isTv?'Series':'Film',
     tahun:String((isTv?d.first_air_date:d.release_date)||'').slice(0,4),
-    genre:genres,
-    poster:d.poster_path?'https://image.tmdb.org/t/p/w780'+d.poster_path:'',
-    deskripsi:d.overview||'',
-    rating:typeof d.vote_average==='number'?d.vote_average.toFixed(1):'',
-    aktor:actors,
-    tmdbId:item.id
+    genre:genres,poster:d.poster_path?'https://image.tmdb.org/t/p/w780'+d.poster_path:'',
+    deskripsi:d.overview||'',rating:typeof d.vote_average==='number'?d.vote_average.toFixed(1):'',
+    aktor:actors,tmdbId:item.id
   };
+  return {data,candidates:ranked.slice(0,8).map(x=>({tmdbId:x.id,tipe:x.media_type==='tv'?'Series':'Film',judul:x.media_type==='tv'?(x.name||''):(x.title||''),tahun:getYear(x)}))};
 }
 function allowed(url){
   const domains=String(process.env.AUTHORIZED_EMBED_DOMAINS||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
@@ -95,9 +101,10 @@ export default async function handler(req,res){
     auth(req);
     const action=String(req.body?.action||'preview').trim();
     const title=String(req.body?.title||'').trim();
+    const year=String(req.body?.year||'').trim();
     if(!title)return res.status(400).json({error:'Judul film wajib diisi'});
-    const data=await tmdbLookup(title);
-    if(action==='preview')return res.status(200).json({ok:true,readOnly:true,data});
+    const lookup=await tmdbLookup(title,year); const data=lookup.data;
+    if(action==='preview')return res.status(200).json({ok:true,readOnly:true,data,candidates:lookup.candidates});
     if(action!=='save')return res.status(400).json({error:'Action tidak dikenal'});
     const embedUrl=String(req.body?.embedUrl||'').trim();
     if(!embedUrl)throw new Error('Link sumber/player wajib diisi');
