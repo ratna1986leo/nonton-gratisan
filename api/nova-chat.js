@@ -30,7 +30,7 @@ function catalogContext(text){
   const linkKey=find('link','url','video','embed','source');
   const yearKey=find('year','tahun');
   const typeKey=find('type','tipe','kategori');
-  const items=objects.slice(0,500).map(o=>({
+  const items=objects.slice(0,250).map(o=>({
     judul:o[titleKey]||'',
     tahun:yearKey?o[yearKey]||'':'',
     tipe:typeKey?o[typeKey]||'':'',
@@ -65,7 +65,11 @@ async function loadTMDBDiscovery(){
 }
 
 async function loadCatalog(){
-  const r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'},cache:'no-store'});
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),8000);
+  let r;
+  try{ r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'},cache:'no-store',signal:controller.signal}); }
+  finally{ clearTimeout(timer); }
   if(!r.ok) throw new Error('Google Sheet katalog HTTP '+r.status);
   return catalogContext(await r.text());
 }
@@ -87,7 +91,7 @@ export default async function handler(req,res){
       ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
       : JSON.stringify(catalog);
     let tmdb={available:false,source:'TMDB',items:[]};
-    const wantsTMDB=/\\btmdb\\b|the movie database|database film/i.test(message);
+    const wantsTMDB=/\btmdb\b|the movie database|database film/i.test(message);
     if(wantsTMDB){
       try{ tmdb=await loadTMDBDiscovery(); }
       catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
@@ -101,8 +105,8 @@ export default async function handler(req,res){
       'TMDB = metadata/discovery dari The Movie Database. PUSTAKA FILM = data yang tersimpan di Google Sheet katalog website.',
       'Jangan pernah menggabungkan, menghapus duplikasi, atau menganggap item TMDB otomatis menjadi item PUSTAKA FILM.',
       'Jika judul yang sama ada di kedua sumber, tetap laporkan sebagai dua sumber terpisah dan jelaskan apakah judul tersebut tercatat di pustaka.',
-      'Kamu memiliki akses READ-ONLY ke katalog website.'
-      'Gunakan hanya DATA KATALOG di bawah. Jangan mengarang judul, jumlah, atau status player.',
+      'Kamu memiliki akses READ-ONLY ke katalog website.',
+      'Gunakan hanya DATA PUSTAKA FILM di bawah. Jangan mengarang judul, jumlah, atau status player.',
       'bisaDiputar=true berarti kolom Link/Player pada katalog terisi. bisaDiputar=false berarti belum ada Link/Player tercatat.',
       'Jika ditanya film yang bisa diputar, gunakan hanya bisaDiputar=true.',
       'Jika ditanya film TMDB yang belum bisa diputar, gunakan bisaDiputar=false dan jelaskan bahwa player belum tercatat.',
