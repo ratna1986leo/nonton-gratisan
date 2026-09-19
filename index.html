@@ -2897,8 +2897,9 @@
                     const text = escapeHtml(comment.text || '');
                     const date = escapeHtml(comment.date || '');
                     const reply = escapeHtml(comment.reply || '');
+                    const replyLinked = reply.replace(/(https?:\\/\\/[^\\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-cyan-300 underline break-all">$1</a>');
                     const initial = escapeHtml((comment.name || 'A').charAt(0).toUpperCase());
-                    const replyHtml = reply ? `<div class="mt-2 ml-1 p-2 rounded-lg border border-zinc-700 bg-zinc-900/70"><div class="text-[10px] font-bold text-brand-400">🤖 NOVA</div><p class="text-xs sm:text-sm text-zinc-300 break-words mt-1">${reply}</p></div>` : '';
+                    const replyHtml = reply ? `<div class="mt-2 ml-1 p-2 rounded-lg border border-zinc-700 bg-zinc-900/70"><div class="text-[10px] font-bold text-brand-400">🤖 NOVA</div><p class="text-xs sm:text-sm text-zinc-300 break-words mt-1">${replyLinked}</p></div>` : '';
                     return `<div class="comment-item flex gap-2 sm:gap-3 items-start p-2 rounded-lg"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs sm:text-sm font-bold text-brand-500 shrink-0">${initial}</div><div class="space-y-1 min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs sm:text-sm font-bold text-white">${name}</span><span class="text-[10px] text-zinc-500">${date}</span></div><p class="text-xs sm:text-sm text-zinc-300 break-words">${text}</p>${replyHtml}</div></div>`;
                 }).join('');
             }
