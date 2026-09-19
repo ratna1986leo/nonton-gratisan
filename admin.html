@@ -46,92 +46,17 @@ button{cursor:pointer}
 .stage{background:radial-gradient(circle at 34% 44%,rgba(255,107,214,.09),transparent 24%),radial-gradient(circle at 72% 30%,rgba(98,232,255,.08),transparent 28%),linear-gradient(135deg,#070817,#11102a 55%,#070816)}.chat{background:linear-gradient(180deg,rgba(7,10,28,.82),rgba(8,11,29,.68));border-color:rgba(98,232,255,.22)}
 .novaRateLimitNote{font-size:11px;color:#ffb7e9;margin-top:6px}
 /* NOVA photo-style avatar v4 */
-.nova3dStage{width:min(430px,72vw)!important;height:min(590px,72vh)!important;min-height:500px!important}
+.nova3dStage{width:min(360px,64vw)!important;height:min(560px,70vh)!important;min-height:470px!important}
 .novaPhotoFrame{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);height:92%;width:min(310px,76%);border-radius:46% 46% 24% 24%;overflow:hidden;isolation:isolate;box-shadow:0 25px 70px rgba(0,0,0,.58),0 0 55px rgba(154,124,255,.22);border:1px solid rgba(255,255,255,.16);background:#0a0d1d}
 .novaPhotoFrame:before{content:"";position:absolute;inset:0;z-index:2;background:linear-gradient(180deg,rgba(7,10,24,0) 48%,rgba(7,10,24,.52) 100%),linear-gradient(90deg,rgba(154,124,255,.10),transparent 38%,rgba(255,107,214,.07));pointer-events:none}
 .novaPhotoAvatar{width:100%;height:100%;display:block;object-fit:cover;object-position:50% 8%;filter:saturate(1.04) contrast(1.03) brightness(.97)}
 .novaPhotoFrame:after{content:"NOVA";position:absolute;left:50%;bottom:14px;transform:translateX(-50%);z-index:3;padding:6px 12px;border:1px solid rgba(98,232,255,.25);border-radius:999px;background:rgba(7,10,24,.64);backdrop-filter:blur(10px);color:#c8fbff;font-size:10px;letter-spacing:.22em}
 @media(max-width:700px){
  .nova3dStage{width:270px!important;height:340px!important;min-height:340px!important}
- .novaPhotoFrame{height:92%;width:205px}
+ .novaPhotoFrame{height:92%;width:190px}
  .novaPhotoAvatar{object-position:50% 8%}
  .novaTag{top:8px!important;right:-8px!important}
 }
-/* NOVA function-first mode: photo/background, no avatar UI */
-.avatarSide{display:none!important}
-.stageInner{display:block!important;min-height:0!important;padding:18px!important}
-.stage{min-height:680px!important;background:
-linear-gradient(90deg,rgba(3,5,16,.84),rgba(4,7,18,.70)),
-radial-gradient(circle at 72% 30%,rgba(154,124,255,.20),transparent 34%),
-linear-gradient(145deg,#070914,#10152d)!important}
-.stage:before{opacity:.18}
-.chat{width:min(760px,100%);min-height:640px;margin:0 auto;border-radius:24px}
-@media(max-width:700px){
-  .stage{min-height:0!important}
-  .stageInner{padding:8px!important}
-  .chat{width:100%;height:calc(100vh - 150px);min-height:520px;border-radius:16px}
-}
-
-/* NOVA clean mode: remove intrusive avatar */
-.nova3dStage,.avatarWrap,.halo,.avatarCard,.face,.eyes,.shoulders,.novaOrb,.novaTag,.novaFaceStatus,.novaHint,.stateBadge,#novaCanvas{display:none!important}
-.avatarSide{min-height:260px!important;height:260px!important;display:flex!important;align-items:center!important;justify-content:center!important}
-.novaCompactIdentity{display:flex;align-items:center;gap:12px;padding:14px 18px;border:1px solid rgba(154,124,255,.24);border-radius:20px;background:rgba(7,10,24,.58);backdrop-filter:blur(18px);box-shadow:0 18px 45px rgba(0,0,0,.28);max-width:430px;width:100%}
-.novaIdentityIcon{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;font-size:25px;background:linear-gradient(135deg,var(--violet),var(--pink));box-shadow:0 0 28px rgba(154,124,255,.4)}
-.novaIdentityText strong{display:block;font-size:20px;letter-spacing:.12em}.novaIdentityText span{display:block;font-size:11px;color:var(--muted);margin-top:3px}
-.novaIdentityPulse{margin-left:auto;font-size:10px;color:#bff8ff}.novaIdentityPulse i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green);margin-right:5px}
-.novaPresence{max-width:430px;margin-top:14px;padding:13px 16px;border-left:2px solid var(--pink);border-radius:0 14px 14px 0;background:rgba(255,107,214,.06);color:#d8d5e7;font-size:12px;line-height:1.55}
-@media(max-width:700px){.avatarSide{min-height:210px!important;height:210px!important}.novaCompactIdentity{max-width:none;padding:11px 13px;border-radius:15px}.novaIdentityIcon{width:40px;height:40px;border-radius:12px;font-size:21px}.novaIdentityText strong{font-size:16px}.novaIdentityText span{font-size:9px}.novaPresence{margin-top:9px;font-size:10px;padding:10px 12px}}
-/* NOVA cinematic avatar v4 — slim portrait, premium holographic composition */
-.nova3dStage{
-  width:min(390px,70%);
-  height:min(570px,72vh);
-  min-height:480px;
-  border-radius:48% 48% 34% 34% / 28% 28% 18% 18%;
-  isolation:isolate;
-}
-.nova3dStage:before{
-  content:"";
-  position:absolute;
-  inset:8% 8% 5%;
-  border-radius:45% 45% 28% 28%;
-  background:
-    radial-gradient(circle at 50% 24%,rgba(255,214,222,.20),transparent 18%),
-    radial-gradient(circle at 50% 52%,rgba(255,107,214,.14),transparent 32%),
-    linear-gradient(160deg,rgba(23,20,48,.92),rgba(5,8,23,.72));
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 0 70px rgba(154,124,255,.20),inset 0 0 80px rgba(98,232,255,.07);
-  z-index:-1;
-}
-.nova3dStage:after{
-  content:"";
-  position:absolute;
-  width:72%;height:20%;
-  left:14%;bottom:5%;
-  background:radial-gradient(ellipse,rgba(154,124,255,.24),transparent 68%);
-  filter:blur(16px);
-  z-index:-1;
-}
-.nova3dStage .halo{width:86%;opacity:.72}
-.nova3dStage #novaCanvas{filter:saturate(1.08) contrast(1.05) drop-shadow(0 18px 34px rgba(0,0,0,.45))}
-.nova3dStage .novaTag{right:0;top:11%}
-.novaFaceStatus{top:54%}
-@media(max-width:700px){
-  .avatarSide{
-    min-height:310px;height:310px;
-    background:
-      radial-gradient(circle at 50% 42%,rgba(154,124,255,.16),transparent 42%),
-      linear-gradient(180deg,rgba(9,10,28,.18),rgba(3,5,16,.48));
-  }
-  .nova3dStage{
-    width:245px;height:310px;min-height:310px;
-    border-radius:48% 48% 30% 30% / 25% 25% 16% 16%;
-  }
-  .nova3dStage .halo{width:88%}
-  .nova3dStage .novaTag{right:-2px;top:10px;transform:scale(.72);transform-origin:top right}
-  .novaFaceStatus{top:56%;transform:translate(-50%,-50%) scale(.76)}
-}
-
-.novaNotifBtn{position:relative;border:1px solid rgba(154,124,255,.24);background:rgba(8,11,27,.72);color:#fff;border-radius:14px;width:42px;height:42px;font-size:18px;backdrop-filter:blur(14px)}.novaNotifCount{position:absolute;right:-4px;top:-4px;min-width:18px;height:18px;padding:0 4px;border-radius:999px;background:linear-gradient(135deg,#ff5fbd,#8f6bff);font-size:9px;display:grid;place-items:center}.novaNotifDrawer{position:fixed;top:74px;right:18px;width:min(390px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 92px));overflow:auto;z-index:80;padding:14px;border:1px solid rgba(154,124,255,.3);border-radius:22px;background:rgba(7,10,25,.94);backdrop-filter:blur(24px);box-shadow:0 24px 80px rgba(0,0,0,.55);display:none}.novaNotifDrawer.open{display:block}.novaNotifHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.novaNotifHead strong{font-size:15px}.novaNotifClear{border:0;background:transparent;color:#aaa7bd;font-size:10px}.novaNotifItem{display:flex;gap:10px;padding:11px 8px;border-bottom:1px solid rgba(255,255,255,.07)}.novaNotifIcon{width:34px;height:34px;flex:0 0 34px;border-radius:11px;display:grid;place-items:center;background:rgba(154,124,255,.13)}.novaNotifTitle{font-size:12px;font-weight:700}.novaNotifText{font-size:10px;color:#bbb8ca;line-height:1.45;margin-top:3px}.novaNotifTime{font-size:8px;color:#77758a;margin-top:4px}@media(max-width:700px){.novaNotifBtn{width:36px;height:36px;border-radius:11px;font-size:16px}.novaNotifDrawer{top:58px;right:10px;width:calc(100vw - 20px);border-radius:18px;max-height:calc(100vh - 72px)}}
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
@@ -220,287 +145,7 @@ opacity:.9}
  .novaStateDock{display:none}
  .novaHero .novaChatShell{width:100%;min-height:0;height:410px}.novaHero .chat{height:410px;border-radius:18px}.novaHero .chatBody{padding:11px}.novaHero .chatInput{margin:0 9px 9px}
 }
-</style>/* NOVA function-first clean: remove visual avatar surface */
-<style id="nova-function-first-clean">
-.novaHero{display:block!important;width:min(900px,calc(100% - 34px));min-height:calc(100vh - 86px);padding:18px 0 28px}
-.novaVisual{display:none!important}
-.novaHero .novaChatShell{width:100%;min-height:calc(100vh - 110px);height:auto;margin:0}
-.novaHero .chat{width:100%;height:calc(100vh - 150px);min-height:560px;max-height:none}
-.novaHero .chatBody{max-width:860px;width:100%;margin:0 auto}
-.novaHero .chatInput{max-width:860px}
-.novaHero .quick{max-width:860px}
-@media(max-width:700px){
- .novaHero{width:100%;padding:8px 9px 14px;min-height:0}
- .novaHero .novaChatShell{min-height:0;height:calc(100vh - 70px)}
- .novaHero .chat{height:calc(100vh - 90px);min-height:520px;border-radius:16px}
- .novaHero .chatBody{padding:12px 8px}
- .novaHero .chatInput{margin:0 7px 8px}
-}
-</style><style id="nova-function-first-v2">
-.novaHero{display:block!important;width:min(920px,100%);min-height:0!important;padding:18px 0 28px}
-.novaFunctionHeader{display:flex;align-items:center;gap:12px;margin:0 auto 14px;padding:12px 14px;border:1px solid rgba(154,124,255,.22);border-radius:16px;background:rgba(10,13,30,.72);backdrop-filter:blur(18px)}
-.novaFunctionMark{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#9a7cff,#ff6bd6);box-shadow:0 0 24px rgba(154,124,255,.3);font-size:20px}
-.novaFunctionTitle{font-size:16px;font-weight:800;letter-spacing:.12em}
-.novaFunctionSub{font-size:10px;color:#a8a7bd;margin-top:2px}
-.novaFunctionPulse{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:10px;color:#bff8d9}
-.novaFunctionPulse i{width:7px;height:7px;border-radius:50%;background:#38e6a2;box-shadow:0 0 10px #38e6a2}
-.novaHero .novaChatShell{width:100%;min-height:0;height:auto;margin:0}
-.novaHero .novaWelcome{display:none}
-.novaHero .chat{width:100%;height:auto;min-height:calc(100vh - 170px);max-height:none}
-.novaHero .chatBody{max-width:860px;width:100%;margin:0 auto}
-.novaHero .chatInput{max-width:860px;margin-left:auto;margin-right:auto}
-.novaHero .quick{max-width:860px}
-.novaStatusLine{max-width:860px;margin:6px auto 0}
-@media(max-width:700px){
- .novaHero{width:100%;padding:8px 0 14px}
- .novaFunctionHeader{margin-bottom:8px;padding:9px 10px;border-radius:13px}
- .novaFunctionMark{width:32px;height:32px;border-radius:9px;font-size:16px}
- .novaFunctionTitle{font-size:13px}.novaFunctionSub{font-size:8px}
- .novaFunctionPulse{font-size:9px}
- .novaHero .chat{min-height:calc(100vh - 142px);border-radius:15px}
- .novaHero .chatBody{padding:12px 8px}
- .novaHero .chatInput{margin:0 7px 8px}
- .novaStatusLine{font-size:10px}
-}
-</style><style id="nova-reference-v6">
-/* NOVA reference-inspired hero: narrow portrait + living room + chat */
-.novaHero{display:grid!important;grid-template-columns:minmax(0,1.05fr) minmax(390px,.95fr)!important;width:min(1240px,calc(100% - 28px))!important;min-height:calc(100vh - 76px)!important;padding:14px 0 24px!important;gap:18px!important;align-items:stretch!important}
-.novaHero .novaFunctionHeader{display:none!important}
-.novaVisual{display:block!important;position:relative;min-height:720px!important;height:calc(100vh - 110px)!important;max-height:820px;border-radius:28px;overflow:hidden;border:1px solid rgba(154,124,255,.28);background:linear-gradient(145deg,#090b1b,#1a1130 58%,#070816);box-shadow:0 28px 90px rgba(0,0,0,.48)}
-.novaVisual:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 48% 36%,rgba(255,107,214,.15),transparent 24%),linear-gradient(90deg,rgba(5,7,18,.25),transparent 55%,rgba(5,7,18,.38));z-index:1;pointer-events:none}
-.novaRoom{position:absolute;inset:0;z-index:0;background:
-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,transparent 1px 33%,rgba(255,255,255,.018) 33.2% 33.4%,transparent 33.6% 100%),
-linear-gradient(180deg,rgba(255,255,255,.04),transparent 42%,rgba(0,0,0,.56));
-}
-.novaWindow{position:absolute;left:8%;right:8%;top:7%;height:49%;border-radius:14px;border:1px solid rgba(98,232,255,.12);background:
-radial-gradient(circle at 76% 24%,rgba(255,107,214,.35),transparent 10%),
-linear-gradient(145deg,rgba(31,51,84,.55),rgba(77,28,76,.48) 55%,rgba(7,11,27,.76));box-shadow:inset 0 0 90px rgba(98,232,255,.08);overflow:hidden}
-.novaWindow:after{content:"";position:absolute;left:0;right:0;bottom:0;height:36%;background:repeating-linear-gradient(90deg,rgba(98,232,255,.05) 0 2px,transparent 2px 23px),linear-gradient(180deg,transparent,rgba(3,6,18,.82))}
-.novaCity{position:absolute;left:0;right:0;bottom:0;height:34%;z-index:2;background:repeating-linear-gradient(90deg,rgba(98,232,255,.055) 0 2px,transparent 2px 28px);opacity:.75}
-.novaVisualText{right:7%;top:8%;font-family:cursive;font-size:25px;z-index:25}
-.novaVisualText small{font-size:10px}
-.novaPortrait{z-index:12;width:360px;height:610px;max-width:70%;position:absolute;left:48%;bottom:20px;transform:translateX(-50%);filter:drop-shadow(0 28px 48px rgba(0,0,0,.72));animation:portraitFloat 6s ease-in-out infinite}
-.novaPortraitSvg{width:100%;height:100%;display:block;overflow:visible}
-.novaPortraitHalo{position:absolute;left:4%;right:4%;top:3%;height:70%;border-radius:50%;border:1px solid rgba(255,107,214,.16);box-shadow:0 0 70px rgba(154,124,255,.16),inset 0 0 50px rgba(98,232,255,.05)}
-.novaPortraitGlow{position:absolute;left:12%;right:12%;bottom:0;height:48%;background:radial-gradient(ellipse,rgba(154,124,255,.25),transparent 68%);filter:blur(18px);z-index:-1}
-.novaVisualBadge{left:18px;bottom:18px}
-.novaMiniStatus{position:absolute;left:18px;top:18px;z-index:30;padding:8px 11px;border:1px solid rgba(98,232,255,.18);border-radius:999px;background:rgba(5,8,22,.65);backdrop-filter:blur(14px);font-size:9px;color:#bff8ff}
-.novaMiniStatus i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#38e6a2;box-shadow:0 0 9px #38e6a2;margin-right:5px}
-.novaHero .novaChatShell{width:auto!important;height:auto!important;min-height:650px!important;margin:0!important}
-.novaHero .chat{height:100%!important;min-height:650px!important;border-radius:26px!important;background:linear-gradient(180deg,rgba(8,11,28,.90),rgba(8,11,29,.72))!important;border:1px solid rgba(154,124,255,.28)!important;box-shadow:0 24px 70px rgba(0,0,0,.38)!important}
-.novaHero .chatBody{padding:20px!important}
-.novaHero .bubble{font-size:13px}
-.novaHero .chatInput{margin:0 18px 18px!important}
-@media(max-width:980px){
- .novaHero{grid-template-columns:1fr!important;width:min(720px,calc(100% - 18px))!important}
- .novaVisual{height:560px;min-height:560px}
- .novaPortrait{width:315px;height:500px}
- .novaHero .novaChatShell{min-height:520px!important}.novaHero .chat{min-height:520px!important}
-}
-@media(max-width:700px){
- .novaHero{display:flex!important;flex-direction:column!important;width:100%!important;padding:7px 8px 18px!important;gap:9px!important}
- .novaVisual{height:365px!important;min-height:365px!important;border-radius:20px}
- .novaWindow{left:5%;right:5%;top:9%;height:48%}
- .novaVisualText{top:10px;right:12px;font-size:17px}.novaVisualText small{font-size:7px}
- .novaMiniStatus{left:10px;top:10px;font-size:8px;padding:6px 8px}
- .novaPortrait{width:238px;height:342px;max-width:none;left:48%;bottom:10px}
- .novaPortraitHalo{top:3%;height:69%}
- .novaVisualBadge{left:10px;bottom:10px;padding:7px 9px;font-size:8px}.novaVisualBadge strong{font-size:10px}
- .novaHero .novaChatShell{min-height:0!important;height:calc(100vh - 430px)!important}
- .novaHero .chat{height:calc(100vh - 430px)!important;min-height:420px!important;border-radius:17px!important}
- .novaHero .chatBody{padding:10px!important}
- .novaHero .chatInput{margin:0 8px 8px!important}
-}
-</style><style id="nova-reference-cleanup">
-/* Override older experimental avatar/function-first rules */
-.novaHero .novaVisual{display:block!important}
-.novaHero{display:grid!important}
-@media(max-width:700px){.novaHero{display:flex!important}}
-</style><style id="nova-reference-cinematic-v1">
-/* Reference-inspired NOVA: slim portrait, cinematic room, chat panel */
-.novaHero{
-  width:min(1280px,calc(100% - 28px));
-  grid-template-columns:minmax(0,1.05fr) minmax(390px,500px);
-  gap:22px;
-  min-height:calc(100vh - 76px);
-  padding:10px 0 20px;
-}
-.novaVisual{
-  min-height:720px;
-  border-radius:28px;
-  background:
-    radial-gradient(circle at 52% 28%,rgba(255,107,214,.14),transparent 28%),
-    linear-gradient(90deg,rgba(4,7,18,.25),rgba(4,7,18,.04) 48%,rgba(5,7,18,.56)),
-    #090b19;
-}
-.novaRoom{
-  background:
-    linear-gradient(90deg,rgba(3,6,16,.68),transparent 28%,transparent 72%,rgba(3,5,15,.4)),
-    radial-gradient(circle at 76% 25%,rgba(255,89,210,.18),transparent 22%),
-    radial-gradient(circle at 18% 70%,rgba(73,131,255,.12),transparent 24%);
-}
-.novaWindow{
-  left:4%;right:4%;top:4%;height:92%;
-  border:0;
-  border-radius:20px;
-  background:
-    linear-gradient(180deg,rgba(23,34,62,.2),rgba(8,10,23,.45)),
-    repeating-linear-gradient(90deg,rgba(255,255,255,.035) 0 1px,transparent 1px 95px);
-  box-shadow:inset 0 0 100px rgba(98,232,255,.05);
-}
-.novaCity{
-  height:30%;
-  background:
-    repeating-linear-gradient(90deg,rgba(98,232,255,.055) 0 2px,transparent 2px 31px),
-    linear-gradient(180deg,transparent,rgba(3,6,17,.88));
-}
-.novaVisualText{
-  right:6%;top:9%;font-size:29px;z-index:25;
-}
-.novaVisualText small{font-size:12px;line-height:1.35}
-.novaCinematicPortrait{
-  width:min(430px,68%);
-  height:min(640px,90%);
-  bottom:0;
-  z-index:10;
-}
-.novaCinematicPortrait .novaPortraitHalo{
-  left:0;right:0;top:2%;height:72%;
-  border-color:rgba(98,232,255,.18);
-}
-.novaCinematicPortrait .novaPortraitGlow{
-  inset:4% 0 0;
-  border-radius:46% 46% 20% 20%;
-  background:radial-gradient(circle at 50% 35%,rgba(255,194,216,.14),transparent 35%),linear-gradient(180deg,rgba(77,49,112,.18),rgba(5,8,22,.28));
-}
-.novaPhoto{
-  position:absolute;inset:0 8% 0;
-  overflow:hidden;
-  border-radius:48% 48% 8% 8% / 25% 25% 4% 4%;
-  border:1px solid rgba(255,255,255,.13);
-  background:#090b18;
-  box-shadow:0 30px 70px rgba(0,0,0,.62),0 0 65px rgba(154,124,255,.17);
-}
-.novaPhoto img{
-  width:100%;height:100%;display:block;
-  object-fit:cover;object-position:50% 9%;
-  filter:saturate(1.05) contrast(1.03) brightness(.98);
-}
-.novaPhotoShade{
-  position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 48%,rgba(4,6,18,.06) 65%,rgba(4,6,18,.78) 100%);
-}
-.novaPhotoLabel{
-  position:absolute;left:50%;bottom:18px;transform:translateX(-50%);
-  z-index:4;text-align:center;white-space:nowrap;
-  padding:8px 15px;border-radius:999px;
-  background:rgba(7,9,23,.62);border:1px solid rgba(98,232,255,.25);
-  backdrop-filter:blur(12px);box-shadow:0 0 22px rgba(98,232,255,.1);
-}
-.novaPhotoLabel strong{display:block;font-size:17px;letter-spacing:.2em}
-.novaPhotoLabel span{display:block;margin-top:2px;font-size:8px;color:#b8f5ff;letter-spacing:.08em}
-.novaSpark{position:absolute;z-index:20;color:#ff9be6;text-shadow:0 0 18px rgba(255,107,214,.85);font-size:24px;animation:novaSpark 3.8s ease-in-out infinite}
-.sparkA{right:2%;top:19%}.sparkB{left:2%;top:49%;animation-delay:1.1s}
-.novaVisualBadge{
-  left:5%;bottom:7%;right:auto;z-index:25;
-  padding:12px 15px;border-radius:16px;
-  background:rgba(7,10,24,.7);border:1px solid rgba(154,124,255,.25);
-  backdrop-filter:blur(15px);
-}
-.novaVisualBadge strong{font-size:16px;letter-spacing:.12em}
-.novaVisualBadge span{font-size:9px}
-.novaChatShell{
-  height:calc(100vh - 110px);
-  min-height:620px;
-  max-height:760px;
-  width:100%;
-  padding:0;
-}
-.novaWelcome{display:none}
-.novaChatShell .chat{
-  height:100%;min-height:0;
-  border:1px solid rgba(154,124,255,.3);
-  border-radius:24px;
-  background:rgba(7,10,26,.74);
-  backdrop-filter:blur(24px);
-  box-shadow:0 25px 70px rgba(0,0,0,.42);
-}
-.novaChatShell .chatHead{
-  display:flex;padding:16px 18px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-.novaChatShell .chatBody{padding:16px;scrollbar-width:thin}
-.novaChatShell .bubble{max-width:100%;margin:0 0 10px;font-size:12px}
-.novaChatShell .quick{margin:8px 0 14px}
-.novaChatShell .chatInput{margin:0;width:100%;padding:7px;border-top:1px solid rgba(255,255,255,.08)}
-@keyframes novaSpark{50%{transform:translateY(-8px) scale(1.1);opacity:.72}}
-@media(max-width:980px){
- .novaHero{grid-template-columns:1fr;min-height:0}
- .novaVisual{min-height:610px}
- .novaChatShell{height:600px;min-height:0}
-}
-@media(max-width:700px){
- .novaHero{width:calc(100% - 12px);gap:10px;padding:5px 0 12px}
- .novaVisual{min-height:470px;border-radius:20px}
- .novaVisualText{right:5%;top:7%;font-size:20px}.novaVisualText small{font-size:9px}
- .novaCinematicPortrait{width:255px;height:420px;max-width:none}
- .novaPhoto{inset:0 8% 0;border-radius:48% 48% 7% 7% / 20% 20% 3% 3%}
- .novaPhotoLabel{bottom:11px;padding:6px 11px}.novaPhotoLabel strong{font-size:13px}.novaPhotoLabel span{font-size:6px}
- .novaVisualBadge{left:8px;bottom:8px;padding:8px 10px;border-radius:12px}.novaVisualBadge strong{font-size:12px}.novaVisualBadge span{font-size:7px}
- .novaChatShell{height:calc(100vh - 145px);min-height:470px}
- .novaChatShell .chat{border-radius:17px}
- .novaChatShell .chatHead{padding:10px 12px}
- .novaChatShell .chatBody{padding:10px}
- .novaChatShell .bubble{font-size:10px;line-height:1.45;padding:9px 10px}
- .novaChatShell .quick button{font-size:8px;padding:6px 8px}
- .novaChatShell .chatInput input{font-size:10px;padding:9px}
-}
-</style>
-<style id="nova-reference-visual-v7">
-.novaHero{grid-template-columns:minmax(0,1.08fr) minmax(400px,.92fr)!important;gap:16px!important;width:min(1260px,calc(100% - 24px))!important}
-.novaVisual{min-height:700px!important;height:calc(100vh - 108px)!important;max-height:840px!important;border-radius:26px!important}
-.novaPortrait{width:305px!important;height:610px!important;max-width:none!important;left:45%!important;bottom:18px!important}
-.novaPhoto{inset:0 4%!important;border-radius:46% 46% 5% 5% / 17% 17% 2% 2%!important}
-.novaPhoto img{object-position:50% 8%!important;filter:saturate(1.06) contrast(1.04) brightness(.98)!important}
-.novaPhotoShade{background:linear-gradient(180deg,rgba(4,6,18,0) 45%,rgba(4,6,18,.08) 60%,rgba(4,6,18,.82) 100%)!important}
-.novaPhotoLabel{bottom:14px!important;padding:7px 13px!important}
-.novaPhotoLabel strong{font-size:15px!important}
-.novaVisualText{right:6%!important;top:7%!important;font-size:24px!important}
-.novaVisualBadge{left:16px!important;bottom:16px!important}
-.novaHero .novaChatShell{min-height:620px!important}
-.novaHero .chat{min-height:620px!important;border-radius:24px!important}
-.novaHero .chatBody{padding:18px!important}
-.novaHero .bubble{font-size:12px!important;line-height:1.55!important}
-.novaHeaderStatus{display:flex!important;align-items:center;gap:10px}
-.novaHeaderStatus:after{content:"⚙";font-size:18px;color:#d8d3ff}
-@media(max-width:980px){
- .novaHero{width:min(720px,calc(100% - 16px))!important}
- .novaVisual{height:570px!important;min-height:570px!important}
- .novaPortrait{width:285px!important;height:510px!important;left:47%!important}
- .novaHero .novaChatShell,.novaHero .chat{min-height:520px!important}
-}
-@media(max-width:700px){
- .novaHero{width:100%!important;padding:5px 8px 14px!important;gap:9px!important}
- .novaVisual{height:390px!important;min-height:390px!important;border-radius:19px!important}
- .novaVisualText{right:5%!important;top:6%!important;font-size:17px!important}
- .novaVisualText small{font-size:8px!important}
- .novaPortrait{width:225px!important;height:355px!important;left:48%!important;bottom:14px!important}
- .novaPhoto{inset:0 3%!important;border-radius:44% 44% 4% 4% / 15% 15% 2% 2%!important}
- .novaPhotoLabel{bottom:9px!important;padding:5px 9px!important}
- .novaPhotoLabel strong{font-size:12px!important}
- .novaPhotoLabel span{font-size:6px!important}
- .novaVisualBadge{left:8px!important;bottom:8px!important;padding:7px 9px!important;border-radius:11px!important}
- .novaVisualBadge strong{font-size:11px!important}
- .novaVisualBadge span{font-size:7px!important}
- .novaMiniStatus{left:9px!important;top:9px!important;font-size:8px!important;padding:6px 9px!important}
- .novaHero .novaChatShell{height:calc(100vh - 505px)!important;min-height:455px!important}
- .novaHero .chat{height:100%!important;min-height:455px!important;border-radius:16px!important}
- .novaHero .chatBody{padding:9px!important}
- .novaHero .bubble{font-size:10px!important}
- .novaHeaderStatus:after{font-size:16px}
-}
-</style>
-</head>
+</style></head>
 <body class="novaApp">
 <div class="novaLayout">
   <aside class="novaSidebar" id="novaSidebar">
@@ -546,28 +191,32 @@ linear-gradient(145deg,rgba(31,51,84,.55),rgba(77,28,76,.48) 55%,rgba(7,11,27,.7
     </header>
 
     <section class="novaView active" id="view-chat">
-      <div class="novaHero"><div class="novaFunctionHeader">
-  <div class="novaFunctionMark">✦</div>
-  <div>
-    <div class="novaFunctionTitle">NOVA</div>
-    <div class="novaFunctionSub">AI Movie Assistant • siap membantu</div>
-  </div>
-  <div class="novaFunctionPulse"><i></i> Online</div>
-</div><div class="novaVisual" aria-label="NOVA visual presence">
-  <div class="novaRoom"></div><div class="novaWindow"></div><div class="novaCity"></div>
-  <div class="novaMiniStatus"><i></i> NOVA • Online</div>
-  <div class="novaVisualText">NOVA ♡<small>Film bukan sekadar hiburan<br>tapi juga tentang perasaan.</small></div>
-  <div class="novaPortrait novaCinematicPortrait">
-    <div class="novaPortraitHalo"></div>
-    <div class="novaPortraitGlow"></div>
-    <div class="novaPhoto">
-      <img src="/assets/nova-avatar.jpg" alt="NOVA virtual assistant">
-      <div class="novaPhotoShade"></div>
-      <div class="novaPhotoLabel"><strong>NOVA</strong><span>AI Movie Assistant</span></div>
+      <div class="novaHero"><div class="novaVisual">
+  <div class="novaRoom"></div><div class="novaWindow"><div class="novaCity"></div></div>
+  <div class="novaVisualText">NOVA ♡<small>Film bukan sekadar hiburan,<br>tapi juga tentang perasaan.</small></div>
+  <div class="novaPortrait" id="novaPortrait">
+    <div class="portraitGlow"></div><div class="portraitHalo"></div><div class="portraitHairBack"></div><div class="portraitNeck"></div>
+    <div class="portraitFace">
+      <div class="hairTop"></div><div class="bang left"></div><div class="bang right"></div>
+      <div class="brow left"></div><div class="brow right"></div>
+      <div class="eye left"><i></i></div><div class="eye right"><i></i></div><div class="nose"></div><div class="cheek left"></div><div class="cheek right"></div><div class="lip"></div>
+      <div class="earring left"></div><div class="earring right"></div>
     </div>
-    <span class="novaSpark sparkA">✦</span><span class="novaSpark sparkB">♡</span>
-  </div></div>
-  <div class="novaVisualBadge"><strong>NOVA</strong><i></i> AI Movie Assistant<br><span style="opacity:.72">Selalu siap membantu kamu.</span></div>
+    <div class="portraitShoulder left"></div><div class="portraitShoulder right"></div>
+    <div class="portraitClothes"><span>✦</span></div>
+    <div class="portraitSpark s1">✦</div><div class="portraitSpark s2">♡</div><div class="portraitSpark s3">✧</div>
+    <div class="portraitName">NOVA<small>AI MOVIE ASSISTANT</small></div>
+    <div class="portraitStatus"><span class="dot"></span> ONLINE • READY</div>
+  </div>
+  <div class="novaVisualBadge"><i></i><strong>NOVA Online</strong>Selalu siap membantu kamu.</div>
+  <div class="novaStateDock">
+    <button class="stateBtn active" data-state="Idle"><span class="stateIcon">◉</span>Idle</button>
+    <button class="stateBtn" data-state="Listening"><span class="stateIcon">◌</span>Listen</button>
+    <button class="stateBtn" data-state="Thinking"><span class="stateIcon">◈</span>Think</button>
+    <button class="stateBtn" data-state="Speaking"><span class="stateIcon">◉</span>Speak</button>
+    <button class="stateBtn" data-state="Happy"><span class="stateIcon">♡</span>Happy</button>
+    <button class="stateBtn" data-state="Error"><span class="stateIcon">!</span>Error</button>
+  </div>
 </div><div class="novaChatShell">
         <div class="novaWelcome">
           <div class="novaWelcomeIcon">✦</div>
@@ -614,7 +263,6 @@ linear-gradient(145deg,rgba(31,51,84,.55),rgba(77,28,76,.48) 55%,rgba(7,11,27,.7
     </section>
   </main>
 </div>
-<div class="novaNotifDrawer" id="novaNotifDrawer"><div class="novaNotifHead"><strong>🔔 Notifikasi NOVA</strong><button class="novaNotifClear" id="novaNotifClear">Tandai sudah dibaca</button></div><div id="novaNotifList">Memuat notifikasi...</div></div>
 <div class="novaToast" id="novaToast"></div>
 <script>
 const $=id=>document.getElementById(id);
@@ -628,7 +276,16 @@ const stateCopy={
  Happy:'Happy — NOVA merespons dengan hangat',
  Error:'Error — NOVA sedang memeriksa masalah'
 };
-function setState(name){ return name; }
+document.querySelectorAll('.stateBtn').forEach(btn=>btn.onclick=()=>{
+ document.querySelectorAll('.stateBtn').forEach(x=>x.classList.remove('active'));
+ btn.classList.add('active');const badge=$('stateBadge');if(badge)badge.innerHTML='<span class="dot"></span> '+stateCopy[btn.dataset.state];if(window.setNovaVisualState)window.setNovaVisualState(btn.dataset.state);});
+function setState(name){
+ const b=[...document.querySelectorAll('.stateBtn')].find(x=>x.dataset.state===name);
+ if(b)b.click();
+ if(window.setNovaVisualState)window.setNovaVisualState(name);
+}
+
+window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stateBadge');if(p)p.dataset.state=name;if(badge)badge.innerHTML='<span class="dot"></span> '+(stateCopy[name]||'NOVA siap menemani');const face=$('.portraitFace'),lip=$('.lip');if(face)face.style.transform=name==='Thinking'?'translateY(-2px) scale(.99)':name==='Happy'?'translateY(-1px) scale(1.015)':'none';if(lip)lip.style.transform=name==='Speaking'?'scaleX(1.18)':name==='Happy'?'scaleX(1.08)':'scaleX(1)';};
 
 let novaBusy=false;
 let novaCooldownUntil=0;
@@ -640,7 +297,7 @@ async function sendNova(message){
  if(novaBusy){$('status').textContent='NOVA masih memproses pesan sebelumnya...';return}
  const wait=Math.ceil((novaCooldownUntil-Date.now())/1000);
  if(wait>0){$('status').textContent='NOVA sedang terkena batas API. Coba lagi sekitar '+wait+' detik lagi.';return}
- novaBusy=true;$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
+ novaBusy=true;setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
  try{
   const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
   const data=await r.json().catch(()=>({}));
@@ -649,8 +306,9 @@ async function sendNova(message){
     throw new Error(data.error||'NOVA sedang terkena rate limit OpenAI. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
-  $('status').textContent=data.reply||JSON.stringify(data,null,2);
- }catch(e){$('status').textContent='Error: '+e.message}
+  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
+  setTimeout(()=>setState('Happy'),900);
+ }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
  finally{novaBusy=false;$('stageSend').disabled=false}
 }
 
@@ -730,30 +388,6 @@ $('refreshComments').onclick=loadHighlights;
  document.getElementById('novaNewChat')?.addEventListener('click',()=>{view('chat');const body=document.querySelector('#view-chat .chatBody');if(body)body.scrollTop=0;});
  document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{view('chat');const input=document.getElementById('stageMessage');if(input){input.value=b.dataset.prompt;input.focus();}}));
 })();
-
-async function loadNovaNotifications(){
- const key=$('key')?.value.trim(), list=$('novaNotifList'), count=$('novaNotifCount');
- if(!key){if(list)list.innerHTML='<div class="novaNotifText">Masukkan Admin Key untuk memuat notifikasi.</div>';return}
- try{
-  const r=await fetch('/api/nova-notifications',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:'{}'});
-  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Notifikasi gagal dimuat');
-  const items=Array.isArray(d.notifications)?d.notifications:[];
-  const seen=JSON.parse(localStorage.getItem('novaNotifSeen')||'[]');
-  const unread=items.filter(x=>!seen.includes(x.id)).length;
-  count.textContent=String(Math.min(unread,99));
-  count.style.display=unread?'grid':'none';
-  list.innerHTML=items.length?items.map(x=>'<div class="novaNotifItem"><div class="novaNotifIcon">'+esc(x.icon||'🔔')+'</div><div><div class="novaNotifTitle">'+esc(x.title)+'</div><div class="novaNotifText">'+esc(x.text)+'</div><div class="novaNotifTime">'+esc(x.time||'')+'</div></div></div>').join(''):'<div class="novaNotifText">Belum ada notifikasi.</div>';
-  window.__novaNotifications=items;
- }catch(e){list.innerHTML='<div class="novaNotifText">Error: '+esc(e.message)+'</div>'}
-}
-$('novaNotifBtn')?.addEventListener('click',()=>{$('novaNotifDrawer').classList.toggle('open');if($('novaNotifDrawer').classList.contains('open'))loadNovaNotifications()});
-$('novaNotifClear')?.addEventListener('click',()=>{
- const items=window.__novaNotifications||[];
- localStorage.setItem('novaNotifSeen',JSON.stringify(items.map(x=>x.id).slice(0,100)));
- loadNovaNotifications();
-});
-setTimeout(loadNovaNotifications,1200);
-setInterval(loadNovaNotifications,60000);
 </script>
 </body>
 </html>
