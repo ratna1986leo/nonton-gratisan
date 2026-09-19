@@ -9,120 +9,93 @@ body{margin:0;background:#09090b;color:#f4f4f5;font-family:system-ui,sans-serif}
 main{max-width:900px;margin:40px auto;padding:24px}
 .card{background:#18181b;border:1px solid #27272a;border-radius:16px;padding:20px;margin-top:16px}
 input,button,textarea{box-sizing:border-box;width:100%;padding:12px;border-radius:10px;border:1px solid #3f3f46;background:#09090b;color:#fff;margin-top:8px}
-button{cursor:pointer;background:#27272a}
-#status{white-space:pre-wrap}
+button{cursor:pointer;background:#27272a}button:disabled{opacity:.55;cursor:wait}
+.muted{color:#a1a1aa;font-size:14px}.comment{border:1px solid #27272a;border-radius:12px;padding:14px;margin-top:10px}.reply{margin-top:10px;padding:10px;border-left:3px solid #71717a;background:#0f0f12;border-radius:8px}
+.badge{display:inline-block;padding:3px 8px;border-radius:999px;background:#27272a;color:#d4d4d8;font-size:11px;margin-left:5px}
 </style>
 </head>
 <body>
 <main>
-<h1>🤖 NOVA Admin v2</h1>
-<p>Mode aman — NOVA chat, tambah film, dan bantuan balas komentar. Perubahan komentar tetap manual/terkonfirmasi.</p>
+<h1>🤖 NOVA Admin</h1>
+<p class="muted">NOVA berjalan otomatis untuk komentar. Dashboard ini hanya untuk melihat highlight. Perbaikan katalog sementara dilewati.</p>
+
 <div class="card">
 <h2 style="margin:0 0 8px">🎬 Tambah Film</h2>
-<p style="color:#a1a1aa;font-size:14px">Cari metadata dari TMDB, cek hasilnya, lalu simpan satu film ke Google Sheet. Link player diisi manual di Google Sheet.</p>
-<label>Judul film</label>
-<input id="filmTitle" placeholder="Contoh: Resident Evil">
+<p class="muted">Cari metadata TMDB, cek hasilnya, lalu simpan metadata ke Google Sheet. Link player tetap diisi manual di Google Sheet.</p>
+<label>Judul film</label><input id="filmTitle" placeholder="Contoh: Resident Evil">
 <input id="filmYear" inputmode="numeric" maxlength="4" placeholder="Tahun (opsional, mis. 2026)">
 <button id="filmLookup">🔎 Cari & Ambil Metadata TMDB</button>
 <div id="filmPreview" class="card" style="display:none;margin-top:12px"></div>
 </div>
+
 <div class="card">
-<h2 style="margin:0 0 8px">💬 Balas Komentar</h2>
-<p style="color:#a1a1aa;font-size:14px">Masukkan Media ID film/series untuk memuat komentar. NOVA bisa membuat draft balasan yang bisa kamu edit sebelum dipakai.</p>
-<input id="commentMediaId" placeholder="Media ID film/series">
-<button id="loadComments">📥 Muat Komentar</button>
-<div id="commentsManager" style="display:none;margin-top:12px"></div>
+<h2 style="margin:0 0 8px">💬 Highlight Komentar</h2>
+<p class="muted">Komentar terbaru dari seluruh web. NOVA membalas otomatis setelah komentar masuk.</p>
+<button id="refreshComments">🔄 Muat Highlight</button>
+<div id="commentsHighlight" style="margin-top:12px">Belum dimuat.</div>
 </div>
+
 <div class="card">
-<label>Admin Key</label>
-<input id="key" type="password" autocomplete="off">
-<label>Pesan</label>
-<textarea id="message" rows="5" placeholder="Contoh: Jelaskan fungsi NOVA..."></textarea>
+<h2 style="margin:0 0 8px">🧠 Chat NOVA</h2>
+<label>Admin Key</label><input id="key" type="password" autocomplete="off">
+<label>Pesan</label><textarea id="message" rows="5" placeholder="Contoh: Jelaskan fungsi NOVA..."></textarea>
 <button id="send">Kirim ke NOVA</button>
-<button id="catalog" style="margin-top:8px">🔎 Cek Katalog (Read-Only)</button>
-<button id="analyze" style="margin-top:8px">🤖 Analisis Katalog (Preview)</button>
-<button id="actions" style="margin-top:8px">🧪 Buat Daftar Perbaikan (Preview)</button>
-<button id="rowPreview" style="margin-top:8px">🔬 Preview Per Baris (Tanpa Menyimpan)</button>
-<button id="selectedPreview" style="margin-top:8px">✅ Pilih Temuan untuk Preview</button>
-<button id="fixPreview" style="margin-top:8px">🧾 Preview Nilai Lama → Usulan Baru</button>
-<div id="catalogResult" class="card" style="display:none;margin-top:12px"></div>
-<div id="analysisResult" class="card" style="display:none;margin-top:12px"></div>
-<div id="actionsResult" class="card" style="display:none;margin-top:12px"></div>
-<div id="rowPreviewResult" class="card" style="display:none;margin-top:12px"></div>
-<div id="selectedPreviewResult" class="card" style="display:none;margin-top:12px"></div>
-<div id="fixPreviewResult" class="card" style="display:none;margin-top:12px"></div>
-<div id="status"></div>
+<div id="status" style="margin-top:10px;white-space:pre-wrap"></div>
 </div>
 </main>
 <script>
-const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
 $('filmLookup').onclick=async()=>{
  const key=$('key').value.trim(),title=$('filmTitle').value.trim(),year=$('filmYear').value.trim(),box=$('filmPreview');
  if(!key||!title){box.style.display='block';box.textContent='Isi Admin Key dan judul film terlebih dahulu.';return}
  box.style.display='block';box.textContent='Mengambil metadata TMDB...';
  try{
   const r=await fetch('/api/nova-add-film',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key,action:'preview',title,year})});
-  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Metadata gagal');
-  const x=d.data||{};
-  const domains=Array.isArray(d.authorizedDomains)?d.authorizedDomains:[];
-  const candidates=Array.isArray(d.candidates)?d.candidates:[];
-  const candHtml=candidates.length?'<div style="margin-top:12px"><b>Hasil lain yang cocok:</b><div>'+candidates.map(c=>'<button class="tmdbCandidate" data-id="'+esc(c.tmdbId)+'" data-type="'+esc(c.tipe)+'" style="text-align:left;margin-top:6px">'+esc(c.judul)+' • '+esc(c.tahun||'-')+' • '+esc(c.tipe)+'</button>').join('')+'</div></div>':'';
-  box.innerHTML='<b>PREVIEW FILM — BELUM DISIMPAN</b><div style="margin-top:10px"><b>'+esc(x.judul)+'</b><br><small>'+esc(x.tipe)+' • '+esc(x.tahun||'-')+' • Rating '+esc(x.rating||'-')+' • '+esc(x.genre||'-')+'</small><p style="font-size:14px;color:#a1a1aa">'+esc(x.deskripsi||'Sinopsis tidak tersedia')+'</p><div style="font-size:13px;color:#a1a1aa">Aktor: '+esc(x.aktor||'Tidak tersedia')+'</div><div style="font-size:13px;color:#a1a1aa;margin-top:6px">Poster: '+esc(x.poster||'Tidak tersedia')+'</div></div><small style="display:block;color:#a1a1aa;margin-top:12px">Link player tidak diisi di sini. Setelah metadata disimpan, isi kolom Link/Player langsung di Google Sheet secara manual.</small><button id="saveFilm" style="margin-top:10px">💾 Simpan Metadata ke Google Sheet</button><div id="saveFilmStatus" style="margin-top:10px"></div>';
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Metadata gagal');
+  const x=d.data||{},candidates=Array.isArray(d.candidates)?d.candidates:[];
+  const candHtml=candidates.length?'<div style="margin-top:12px"><b>Hasil lain:</b><div>'+candidates.map(c=>'<div style="margin-top:6px;color:#a1a1aa">'+esc(c.judul)+' • '+esc(c.tahun||'-')+' • '+esc(c.tipe)+'</div>').join('')+'</div>':'';
+  box.innerHTML='<b>PREVIEW FILM — BELUM DISIMPAN</b><div style="margin-top:10px"><b>'+esc(x.judul)+'</b><br><small>'+esc(x.tipe)+' • '+esc(x.tahun||'-')+' • Rating '+esc(x.rating||'-')+' • '+esc(x.genre||'-')+'</small><p class="muted">'+esc(x.deskripsi||'Sinopsis tidak tersedia')+'</p><div class="muted">Aktor: '+esc(x.aktor||'Tidak tersedia')+'</div><div class="muted" style="margin-top:6px">Poster: '+esc(x.poster||'Tidak tersedia')+'</div></div>'+candHtml+'<small class="muted" style="display:block;margin-top:12px">Link player tidak diisi di sini. Isi kolom Link/Player langsung di Google Sheet.</small><button id="saveFilm" style="margin-top:10px">💾 Simpan Metadata ke Google Sheet</button><div id="saveFilmStatus" style="margin-top:10px"></div>';
   $('saveFilm').onclick=async()=>{
-   const b=$('saveFilm'),st=$('saveFilmStatus');
-   if(!confirm('Simpan metadata film ini ke Google Sheet?'))return;
+   const b=$('saveFilm'),st=$('saveFilmStatus');if(!confirm('Simpan metadata film ini ke Google Sheet?'))return;
    b.disabled=true;st.textContent='Menyimpan metadata...';
    try{
     const r=await fetch('/api/nova-add-film',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key,action:'save',title,year})});
-    const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Gagal menyimpan');
-    st.textContent='✅ Metadata berhasil ditambahkan: '+(d.data?.judul||title)+'. Link player silakan diisi manual di Google Sheet.';
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Gagal menyimpan');
+    st.textContent='✅ Metadata berhasil ditambahkan: '+(d.data?.judul||title)+'. Link player isi manual di Google Sheet.';
    }catch(e){st.textContent='Error: '+e.message;b.disabled=false}
   };
  }catch(e){box.textContent='Error: '+e.message}
 };
-async function loadAdminComments(){
- const key=$('key').value.trim(),mediaId=$('commentMediaId').value.trim(),box=$('commentsManager');
- if(!key||!mediaId){box.style.display='block';box.textContent='Isi Admin Key dan Media ID terlebih dahulu.';return}
- box.style.display='block';box.textContent='Memuat komentar...';
+
+async function loadHighlights(){
+ const key=$('key').value.trim(),box=$('commentsHighlight');
+ if(!key){box.textContent='Isi Admin Key terlebih dahulu.';return}
+ box.textContent='Memuat highlight komentar...';
  try{
-  const r=await fetch('/api/nova-comments',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'list',mediaId})});
+  const r=await fetch('/api/nova-comments',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'recent',limit:40})});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Komentar gagal dimuat');
   const comments=Array.isArray(d.comments)?d.comments:[];
-  if(!comments.length){box.textContent='Belum ada komentar untuk media ID ini.';return}
-  box.innerHTML=comments.map((x,i)=>'<div class="card" style="margin-top:10px;padding:14px"><div><b>'+esc(x.name||'Anonim')+'</b> <small style="color:#71717a">'+esc(x.date||'')+'</small></div><div style="margin-top:8px;color:#d4d4d8;white-space:pre-wrap">'+esc(x.text||'')+'</div><button class="draftReply" data-i="'+i+'" style="margin-top:10px">🤖 Balas Otomatis</button><textarea id="reply_'+i+'" rows="3" placeholder="Draft balasan akan muncul di sini..." style="margin-top:8px"></textarea><button class="copyReply" data-i="'+i+'" style="margin-top:8px">📋 Salin Balasan</button><div id="replyStatus_'+i+'" style="margin-top:8px;color:#a1a1aa"></div></div>').join('');
-  box.querySelectorAll('.draftReply').forEach(btn=>btn.onclick=async()=>{
-   const i=Number(btn.dataset.i),x=comments[i],st=$('replyStatus_'+i);btn.disabled=true;st.textContent='NOVA sedang membalas komentar...';
-   try{
-    const r=await fetch('/api/nova-comments',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'auto_reply',comment:{mediaId,title:x.title,name:x.name,text:x.text,commentId:x.commentId||x.id||''}})});
-    const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Draft gagal');
-    $('reply_'+i).value=d.reply||'';st.textContent='✅ NOVA sudah mengirim balasan langsung.';
-   }catch(e){st.textContent='Error: '+e.message}
-   finally{btn.disabled=false}
-  });
-  box.querySelectorAll('.copyReply').forEach(btn=>btn.onclick=async()=>{
-   const i=Number(btn.dataset.i),txt=$('reply_'+i).value.trim(),st=$('replyStatus_'+i);
-   if(!txt){st.textContent='Draft balasan masih kosong.';return}
-   try{await navigator.clipboard.writeText(txt);st.textContent='✅ Balasan disalin ke clipboard.'}catch{st.textContent='Salin manual dari kotak balasan.'}
-  });
+  if(!comments.length){box.textContent='Belum ada komentar.';return}
+  box.innerHTML=comments.map(x=>{
+   const replied=String(x.reply||'').trim();
+   return '<div class="comment"><div><b>'+esc(x.name||'Anonim')+'</b><span class="badge">'+(replied?'Sudah dibalas':'Menunggu balasan')+'</span></div><div class="muted" style="margin-top:4px">'+esc(x.title||'')+' • '+esc(x.date||'')+'</div><div style="margin-top:8px;white-space:pre-wrap">'+esc(x.text||'')+'</div>'+(replied?'<div class="reply"><b>🤖 NOVA</b><div style="margin-top:5px;white-space:pre-wrap">'+esc(replied)+'</div></div>':'')+'</div>';
+  }).join('');
  }catch(e){box.textContent='Error: '+e.message}
 }
-$('loadComments').onclick=loadAdminComments;
+$('refreshComments').onclick=loadHighlights;
 $('send').onclick=async()=>{
- const key=$('key').value.trim(), message=$('message').value.trim();
+ const key=$('key').value.trim(),message=$('message').value.trim();
  if(!key||!message){$('status').textContent='Isi Admin Key dan pesan.';return}
  $('send').disabled=true;$('status').textContent='Memproses...';
  try{
   const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(data.error||'Request gagal');
+  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Request gagal');
   $('status').textContent=data.reply||JSON.stringify(data,null,2);
  }catch(e){$('status').textContent='Error: '+e.message}
  finally{$('send').disabled=false}
 };
-$('catalog').onclick=async()=>{const box=$('catalogResult');box.style.display='block';box.textContent='Membaca katalog...';try{const r=await fetch('/api/nova-catalog');const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Katalog gagal dibaca');const s=d.stats||{};box.textContent='Katalog berhasil dibaca (READ-ONLY)\\n\\nTotal: '+s.total+'\\nJudul terisi: '+s.withTitle+'\\nDuplikat judul: '+s.duplicates+'\\nFilm: '+(s.movies??'tidak terdeteksi')+'\\nSeries: '+(s.series??'tidak terdeteksi')+'\\n\\nTidak ada data yang diubah.';}catch(e){box.textContent='Error: '+e.message}};
-$('analyze').onclick=async()=>{const key=$('key').value.trim(),box=$('analysisResult');if(!key){box.style.display='block';box.textContent='Isi Admin Key terlebih dahulu.';return}box.style.display='block';box.textContent='NOVA sedang menganalisis katalog (READ-ONLY)...';try{const r=await fetch('/api/nova-catalog-analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Analisis gagal');box.textContent=d.analysis||'Tidak ada hasil analisis.';}catch(e){box.textContent='Error: '+e.message}};
-$('actions').onclick=async()=>{const key=$('key').value.trim(),box=$('actionsResult');if(!key){box.style.display='block';box.textContent='Isi Admin Key terlebih dahulu.';return}box.style.display='block';box.textContent='Menyusun daftar perbaikan (PREVIEW)...';try{const r=await fetch('/api/nova-catalog-actions',{method:'POST',headers:{'x-nova-key':key}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Preview gagal');box.textContent=d.preview||'Tidak ada tindakan yang terdeteksi.';}catch(e){box.textContent='Error: '+e.message}};
-$('rowPreview').onclick=async()=>{const key=$('key').value.trim(),box=$('rowPreviewResult');if(!key){box.style.display='block';box.textContent='Isi Admin Key terlebih dahulu.';return}box.style.display='block';box.textContent='Membaca temuan per baris (READ-ONLY)...';try{const r=await fetch('/api/nova-catalog-actions',{method:'POST',headers:{'x-nova-key':key}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Preview gagal');const issues=d.issues||[];const rows=issues.slice(0,200).map(x=>'<tr><td>'+x.row+'</td><td>'+x.type+'</td><td>'+x.message+'</td><td>'+x.action+'</td></tr>').join('');box.innerHTML='<b>PREVIEW PER BARIS — READ-ONLY</b><br><small>Total temuan yang ditampilkan: '+issues.length+' (maks. 200). Tidak ada perubahan ke Google Sheet.</small><div style="overflow:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th>Baris</th><th>Kategori</th><th>Temuan</th><th>Rencana</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}catch(e){box.textContent='Error: '+e.message}};
-$('selectedPreview').onclick=async()=>{const key=$('key').value.trim(),box=$('selectedPreviewResult');if(!key){box.style.display='block';box.textContent='Isi Admin Key terlebih dahulu.';return}box.style.display='block';box.textContent='Memuat temuan yang bisa dipilih (READ-ONLY)...';try{const r=await fetch('/api/nova-catalog-actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Preview gagal');const issues=d.issues||[];const safe=issues.filter(x=>x.type!=='rating-check');const rows=safe.slice(0,120).map((x,i)=>'<tr><td><input type="checkbox" data-i="'+i+'"></td><td>'+x.row+'</td><td>'+x.type+'</td><td>'+x.message+'</td><td>'+x.action+'</td></tr>').join('');box.innerHTML='<b>PILIH TEMUAN — READ-ONLY</b><br><small>Centang hanya temuan yang ingin disiapkan untuk tahap review berikutnya. Belum ada perubahan ke Sheet.</small><div style="overflow:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:14px"><thead><tr><th>Pilih</th><th>Baris</th><th>Kategori</th><th>Temuan</th><th>Rencana</th></tr></thead><tbody>'+rows+'</tbody></table></div><button id="makePreview" style="margin-top:10px">Buat Preview Terpilih</button><div id="chosen" style="margin-top:10px;white-space:pre-wrap"></div>';const chosen=()=>[...box.querySelectorAll('input[data-i]:checked')].map(el=>safe[Number(el.dataset.i)]);box.querySelector('#makePreview').onclick=()=>{const items=chosen();box.querySelector('#chosen').textContent=items.length?items.map(x=>'Baris '+x.row+' ['+x.type+'] — '+x.message+'\nRencana: '+x.action).join('\n\n'):'Belum ada temuan dipilih.'};}catch(e){box.textContent='Error: '+e.message}};$('fixPreview').onclick=async()=>{const key=$('key').value.trim(),box=$('fixPreviewResult');if(!key){box.style.display='block';box.textContent='Isi Admin Key terlebih dahulu.';return}box.style.display='block';box.textContent='Membuat preview nilai lama dan usulan (READ-ONLY)...';try{const r0=await fetch('/api/nova-catalog-actions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key})});const d0=await r0.json().catch(()=>({}));if(!r0.ok)throw new Error(d0.error||'Daftar temuan gagal');const issues=(d0.issues||[]).filter(x=>x.type!=='rating-check').slice(0,50);if(!issues.length){box.textContent='Tidak ada temuan yang bisa dipreview.';return}const r=await fetch('/api/nova-catalog-fix-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key,selections:issues})});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Preview nilai gagal');const rows=(d.proposals||[]).map(x=>'<tr><td>'+x.row+'</td><td>'+x.type+'</td><td>'+esc(x.field)+'</td><td>'+esc(x.oldValue||'(kosong)')+'</td><td>'+esc(x.proposed)+'</td><td>'+x.status+'</td></tr>').join('');box.innerHTML='<b>PREVIEW NILAI LAMA → USULAN BARU — READ-ONLY</b><br><small>Menampilkan maksimal 50 temuan. Ini hanya usulan; tidak ada perubahan ke Google Sheet.</small><div style="overflow:auto;margin-top:12px"><table style="width:100%;border-collapse:collapse;font-size:13px"><thead><tr><th>Baris</th><th>Kategori</th><th>Field</th><th>Nilai sekarang</th><th>Usulan</th><th>Status</th></tr></thead><tbody>'+rows+'</tbody></table></div>'; }catch(e){box.textContent='Error: '+e.message}};</script>
+</script>
 </body>
 </html>
