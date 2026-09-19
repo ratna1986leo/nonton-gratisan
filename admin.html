@@ -163,6 +163,15 @@ button.action{background:#202123;color:#fff;border-color:#202123}
  .novaStateDock{display:none}
 }
 
+
+/* NOVA cinematic photo avatar v5 — based on the approved visual direction */
+.novaHero .novaPortrait{position:relative;width:min(430px,62vw);height:min(610px,78vh);min-height:480px;border-radius:42% 42% 22% 22%;overflow:hidden;isolation:isolate;filter:drop-shadow(0 28px 60px rgba(0,0,0,.55));background:#0b1020;box-shadow:0 0 70px rgba(109,93,252,.18),0 24px 55px rgba(0,0,0,.35)}
+.novaHero .novaPortrait::before{content:"";position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(180deg,rgba(8,10,24,.02) 45%,rgba(8,10,24,.58) 100%),linear-gradient(90deg,rgba(109,93,252,.10),transparent 42%,rgba(217,70,239,.08))}
+.novaHero .novaPortrait::after{content:"NOVA";position:absolute;z-index:4;left:50%;bottom:14px;transform:translateX(-50%);padding:6px 12px;border:1px solid rgba(98,232,255,.25);border-radius:999px;background:rgba(7,10,24,.68);backdrop-filter:blur(12px);color:#d8fbff;font-size:10px;font-weight:700;letter-spacing:.24em}
+.novaHero .novaPortrait img{width:100%;height:100%;display:block;object-fit:cover;object-position:50% 10%;filter:saturate(1.03) contrast(1.02) brightness(.98);transform:scale(1.015)}
+@media(max-width:900px){.novaHero .novaPortrait{width:340px;height:500px;min-height:0}}
+@media(max-width:700px){.novaHero .novaPortrait{width:240px;height:315px;min-height:0;border-radius:42% 42% 20% 20%}.novaHero .novaPortrait img{object-position:50% 8%}.novaHero .novaPortrait::after{bottom:9px;font-size:8px;padding:5px 9px}.novaHero .novaVisual{min-height:350px}}
+
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
@@ -306,7 +315,7 @@ opacity:.9}
       <div class="novaHero"><div class="novaVisual">
   <div class="novaRoom"></div><div class="novaWindow"><div class="novaCity"></div></div>
   <div class="novaVisualText">NOVA ♡<small>Film bukan sekadar hiburan,<br>tapi juga tentang perasaan.</small></div>
-  <div class="novaPortrait" id="novaPortrait" aria-hidden="true"></div>
+  <div class="novaPortrait" id="novaPortrait" aria-label="NOVA cinematic avatar"><img src="/assets/nova-avatar.jpg" alt="NOVA AI assistant avatar" loading="eager"></div>
   <div class="novaCore" aria-label="NOVA AI presence" hidden>
     <div class="coreRings"><i></i><i></i><i></i></div>
     <div class="coreOrbit orbitA"></div><div class="coreOrbit orbitB"></div>
