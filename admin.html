@@ -38,7 +38,7 @@ button{cursor:pointer}
 .avatarSide{position:relative;display:flex;align-items:center;justify-content:center;min-height:620px;overflow:hidden}
 .neonText{position:absolute;top:8%;left:8%;font-size:clamp(18px,2.2vw,32px);font-weight:700;line-height:1.2;color:#fff;text-shadow:0 0 20px rgba(255,107,214,.65);transform:rotate(-3deg);opacity:.9}
 .neonText span{display:block;color:#ff9be6;font-size:.58em;font-weight:500;margin-top:8px}
-.nova3dStage{position:relative;width:min(620px,82vw);height:min(620px,68vh);min-height:500px;display:grid;place-items:center;filter:drop-shadow(0 35px 70px rgba(0,0,0,.55))}
+.nova3dStage{position:relative;width:min(430px,68vw);height:min(600px,72vh);min-height:520px;display:grid;place-items:center;filter:drop-shadow(0 35px 70px rgba(0,0,0,.55))}
 #novaCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .novaOrb{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:44%;height:16%;border-radius:50%;background:radial-gradient(ellipse,rgba(98,232,255,.22),rgba(154,124,255,.09) 45%,transparent 72%);filter:blur(5px);box-shadow:0 0 55px rgba(98,232,255,.18)}
 .novaTag{position:absolute;right:2%;top:15%;padding:10px 13px;border:1px solid rgba(98,232,255,.24);border-radius:14px;background:rgba(7,10,24,.48);backdrop-filter:blur(16px);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#bff8ff;box-shadow:0 0 30px rgba(98,232,255,.08)}
@@ -47,7 +47,7 @@ button{cursor:pointer}
 .novaFaceStatus strong{display:block;color:#fff;font-size:12px;letter-spacing:.04em;margin-top:4px}
 .novaHint{position:absolute;left:2%;bottom:13%;max-width:180px;padding:11px 13px;border:1px solid rgba(255,107,214,.18);border-radius:16px;background:rgba(7,10,24,.42);backdrop-filter:blur(15px);font-size:11px;line-height:1.45;color:#d8d5e7}
 .novaHint strong{color:#ffb2ea}
-@media(max-width:600px){.nova3dStage{width:100%;height:430px;min-height:390px}.novaTag{right:0;top:9%;transform:scale(.88);transform-origin:right top}.novaHint{left:0;bottom:8%;transform:scale(.9);transform-origin:left bottom}}
+@media(max-width:600px){.nova3dStage{width:260px;height:360px;min-height:360px}.novaTag{right:0;top:9%;transform:scale(.88);transform-origin:right top}.novaHint{left:0;bottom:8%;transform:scale(.9);transform-origin:left bottom}}
 .avatarWrap{position:relative;width:min(500px,74%);aspect-ratio:4/5;display:grid;place-items:center;filter:drop-shadow(0 28px 55px rgba(0,0,0,.55));animation:float 5s ease-in-out infinite}
 .halo{position:absolute;width:78%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(160,129,255,.38);box-shadow:0 0 70px rgba(139,93,255,.22),inset 0 0 60px rgba(139,93,255,.10);animation:pulse 3.5s ease-in-out infinite}
 .halo:before,.halo:after{content:"";position:absolute;inset:8%;border-radius:50%;border:1px dashed rgba(98,232,255,.23);animation:spin 16s linear infinite}
@@ -98,7 +98,7 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
   .avatarSide{min-height:300px;height:300px;border-radius:15px;background:radial-gradient(circle at 50% 45%,rgba(113,81,255,.13),transparent 58%)}
   .neonText{top:8px;left:10px;font-size:13px;transform:none;z-index:4}
   .neonText span{display:none}
-  .nova3dStage{width:100%;height:295px;min-height:295px}
+  .nova3dStage{width:245px;height:330px;min-height:330px}
   .novaTag{right:5px;top:12px;transform:scale(.76);transform-origin:top right}
   .novaHint{display:none}
   .novaFaceStatus{top:59%;font-size:7px;transform:translate(-50%,-50%) scale(.85)}
@@ -158,6 +158,19 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
 }
 @media(min-width:701px){.appOnly{display:none}}
 
+/* NOVA reference-style portrait treatment */
+.nova3dStage:before{content:"";position:absolute;inset:8% 9% 7%;border-radius:48% 48% 34% 34%;background:
+ radial-gradient(circle at 50% 28%,rgba(255,205,218,.13),transparent 23%),
+ radial-gradient(circle at 20% 42%,rgba(255,107,214,.12),transparent 20%),
+ radial-gradient(circle at 82% 52%,rgba(98,232,255,.10),transparent 19%);
+ box-shadow:inset 0 0 70px rgba(154,124,255,.10),0 0 80px rgba(98,232,255,.08);
+ pointer-events:none;z-index:0}
+.novaPortraitFrame{position:absolute;inset:7% 8% 5%;border:1px solid rgba(255,255,255,.12);border-radius:46% 46% 32% 32%;background:linear-gradient(180deg,rgba(255,255,255,.035),rgba(154,124,255,.025));box-shadow:0 25px 70px rgba(0,0,0,.28),inset 0 0 35px rgba(255,107,214,.06);pointer-events:none;z-index:1}
+#novaCanvas{z-index:2}
+.novaOrb{z-index:3}
+.novaTag,.novaFaceStatus,.novaHint,.stateBadge{z-index:4}
+@media(max-width:700px){.novaPortraitFrame{inset:6% 7% 4%}.nova3dStage:before{inset:7% 8% 5%}}
+
 </style>
 </head>
 <body>
@@ -174,7 +187,7 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
       <div class="neonText">Halo Bro... ♡<span>Ada yang bisa NOVA bantu hari ini?</span></div>
       <div class="nova3dStage">
         <div class="halo"></div>
-        <canvas id="novaCanvas" aria-label="NOVA 3D avatar"></canvas>
+        <div class="novaPortraitFrame" aria-hidden="true"></div><canvas id="novaCanvas" aria-label="NOVA 3D avatar"></canvas>
         <div class="novaOrb"></div>
         <div class="novaTag">NOVA <b id="novaMood">IDLE</b></div>
         <div class="novaFaceStatus">AI PRESENCE<strong id="novaFaceState">CALM</strong></div>
@@ -276,6 +289,8 @@ const hair=new THREE.Mesh(
 );
 hair.scale.set(1.03,1.06,.9); hair.position.set(0,.72,-.06); root.add(hair);
 
+const hairBack=new THREE.Mesh(new THREE.SphereGeometry(1.22,48,40),new THREE.MeshPhysicalMaterial({color:0x110c16,roughness:.3,metalness:.1,clearcoat:.45})); hairBack.scale.set(1.02,1.12,.84); hairBack.position.set(0,.55,-.28); root.add(hairBack);
+
 const hairFringe=new THREE.Mesh(
   new THREE.SphereGeometry(.72,40,32),
   new THREE.MeshPhysicalMaterial({color:0x211329,roughness:.24,metalness:.12,clearcoat:.55})
@@ -289,10 +304,45 @@ const shoulders=new THREE.Mesh(new THREE.SphereGeometry(1.65,48,32),new THREE.Me
 shoulders.scale.set(1,.5,.62); shoulders.position.y=-.95; root.add(shoulders);
 
 function eye(x){
-  const e=new THREE.Mesh(new THREE.SphereGeometry(.12,24,16),new THREE.MeshStandardMaterial({color:0x14101b,emissive:0x62e8ff,emissiveIntensity:1.2}));
-  e.scale.set(1,.48,.45); e.position.set(x,.64,.9); root.add(e); return e;
+  const white=new THREE.Mesh(new THREE.SphereGeometry(.17,32,20),new THREE.MeshPhysicalMaterial({color:0xfff8f8,roughness:.28,clearcoat:.3}));
+  white.scale.set(1.35,.62,.48); white.position.set(x,.66,.86); root.add(white);
+  const iris=new THREE.Mesh(new THREE.SphereGeometry(.072,24,18),new THREE.MeshPhysicalMaterial({color:0x5b3b2f,roughness:.2,metalness:.05,clearcoat:.5,emissive:0x1b0b12,emissiveIntensity:.15}));
+  iris.scale.set(1,.82,.48); iris.position.set(x,.65,.99); root.add(iris);
+  const pupil=new THREE.Mesh(new THREE.SphereGeometry(.034,18,14),new THREE.MeshBasicMaterial({color:0x120d16}));
+  pupil.position.set(x,.65,1.025); root.add(pupil);
+  const shine=new THREE.Mesh(new THREE.SphereGeometry(.014,12,10),new THREE.MeshBasicMaterial({color:0xffffff}));
+  shine.position.set(x-.018,.69,1.04); root.add(shine);
+  return {white,iris,pupil};
 }
 const eyeL=eye(-.39),eyeR=eye(.39);
+
+const nose=new THREE.Mesh(new THREE.SphereGeometry(.12,24,18),new THREE.MeshPhysicalMaterial({color:0xd99da1,roughness:.48,clearcoat:.25}));
+nose.scale.set(.62,1.35,.62); nose.position.set(0,.43,.91); root.add(nose);
+
+const noseTip=new THREE.Mesh(new THREE.SphereGeometry(.075,20,16),new THREE.MeshPhysicalMaterial({color:0xe2a6aa,roughness:.42,clearcoat:.3}));
+noseTip.scale.set(1,.72,.72); noseTip.position.set(0,.36,.98); root.add(noseTip);
+
+function lip(y,scaleY,color){
+  const m=new THREE.Mesh(new THREE.TorusGeometry(.14,.028,12,32,Math.PI),new THREE.MeshPhysicalMaterial({color,roughness:.35,clearcoat:.25}));
+  m.position.set(0,y,.96); m.rotation.z=Math.PI; m.scale.set(1,scaleY,1); root.add(m); return m;
+}
+const upperLip=lip(.235,.45,0x9b5068), lowerLip=lip(.205,.62,0xc96b82);
+
+const cheekL=new THREE.Mesh(new THREE.SphereGeometry(.17,24,18),new THREE.MeshBasicMaterial({color:0xff7f9d,transparent:true,opacity:.12}));
+cheekL.scale.set(1.3,.7,.25); cheekL.position.set(-.46,.35,.88); root.add(cheekL);
+const cheekR=cheekL.clone(); cheekR.position.x=.46; root.add(cheekR);
+
+function ear(x){
+  const e=new THREE.Mesh(new THREE.TorusGeometry(.16,.035,12,28,Math.PI*1.25),new THREE.MeshPhysicalMaterial({color:0xd69ca2,roughness:.5}));
+  e.position.set(x,.48,.3); e.rotation.y=Math.PI/2; root.add(e); return e;
+}
+ear(-1.02); ear(1.02);
+
+function lock(x,y,scale,rot){
+  const l=new THREE.Mesh(new THREE.SphereGeometry(.22,28,22),new THREE.MeshPhysicalMaterial({color:0x17101a,roughness:.24,metalness:.12,clearcoat:.55}));
+  l.scale.set(scale,.95,1.05); l.position.set(x,y,.35); l.rotation.z=rot; root.add(l); return l;
+}
+lock(-.92,.62,.72,-.12); lock(.92,.62,.72,.12);
 
 function brow(x,rot){
   const b=new THREE.Mesh(new THREE.BoxGeometry(.32,.035,.035),new THREE.MeshStandardMaterial({color:0x241426,roughness:.4}));
