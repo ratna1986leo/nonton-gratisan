@@ -36,7 +36,7 @@ function catalogContext(text){
     tipe:typeKey?o[typeKey]||'':'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
-  const items=allItems.slice(0,250);
+  const items=allItems.slice(0,80);
   return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
 }
 
@@ -61,7 +61,7 @@ async function loadTMDBDiscovery(){
     if(!id||!title||seen.has(key)) return null;
     seen.add(key);
     return {tmdbId:x.id,judul:title,tahun:String(x.release_date||x.first_air_date||'').slice(0,4),tipe:type};
-  }).filter(Boolean).slice(0,100);
+  }).filter(Boolean).slice(0,60);
   return {available:true,source:'TMDB',items};
 }
 
@@ -102,7 +102,7 @@ export default async function handler(req,res){
     const tmdbComparison=tmdb.available ? {
       totalTMDB:tmdb.items.length,
       sudahTercatatDiPustaka:tmdb.items.filter(x=>libraryTitles.has(normalizeTitle(x.judul))).length,
-      belumTercatatDiPustaka:tmdb.items.filter(x=>!libraryTitles.has(normalizeTitle(x.judul))).map(x=>x.judul).slice(0,100)
+      belumTercatatDiPustaka:tmdb.items.filter(x=>!libraryTitles.has(normalizeTitle(x.judul))).map(x=>x.judul).slice(0,60)
     } : null;
     const tmdbBlock=tmdb.available
       ? JSON.stringify({...tmdb,comparison:tmdbComparison})
@@ -147,7 +147,8 @@ export default async function handler(req,res){
         model:MODEL,
         store:false,
         instructions,
-        input:message
+        input:message,
+        max_output_tokens:700
       })
     });
     const data=await r.json();
