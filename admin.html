@@ -57,6 +57,21 @@ button{cursor:pointer}
  .novaPhotoAvatar{object-position:50% 8%}
  .novaTag{top:8px!important;right:-8px!important}
 }
+/* NOVA function-first mode: photo/background, no avatar UI */
+.avatarSide{display:none!important}
+.stageInner{display:block!important;min-height:0!important;padding:18px!important}
+.stage{min-height:680px!important;background:
+linear-gradient(90deg,rgba(3,5,16,.84),rgba(4,7,18,.70)),
+radial-gradient(circle at 72% 30%,rgba(154,124,255,.20),transparent 34%),
+linear-gradient(145deg,#070914,#10152d)!important}
+.stage:before{opacity:.18}
+.chat{width:min(760px,100%);min-height:640px;margin:0 auto;border-radius:24px}
+@media(max-width:700px){
+  .stage{min-height:0!important}
+  .stageInner{padding:8px!important}
+  .chat{width:100%;height:calc(100vh - 150px);min-height:520px;border-radius:16px}
+}
+
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
@@ -278,11 +293,11 @@ const stateCopy={
 };
 document.querySelectorAll('.stateBtn').forEach(btn=>btn.onclick=()=>{
  document.querySelectorAll('.stateBtn').forEach(x=>x.classList.remove('active'));
- btn.classList.add('active');const badge=$('stateBadge');if(badge)badge.innerHTML='<span class="dot"></span> '+stateCopy[btn.dataset.state];if(window.setNovaVisualState)window.setNovaVisualState(btn.dataset.state);});
+ btn.classList.add('active');const badge=$('stateBadge');if(badge)badge.innerHTML='<span class="dot"></span> '+stateCopy[btn.dataset.state];});
 function setState(name){
  const b=[...document.querySelectorAll('.stateBtn')].find(x=>x.dataset.state===name);
  if(b)b.click();
- if(window.setNovaVisualState)window.setNovaVisualState(name);
+
 }
 
 window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stateBadge');if(p)p.dataset.state=name;if(badge)badge.innerHTML='<span class="dot"></span> '+(stateCopy[name]||'NOVA siap menemani');const face=$('.portraitFace'),lip=$('.lip');if(face)face.style.transform=name==='Thinking'?'translateY(-2px) scale(.99)':name==='Happy'?'translateY(-1px) scale(1.015)':'none';if(lip)lip.style.transform=name==='Speaking'?'scaleX(1.18)':name==='Happy'?'scaleX(1.08)':'scaleX(1)';};
