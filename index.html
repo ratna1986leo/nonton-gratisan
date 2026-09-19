@@ -2904,7 +2904,7 @@
             }
         }
 
-        function loadCommentsOnline(mediaId) {
+        async function loadCommentsOnline(mediaId) {
             const list = document.getElementById('comments-list');
             if (!list || !mediaId) return;
 
@@ -2918,65 +2918,35 @@
             list.innerHTML = `<p class="text-xs sm:text-sm text-zinc-500">Memuat komentar online...</p>`;
             renderPendingComments(mediaId);
 
-            const callbackName = `rf21CommentsCallback_${Date.now()}_${++commentsJsonpCounter}`;
-            const script = document.createElement('script');
-            script.async = true;
-            script.defer = false;
-            script.referrerPolicy = 'no-referrer';
+            try {
+                const url = new URL(endpoint, window.location.origin);
+                url.searchParams.set('action', 'list');
+                url.searchParams.set('mediaId', String(mediaId));
+                url.searchParams.set('_', String(Date.now()));
 
-            let settled = false;
-            let loaded = false;
-            let timeoutId = null;
+                const response = await fetch(url.toString(), {
+                    method: 'GET',
+                    headers: { 'accept': 'application/json' },
+                    cache: 'no-store'
+                });
 
-            const cleanup = () => {
-                if (settled) return;
-                settled = true;
-                if (timeoutId) clearTimeout(timeoutId);
-                try { delete window[callbackName]; } catch (e) { window[callbackName] = undefined; }
-                script.remove();
-            };
-
-            window[callbackName] = (data) => {
-                if (settled) return;
-                if (data && data.ok === true) {
-                    cleanup();
-                    renderOnlineComments(Array.isArray(data.comments) ? data.comments : []);
-                    renderPendingComments(mediaId);
-                    syncCommentQueue();
-                    return;
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
                 }
 
-                const message = escapeHtml(data?.error || 'Kesalahan server tidak diketahui.');
-                cleanup();
-                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Komentar gagal dimuat: ${message}</p>`;
+                const data = await response.json();
+                if (!data || data.ok !== true) {
+                    throw new Error(data?.error || 'Respons server tidak valid.');
+                }
+
+                renderOnlineComments(Array.isArray(data.comments) ? data.comments : []);
                 renderPendingComments(mediaId);
-            };
-
-            script.onload = () => { loaded = true; };
-            script.onerror = () => {
-                cleanup();
-                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Server komentar tidak dapat dihubungi. Komentar baru tetap disimpan dan akan dicoba lagi otomatis.</p>`;
+                syncCommentQueue();
+            } catch (error) {
+                console.warn('Komentar online gagal dimuat:', error);
+                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Komentar online belum dapat dimuat. Komentar baru tetap disimpan dan akan dicoba lagi otomatis.</p>`;
                 renderPendingComments(mediaId);
-            };
-
-            const url = new URL(endpoint);
-            url.searchParams.set('action', 'list');
-            url.searchParams.set('mediaId', String(mediaId));
-            url.searchParams.set('callback', callbackName);
-            url.searchParams.set('_', String(Date.now()));
-            script.src = url.toString();
-
-            timeoutId = setTimeout(() => {
-                if (settled) return;
-                cleanup();
-                const reason = loaded
-                    ? 'Server komentar merespons tetapi callback tidak diterima.'
-                    : 'Server komentar tidak merespons tepat waktu.';
-                list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">Komentar online belum dapat dimuat. ${reason} Komentar baru tetap tersimpan.</p>`;
-                renderPendingComments(mediaId);
-            }, 30000);
-
-            document.body.appendChild(script);
+            }
         }
 
         async function sendQueuedComment(comment) {
