@@ -40,6 +40,43 @@ function catalogContext(text){
   return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
 }
 
+async function searchTMDB(query, type='all'){
+  if(!TMDB_API_KEY) return {available:false,source:'TMDB',query,type,items:[],error:'TMDB_API_KEY belum disetel'};
+  const clean=String(query||'').trim();
+  if(!clean) return {available:false,source:'TMDB',query:'',type,items:[],error:'Query TMDB kosong'};
+  const endpoint=type==='series'?'tv':type==='film'?'movie':'multi';
+  const url='https://api.themoviedb.org/3/search/'+endpoint+'?language=id-ID&include_adult=false&page=1&api_key='+encodeURIComponent(TMDB_API_KEY)+'&query='+encodeURIComponent(clean);
+  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
+  if(!r.ok) throw new Error('TMDB search HTTP '+r.status);
+  const data=await r.json();
+  const items=(Array.isArray(data?.results)?data.results:[]).filter(x=>{
+    if(endpoint==='tv') return true;
+    if(endpoint==='movie') return true;
+    return x.media_type==='movie'||x.media_type==='tv';
+  }).slice(0,8).map(x=>({
+    tmdbId:x.id,
+    tipe:(x.media_type==='tv'||endpoint==='tv')?'Series':'Film',
+    judul:(x.media_type==='tv'||endpoint==='tv')?(x.name||''):(x.title||''),
+    tahun:String((x.media_type==='tv'||endpoint==='tv')?x.first_air_date:x.release_date||'').slice(0,4),
+    rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
+    poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
+    deskripsi:x.overview||''
+  }));
+  return {available:true,source:'TMDB',query:clean,type,totalResults:Number(data.total_results||items.length),items};
+}
+
+function extractTMDBSearch(message){
+  const m=String(message||'').trim();
+  const patterns=[
+    /(?:cari|carikan|search|temukan|tolong cari)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)(?:\s+di\s+tmdb|\s+di\s+the movie database)?$/i,
+    /(?:film|series|serial|tv)\s+(.+?)\s+(?:di\s+tmdb|di\s+the movie database)$/i
+  ];
+  for(const re of patterns){const hit=m.match(re);if(hit?.[1]){
+    let q=hit[1].replace(/\s+(?:dong|bro|ya|please)$/i,'').trim();
+    if(q.length>=2) return {query:q,type:/\b(series|serial|tv)\b/i.test(m)?'series':/\b(film|movie)\b/i.test(m)?'film':'all'};
+  }}
+  return null;
+}
 async function loadTMDBDiscovery(){
   if(!TMDB_API_KEY) return {available:false,source:'TMDB',items:[]};
   const urls=[
@@ -92,7 +129,7 @@ export default async function handler(req,res){
       ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
       : JSON.stringify(catalog);
     let tmdb={available:false,source:'TMDB',items:[]};
-    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message);
+    const tmdbSearch=extractTMDBSearch(message);\n    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
     if(wantsTMDB){
       try{ tmdb=await loadTMDBDiscovery(); }
       catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
@@ -127,7 +164,7 @@ export default async function handler(req,res){
       'Jika ditanya film yang bisa diputar, gunakan hanya bisaDiputar=true.',
       'Jika ditanya film TMDB yang belum tercatat di pustaka, gunakan comparison.belumTercatatDiPustaka. Jangan menyebutnya sebagai film yang belum bisa diputar; itu dua hal yang berbeda.',
       'Jika ditanya film yang belum bisa diputar, gunakan data PUSTAKA FILM dengan bisaDiputar=false. Jangan memakai daftar TMDB sebagai pengganti.',
-      'Jika ditanya perbandingan TMDB vs pustaka, jelaskan jumlah TMDB yang dimuat, jumlah yang sudah tercatat di pustaka, dan daftar yang belum tercatat jika tersedia.',
+      'Jika pengguna meminta mencari film atau series di TMDB, gunakan hasil DATA TMDB yang dimuat dari pencarian. Sebutkan judul, tipe (Film/Series), tahun, rating jika tersedia, dan TMDB ID. Jangan menyebut hasil pencarian TMDB sebagai data pustaka atau sebagai film yang pasti bisa diputar.',\n      'Jika pencarian TMDB menghasilkan beberapa kandidat, tampilkan beberapa kandidat yang paling relevan dan biarkan pengguna memilih berdasarkan judul/tahun; jangan mengarang kandidat.',\n      'Jika ditanya perbandingan TMDB vs pustaka, jelaskan jumlah TMDB yang dimuat, jumlah yang sudah tercatat di pustaka, dan daftar yang belum tercatat jika tersedia.',
       'Jika diminta jumlah katalog, gunakan total/playable/unplayable dari PUSTAKA FILM, bukan jumlah item yang dikirim dalam array (array dibatasi untuk menjaga ukuran request).',
       'Jangan menganggap film ada di TMDB berarti otomatis bisa diputar.',
       'Jangan mengklaim URL yang terisi pasti dapat diputar; data hanya menunjukkan player tercatat.',
