@@ -18,6 +18,14 @@ button{cursor:pointer;background:#27272a}
 <h1>🤖 NOVA Admin v2</h1>
 <p>Mode aman — hanya AI chat. Katalog, TMDB, player, dan Google Sheet tidak disentuh.</p>
 <div class="card">
+<h2 style="margin:0 0 8px">🎬 Tambah Film</h2>
+<p style="color:#a1a1aa;font-size:14px">Cari metadata dari TMDB, cek hasilnya, lalu simpan satu film ke Google Sheet. Link player wajib berasal dari domain yang kamu izinkan.</p>
+<label>Judul film</label>
+<input id="filmTitle" placeholder="Contoh: Interstellar">
+<button id="filmLookup">🔎 Ambil Metadata TMDB</button>
+<div id="filmPreview" class="card" style="display:none;margin-top:12px"></div>
+</div>
+<div class="card">
 <label>Admin Key</label>
 <input id="key" type="password" autocomplete="off">
 <label>Pesan</label>
@@ -40,6 +48,28 @@ button{cursor:pointer;background:#27272a}
 </main>
 <script>
 const $=id=>document.getElementById(id); const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+$('filmLookup').onclick=async()=>{
+ const key=$('key').value.trim(),title=$('filmTitle').value.trim(),box=$('filmPreview');
+ if(!key||!title){box.style.display='block';box.textContent='Isi Admin Key dan judul film terlebih dahulu.';return}
+ box.style.display='block';box.textContent='Mengambil metadata TMDB...';
+ try{
+  const r=await fetch('/api/nova-add-film',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key,action:'preview',title})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Metadata gagal');
+  const x=d.data||{};
+  box.innerHTML='<b>PREVIEW FILM — BELUM DISIMPAN</b><div style="margin-top:10px"><b>'+esc(x.judul)+'</b><br><small>'+esc(x.tipe)+' • '+esc(x.tahun||'-')+' • Rating '+esc(x.rating||'-')+' • '+esc(x.genre||'-')+'</small><p style="font-size:14px;color:#a1a1aa">'+esc(x.deskripsi||'Sinopsis tidak tersedia')+'</p><div style="font-size:13px;color:#a1a1aa">Aktor: '+esc(x.aktor||'Tidak tersedia')+'</div><div style="font-size:13px;color:#a1a1aa;margin-top:6px">Poster: '+esc(x.poster||'Tidak tersedia')+'</div></div><label style="display:block;margin-top:12px">Link sumber/player berizin</label><input id="filmLink" placeholder="https://domain-yang-kamu-izinkan/..."><small style="display:block;color:#71717a;margin-top:6px">NOVA tidak memilih link streaming yang tidak diizinkan. Domain harus ada di AUTHORIZED_EMBED_DOMAINS.</small><button id="saveFilm" style="margin-top:10px">💾 Simpan Film ke Google Sheet</button><div id="saveFilmStatus" style="margin-top:10px"></div>';
+  $('saveFilm').onclick=async()=>{
+   const b=$('saveFilm'),link=$('filmLink').value.trim(),st=$('saveFilmStatus');
+   if(!link){st.textContent='Link wajib diisi.';return}
+   if(!confirm('Simpan satu film ini ke Google Sheet?'))return;
+   b.disabled=true;st.textContent='Menyimpan...';
+   try{
+    const r=await fetch('/api/nova-add-film',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key,action:'save',title,embedUrl:link})});
+    const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Gagal menyimpan');
+    st.textContent='✅ Film berhasil ditambahkan: '+(d.data?.judul||title);
+   }catch(e){st.textContent='Error: '+e.message;b.disabled=false}
+  };
+ }catch(e){box.textContent='Error: '+e.message}
+};
 $('send').onclick=async()=>{
  const key=$('key').value.trim(), message=$('message').value.trim();
  if(!key||!message){$('status').textContent='Isi Admin Key dan pesan.';return}
