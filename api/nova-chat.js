@@ -22,7 +22,8 @@ export default async function handler(req,res){
     });
     const data=await r.json();
     if(!r.ok) return res.status(r.status).json({error:data?.error?.message||'OpenAI request gagal'});
-    const reply = typeof data.output_text==='string' && data.output_text.trim() ? data.output_text.trim() : (Array.isArray(data.output) ? data.output.flatMap(item=>Array.isArray(item?.content)?item.content.map(part=>typeof part?.text==='string'?part.text:(typeof part?.value==='string'?part.value:'')):[]).filter(Boolean).join('\n').trim() : '');\n    if(!reply) return res.status(502).json({error:'OpenAI berhasil merespons, tetapi teks jawaban NOVA tidak ditemukan.'});\n    return res.status(200).json({ok:true,reply});
+    const reply = typeof data.output_text==='string' && data.output_text.trim() ? data.output_text.trim() : (Array.isArray(data.output) ? data.output.flatMap(item=>Array.isArray(item?.content)?item.content.map(part=>typeof part?.text==='string'?part.text:(typeof part?.value==='string'?part.value:'')):[]).filter(Boolean).join('\n').trim() : '');
+    if(!reply) return res.status(502).json({error:'OpenAI berhasil merespons, tetapi teks jawaban NOVA tidak ditemukan.'});\n    return res.status(200).json({ok:true,reply});
   }catch(e){
     return res.status(500).json({error:'NOVA error: '+(e.message||'unknown error')});
   }
