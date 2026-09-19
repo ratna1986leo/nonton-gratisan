@@ -38,6 +38,14 @@ button{cursor:pointer}
 .avatarSide{position:relative;display:flex;align-items:center;justify-content:center;min-height:620px;overflow:hidden}
 .neonText{position:absolute;top:8%;left:8%;font-size:clamp(18px,2.2vw,32px);font-weight:700;line-height:1.2;color:#fff;text-shadow:0 0 20px rgba(255,107,214,.65);transform:rotate(-3deg);opacity:.9}
 .neonText span{display:block;color:#ff9be6;font-size:.58em;font-weight:500;margin-top:8px}
+.nova3dStage{position:relative;width:min(620px,82vw);height:min(620px,68vh);min-height:500px;display:grid;place-items:center;filter:drop-shadow(0 35px 70px rgba(0,0,0,.55))}
+#novaCanvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.novaOrb{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:44%;height:16%;border-radius:50%;background:radial-gradient(ellipse,rgba(98,232,255,.22),rgba(154,124,255,.09) 45%,transparent 72%);filter:blur(5px);box-shadow:0 0 55px rgba(98,232,255,.18)}
+.novaTag{position:absolute;right:2%;top:15%;padding:10px 13px;border:1px solid rgba(98,232,255,.24);border-radius:14px;background:rgba(7,10,24,.48);backdrop-filter:blur(16px);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#bff8ff;box-shadow:0 0 30px rgba(98,232,255,.08)}
+.novaTag b{display:block;font-size:13px;letter-spacing:.04em;color:#fff;margin-top:3px}
+.novaHint{position:absolute;left:2%;bottom:13%;max-width:180px;padding:11px 13px;border:1px solid rgba(255,107,214,.18);border-radius:16px;background:rgba(7,10,24,.42);backdrop-filter:blur(15px);font-size:11px;line-height:1.45;color:#d8d5e7}
+.novaHint strong{color:#ffb2ea}
+@media(max-width:600px){.nova3dStage{width:100%;height:430px;min-height:390px}.novaTag{right:0;top:9%;transform:scale(.88);transform-origin:right top}.novaHint{left:0;bottom:8%;transform:scale(.9);transform-origin:left bottom}}
 .avatarWrap{position:relative;width:min(500px,74%);aspect-ratio:4/5;display:grid;place-items:center;filter:drop-shadow(0 28px 55px rgba(0,0,0,.55));animation:float 5s ease-in-out infinite}
 .halo{position:absolute;width:78%;aspect-ratio:1;border-radius:50%;border:1px solid rgba(160,129,255,.38);box-shadow:0 0 70px rgba(139,93,255,.22),inset 0 0 60px rgba(139,93,255,.10);animation:pulse 3.5s ease-in-out infinite}
 .halo:before,.halo:after{content:"";position:absolute;inset:8%;border-radius:50%;border:1px dashed rgba(98,232,255,.23);animation:spin 16s linear infinite}
@@ -88,13 +96,13 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
   <div class="stageInner">
     <div class="avatarSide">
       <div class="neonText">Halo Bro... ♡<span>Ada yang bisa NOVA bantu hari ini?</span></div>
-      <div class="avatarWrap">
+      <div class="nova3dStage">
         <div class="halo"></div>
-        <div class="avatarCard">
-          <div class="face"><div class="eyes"><i class="eye"></i><i class="eye"></i></div></div>
-          <div class="shoulders"></div>
-          <div class="stateBadge" id="stateBadge">● Idle — NOVA siap menemani</div>
-        </div>
+        <canvas id="novaCanvas" aria-label="NOVA 3D avatar"></canvas>
+        <div class="novaOrb"></div>
+        <div class="novaTag">NOVA <b id="novaMood">IDLE</b></div>
+        <div class="novaHint">Visual 3D aktif<br><strong>Holographic AI presence</strong></div>
+        <div class="stateBadge" id="stateBadge">● Idle — NOVA siap menemani</div>
       </div>
     </div>
 
@@ -160,7 +168,89 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
 </div>
 </div>
 
-<script>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+
+const canvas=document.getElementById('novaCanvas');
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(28,1,.1,100);
+camera.position.set(0,0.25,7.2);
+const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+
+const root=new THREE.Group(); scene.add(root);
+const head=new THREE.Mesh(
+  new THREE.SphereGeometry(1.05,48,48),
+  new THREE.MeshPhysicalMaterial({color:0xdba8a8,roughness:.52,metalness:.02,clearcoat:.28,clearcoatRoughness:.3})
+);
+head.scale.set(1,.98,.88); head.position.y=.55; root.add(head);
+
+const hair=new THREE.Mesh(
+  new THREE.SphereGeometry(1.18,48,48),
+  new THREE.MeshPhysicalMaterial({color:0x15101d,roughness:.28,metalness:.18,clearcoat:.5})
+);
+hair.scale.set(1.03,1.06,.9); hair.position.set(0,.72,-.06); root.add(hair);
+
+const hairFringe=new THREE.Mesh(
+  new THREE.SphereGeometry(.72,40,32),
+  new THREE.MeshPhysicalMaterial({color:0x211329,roughness:.24,metalness:.12,clearcoat:.55})
+);
+hairFringe.scale.set(1.18,.72,.72); hairFringe.position.set(0,1.15,.75); hairFringe.rotation.x=-.18; root.add(hairFringe);
+
+const neck=new THREE.Mesh(new THREE.CylinderGeometry(.34,.42,.72,32),new THREE.MeshPhysicalMaterial({color:0xd29a9d,roughness:.55}));
+neck.position.y=-.48; root.add(neck);
+
+const shoulders=new THREE.Mesh(new THREE.SphereGeometry(1.65,48,32),new THREE.MeshPhysicalMaterial({color:0x17182e,roughness:.34,metalness:.3,clearcoat:.35}));
+shoulders.scale.set(1,.5,.62); shoulders.position.y=-.95; root.add(shoulders);
+
+function eye(x){
+  const e=new THREE.Mesh(new THREE.SphereGeometry(.12,24,16),new THREE.MeshStandardMaterial({color:0x14101b,emissive:0x62e8ff,emissiveIntensity:1.2}));
+  e.scale.set(1,.48,.45); e.position.set(x,.64,.9); root.add(e); return e;
+}
+const eyeL=eye(-.39),eyeR=eye(.39);
+
+const eyeGlowMat=new THREE.MeshBasicMaterial({color:0x62e8ff,transparent:true,opacity:.16});
+const eyeGlow=new THREE.Mesh(new THREE.SphereGeometry(1.45,32,24),eyeGlowMat); eyeGlow.scale.set(1,.8,.72); eyeGlow.position.set(0,.45,.15); root.add(eyeGlow);
+
+const ring=new THREE.Mesh(new THREE.TorusGeometry(1.75,.012,10,96),new THREE.MeshBasicMaterial({color:0x9a7cff,transparent:true,opacity:.38}));
+ring.rotation.x=Math.PI/2; ring.position.y=-.75; root.add(ring);
+
+scene.add(new THREE.HemisphereLight(0xbccaff,0x11091f,1.5));
+const key=new THREE.PointLight(0xff78d8,3.2,8); key.position.set(-2,2.8,3); scene.add(key);
+const rim=new THREE.PointLight(0x62e8ff,3.8,9); rim.position.set(2,-.2,-2); scene.add(rim);
+
+let novaState='Idle', blinkUntil=0, targetRotY=0, currentRotY=0;
+const stateEnergy={Idle:.35,Listening:.65,Thinking:.85,Speaking:1.05,Happy:1.3,Error:.95};
+function setNovaVisualState(name){
+  novaState=name||'Idle';
+  const mood=document.getElementById('novaMood'); if(mood)mood.textContent=novaState.toUpperCase();
+}
+window.setNovaVisualState=setNovaVisualState;
+
+function resize(){
+  const r=canvas.getBoundingClientRect(); const w=Math.max(1,r.width),h=Math.max(1,r.height);
+  camera.aspect=w/h; camera.updateProjectionMatrix(); renderer.setSize(w,h,false);
+}
+new ResizeObserver(resize).observe(canvas); resize();
+window.addEventListener('pointermove',e=>{targetRotY=(e.clientX/window.innerWidth-.5)*.42;});
+function animate(t){
+  requestAnimationFrame(animate);
+  const sec=t*.001, energy=stateEnergy[novaState]||.4;
+  currentRotY+=(targetRotY-currentRotY)*.035;
+  root.rotation.y=currentRotY+Math.sin(sec*.55)*.035;
+  root.position.y=Math.sin(sec*1.25)*.055;
+  root.scale.setScalar(1+Math.sin(sec*2.2)*.012*energy);
+  ring.rotation.z=sec*.18;
+  eyeGlow.scale.set(1+energy*.03, .8+energy*.04, .72+energy*.03);
+  const blink=(sec%5.2)>4.82;
+  eyeL.scale.y=blink?.06:.48; eyeR.scale.y=blink?.06:.48;
+  const pulse=1+Math.sin(sec*(2.2+energy))*0.05*energy;
+  eyeL.material.emissiveIntensity=1.1*pulse; eyeR.material.emissiveIntensity=1.1*pulse;
+  renderer.render(scene,camera);
+}
+animate(0);
+
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
@@ -174,11 +264,12 @@ const stateCopy={
 };
 document.querySelectorAll('.stateBtn').forEach(btn=>btn.onclick=()=>{
  document.querySelectorAll('.stateBtn').forEach(x=>x.classList.remove('active'));
- btn.classList.add('active');$('stateBadge').textContent='● '+stateCopy[btn.dataset.state];
+ btn.classList.add('active');$('stateBadge').textContent='● '+stateCopy[btn.dataset.state];if(window.setNovaVisualState)window.setNovaVisualState(btn.dataset.state);
 });
 function setState(name){
  const b=[...document.querySelectorAll('.stateBtn')].find(x=>x.dataset.state===name);
  if(b)b.click();
+ if(window.setNovaVisualState)window.setNovaVisualState(name);
 }
 
 async function sendNova(message){
