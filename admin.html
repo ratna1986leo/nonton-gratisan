@@ -57,6 +57,79 @@ button{cursor:pointer}
  .novaPhotoAvatar{object-position:50% 8%}
  .novaTag{top:8px!important;right:-8px!important}
 }
+/* NOVA ChatGPT-style light production UI */
+:root{
+ --bg:#f7f7f8;--panel:#fff;--panel2:#f2f2f3;--line:#e5e5e7;--text:#202123;--muted:#6b6b70;
+ --violet:#6d5dfc;--pink:#d946ef;--cyan:#0ea5e9;--green:#10a37f;
+ --shadow:0 8px 30px rgba(0,0,0,.07)
+}
+html,body{background:var(--bg)!important;color:var(--text)!important}
+body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.shell{width:min(1280px,100%);padding:0 20px 24px}
+.topbar{height:64px;border-bottom:1px solid var(--line);padding:0 4px}
+.brand{color:#202123}.brandMark{width:34px;height:34px;border-radius:10px;background:#202123;box-shadow:none;color:#fff}
+.brand small{color:#8a8a90}.online{color:#343438;background:#fff;border-color:#dedee2;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.dot{box-shadow:none}
+.stage{min-height:0;border:1px solid var(--line);border-radius:18px;background:#fff;box-shadow:var(--shadow);overflow:hidden}
+.stage:before,.grid{display:none}
+.stageInner{min-height:720px;padding:0;grid-template-columns:minmax(0,1fr) 420px;gap:0}
+.avatarSide{min-height:720px;background:linear-gradient(180deg,#fafafa,#f4f4f5);border-right:1px solid var(--line)}
+.neonText{top:28px;left:32px;color:#202123;text-shadow:none;transform:none;font-size:20px}
+.neonText span{color:#777;font-size:12px}
+.nova3dStage{width:min(460px,78%);height:600px;min-height:520px;filter:none}
+.halo{border-color:rgba(109,93,252,.18);box-shadow:0 0 60px rgba(109,93,252,.10),inset 0 0 40px rgba(109,93,252,.05)}
+.novaOrb{background:radial-gradient(ellipse,rgba(109,93,252,.12),transparent 70%);box-shadow:none}
+.novaTag{right:4%;top:13%;color:#555;background:rgba(255,255,255,.82);border-color:#e2e2e6;box-shadow:0 4px 14px rgba(0,0,0,.05)}
+.novaTag b{color:#202123}
+.novaFaceStatus{color:#777;text-shadow:none}.novaFaceStatus strong{color:#202123}
+.novaHint{display:none}
+.stateBadge{bottom:8%;color:#555;background:#fff;border-color:#e1e1e5;box-shadow:0 4px 16px rgba(0,0,0,.06)}
+.chat{min-height:720px;border:0;border-radius:0;background:#fff;backdrop-filter:none;box-shadow:none}
+.chatHead{padding:18px 20px;border-bottom:1px solid var(--line)}
+.miniAvatar{border-color:#ddd;background:linear-gradient(145deg,#eee,#fafafa);box-shadow:none;color:#333}
+.chatTitle{color:#202123}.chatSub{color:#777}
+.chatBody{padding:22px 20px;background:#fff}
+.bubble{font-size:13px;line-height:1.55;border-radius:14px}
+.ai{background:#f7f7f8;border:1px solid #ececef;color:#202123}
+.user{background:#f1f1f3;border:1px solid #e2e2e5;color:#202123}
+.quick button{background:#fff;border-color:#dcdce1;color:#444;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.result{background:#fafafa;border-color:#e4e4e7}
+.play{color:#087f5b;background:#e8f7f1}
+.chatInput{padding:14px 16px;border-top:1px solid var(--line);background:#fff}
+.chatInput input{background:#fff;color:#202123;border-color:#d8d8dd}
+.sendBtn{background:#202123;color:#fff}
+.controls{background:#fff;border-color:#dedee3;box-shadow:0 5px 18px rgba(0,0,0,.08);backdrop-filter:blur(12px)}
+.stateBtn{color:#777}.stateBtn.active{color:#202123;background:#f0f0f2;box-shadow:none}
+.sections{margin-top:16px}.card{background:#fff;border-color:var(--line);box-shadow:var(--shadow)}
+input,textarea{background:#fff;color:#202123;border-color:#d8d8dd}
+button.action{background:#202123;color:#fff;border-color:#202123}
+.comment{background:#fafafa;border-color:#e5e5e8}.reply{background:#f3faf7;border-left-color:#10a37f}
+.novaBottomNav{background:rgba(255,255,255,.96);border-color:#dedee3;box-shadow:0 6px 24px rgba(0,0,0,.12)}
+.novaNavBtn{color:#777}.novaNavBtn.active{color:#202123;background:#f0f0f2}
+@media(max-width:980px){
+ .stageInner{grid-template-columns:1fr;min-height:0}
+ .avatarSide{min-height:470px;border-right:0;border-bottom:1px solid var(--line)}
+ .chat{min-height:520px}
+}
+@media(max-width:700px){
+ .shell{padding:0 8px 12px}.topbar{height:54px}
+ .brand{font-size:14px}.brandMark{width:30px;height:30px}
+ .online{padding:6px 9px;font-size:10px}
+ .stage{border-radius:14px}
+ .stageInner{padding:0;gap:0}
+ .avatarSide{height:330px;min-height:330px}
+ .neonText{top:16px;left:16px;font-size:14px}.neonText span{display:block;font-size:9px;margin-top:3px}
+ .nova3dStage{width:270px;height:300px;min-height:300px}
+ .novaTag{top:20px;right:0;transform:scale(.78);transform-origin:top right}
+ .novaFaceStatus{top:58%;font-size:7px}
+ .stateBadge{bottom:8px;font-size:8px;padding:5px 8px}
+ .chat{height:390px;min-height:390px}
+ .chatHead{padding:10px 12px}.chatBody{padding:10px 12px}
+ .chatInput{padding:8px}
+ .sections{margin-top:8px}
+ .card{box-shadow:0 2px 10px rgba(0,0,0,.04)}
+}
+
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
