@@ -1392,7 +1392,7 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
         // ================= LOAD LIBRARY =================
         async function loadLibraryFromGoogleSheets() {
             try {
-                const response = await fetchWithRetry('/api/catalog', 3, 120000);
+                const response = await fetchWithRetry('/api/catalog', 1, 10000);
                 if (!response.ok) throw new Error('Katalog API HTTP ' + response.status);
                 const parsedData = await response.json();
                 if (parsedData.length === 0) throw new Error('Data CSV kosong');
@@ -3324,8 +3324,8 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
 
             // Muat pustaka dan katalog sebelum mencoba membuka URL yang dibagikan.
             try {
-                await loadLibraryFromGoogleSheets();
-                await fetchTMDBCatalogs();
+                loadLibraryFromGoogleSheets().catch(e => console.warn('Google Sheet catalog gagal:', e));
+                fetchTMDBCatalogs().catch(e => console.warn('TMDB catalog gagal:', e));
             } catch (e) {
                 console.warn('Inisialisasi katalog gagal:', e);
             }
@@ -3338,7 +3338,7 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
             setTimeout(() => {
                 if (!store.getState().isLibraryLoaded) {
                     loadFallbackLibraryData();
-                    fetchTMDBCatalogs();
+                    fetchTMDBCatalogs().catch(e => console.warn('TMDB fallback gagal:', e));
                 }
             }, 10000);
 
