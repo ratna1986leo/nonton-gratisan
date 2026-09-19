@@ -43,6 +43,8 @@ button{cursor:pointer}
 .novaOrb{position:absolute;left:50%;bottom:9%;transform:translateX(-50%);width:44%;height:16%;border-radius:50%;background:radial-gradient(ellipse,rgba(98,232,255,.22),rgba(154,124,255,.09) 45%,transparent 72%);filter:blur(5px);box-shadow:0 0 55px rgba(98,232,255,.18)}
 .novaTag{position:absolute;right:2%;top:15%;padding:10px 13px;border:1px solid rgba(98,232,255,.24);border-radius:14px;background:rgba(7,10,24,.48);backdrop-filter:blur(16px);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#bff8ff;box-shadow:0 0 30px rgba(98,232,255,.08)}
 .novaTag b{display:block;font-size:13px;letter-spacing:.04em;color:#fff;margin-top:3px}
+.novaFaceStatus{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);width:180px;text-align:center;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62);pointer-events:none;text-shadow:0 0 12px rgba(98,232,255,.5)}
+.novaFaceStatus strong{display:block;color:#fff;font-size:12px;letter-spacing:.04em;margin-top:4px}
 .novaHint{position:absolute;left:2%;bottom:13%;max-width:180px;padding:11px 13px;border:1px solid rgba(255,107,214,.18);border-radius:16px;background:rgba(7,10,24,.42);backdrop-filter:blur(15px);font-size:11px;line-height:1.45;color:#d8d5e7}
 .novaHint strong{color:#ffb2ea}
 @media(max-width:600px){.nova3dStage{width:100%;height:430px;min-height:390px}.novaTag{right:0;top:9%;transform:scale(.88);transform-origin:right top}.novaHint{left:0;bottom:8%;transform:scale(.9);transform-origin:left bottom}}
@@ -101,6 +103,7 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
         <canvas id="novaCanvas" aria-label="NOVA 3D avatar"></canvas>
         <div class="novaOrb"></div>
         <div class="novaTag">NOVA <b id="novaMood">IDLE</b></div>
+        <div class="novaFaceStatus">AI PRESENCE<strong id="novaFaceState">CALM</strong></div>
         <div class="novaHint">Visual 3D aktif<br><strong>Holographic AI presence</strong></div>
         <div class="stateBadge" id="stateBadge">● Idle — NOVA siap menemani</div>
       </div>
@@ -210,6 +213,30 @@ function eye(x){
 }
 const eyeL=eye(-.39),eyeR=eye(.39);
 
+function brow(x,rot){
+  const b=new THREE.Mesh(new THREE.BoxGeometry(.32,.035,.035),new THREE.MeshStandardMaterial({color:0x241426,roughness:.4}));
+  b.position.set(x,.88,.88); b.rotation.z=rot; root.add(b); return b;
+}
+const browL=brow(-.39,.08),browR=brow(.39,-.08);
+
+const mouth=new THREE.Mesh(
+  new THREE.TorusGeometry(.16,.018,10,32,Math.PI),
+  new THREE.MeshStandardMaterial({color:0x8e3f65,roughness:.4,emissive:0x260817,emissiveIntensity:.25})
+);
+mouth.position.set(0,.28,.89); mouth.rotation.z=Math.PI; mouth.scale.set(1,.62,1); root.add(mouth);
+
+const smileGlow=new THREE.Mesh(
+  new THREE.TorusGeometry(.205,.009,8,32,Math.PI),
+  new THREE.MeshBasicMaterial({color:0xff6bd6,transparent:true,opacity:.32})
+);
+smileGlow.position.set(0,.29,.9); smileGlow.rotation.z=Math.PI; smileGlow.scale.set(1,.6,1); root.add(smileGlow);
+
+function earring(x){
+  const e=new THREE.Mesh(new THREE.TorusGeometry(.09,.012,8,24),new THREE.MeshStandardMaterial({color:0x62e8ff,metalness:.8,roughness:.2,emissive:0x164c59,emissiveIntensity:.8}));
+  e.position.set(x,.22,.82); root.add(e); return e;
+}
+const earringL=earring(-1.0),earringR=earring(1.0);
+
 const eyeGlowMat=new THREE.MeshBasicMaterial({color:0x62e8ff,transparent:true,opacity:.16});
 const eyeGlow=new THREE.Mesh(new THREE.SphereGeometry(1.45,32,24),eyeGlowMat); eyeGlow.scale.set(1,.8,.72); eyeGlow.position.set(0,.45,.15); root.add(eyeGlow);
 
@@ -225,6 +252,9 @@ const stateEnergy={Idle:.35,Listening:.65,Thinking:.85,Speaking:1.05,Happy:1.3,E
 function setNovaVisualState(name){
   novaState=name||'Idle';
   const mood=document.getElementById('novaMood'); if(mood)mood.textContent=novaState.toUpperCase();
+  const face=document.getElementById('novaFaceState');
+  const labels={Idle:'CALM',Listening:'ATTENTIVE',Thinking:'FOCUSED',Speaking:'EXPRESSIVE',Happy:'WARM',Error:'ALERT'};
+  if(face)face.textContent=labels[novaState]||'CALM';
 }
 window.setNovaVisualState=setNovaVisualState;
 
@@ -247,6 +277,16 @@ function animate(t){
   eyeL.scale.y=blink?.06:.48; eyeR.scale.y=blink?.06:.48;
   const pulse=1+Math.sin(sec*(2.2+energy))*0.05*energy;
   eyeL.material.emissiveIntensity=1.1*pulse; eyeR.material.emissiveIntensity=1.1*pulse;
+
+  // Subtle facial acting: NOVA remains calm, but her expression follows the conversation state.
+  const speaking=novaState==='Speaking', happy=novaState==='Happy', thinking=novaState==='Thinking', alert=novaState==='Error';
+  const smile=(happy?.42:speaking?.16:alert?-.06:.05);
+  mouth.scale.x=1+smile; mouth.scale.y=.62+(happy?.16:0);
+  smileGlow.scale.x=mouth.scale.x; smileGlow.scale.y=mouth.scale.y;
+  browL.rotation.z=.08+(thinking?-.10:0)+(alert?.10:0);
+  browR.rotation.z=-.08+(thinking?.10:0)+(alert?-.10:0);
+  if(speaking){ mouth.rotation.z=Math.PI+Math.sin(sec*8)*.035; mouth.scale.y=.62+Math.abs(Math.sin(sec*8))*.24; }
+  earringL.rotation.z=sec*.8; earringR.rotation.z=-sec*.8;
   renderer.render(scene,camera);
 }
 animate(0);
