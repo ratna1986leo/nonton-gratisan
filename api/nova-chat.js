@@ -1,5 +1,6 @@
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.6-luna';
 const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || '';
 
 function parseCSV(text){
   const rows=[]; let row=[], cell='', quoted=false;
@@ -38,6 +39,31 @@ function catalogContext(text){
   return {total:objects.length,playable:items.filter(x=>x.bisaDiputar).length,unplayable:items.filter(x=>!x.bisaDiputar).length,items};
 }
 
+async function loadTMDBDiscovery(){
+  if(!TMDB_API_KEY) return {available:false,source:'TMDB',items:[]};
+  const urls=[
+    'https://api.themoviedb.org/3/trending/all/week?language=id-ID&api_key='+encodeURIComponent(TMDB_API_KEY),
+    'https://api.themoviedb.org/3/discover/movie?language=id-ID&sort_by=popularity.desc&api_key='+encodeURIComponent(TMDB_API_KEY)
+  ];
+  const results=[];
+  for(const url of urls){
+    const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
+    if(!r.ok) continue;
+    const data=await r.json();
+    if(Array.isArray(data?.results)) results.push(...data.results);
+  }
+  const seen=new Set();
+  const items=results.map(x=>{
+    const id=String(x.id||''); const title=x.title||x.name||'';
+    const type=x.media_type||(x.title?'movie':'tv');
+    const key=type+'-'+id;
+    if(!id||!title||seen.has(key)) return null;
+    seen.add(key);
+    return {tmdbId:x.id,judul:title,tahun:String(x.release_date||x.first_air_date||'').slice(0,4),tipe:type};
+  }).filter(Boolean).slice(0,100);
+  return {available:true,source:'TMDB',items};
+}
+
 async function loadCatalog(){
   const r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'},cache:'no-store'});
   if(!r.ok) throw new Error('Google Sheet katalog HTTP '+r.status);
@@ -58,11 +84,24 @@ export default async function handler(req,res){
     try{ catalog=await loadCatalog(); }
     catch(e){ catalog={total:0,playable:0,unplayable:0,items:[],error:e.message}; }
     const catalogBlock=catalog.error
-      ? 'KATALOG TIDAK TERSEDIA. Jangan mengarang daftar film atau status player.'
+      ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
       : JSON.stringify(catalog);
+    let tmdb={available:false,source:'TMDB',items:[]};
+    const wantsTMDB=/\\btmdb\\b|the movie database|database film/i.test(message);
+    if(wantsTMDB){
+      try{ tmdb=await loadTMDBDiscovery(); }
+      catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
+    }
+    const tmdbBlock=tmdb.available
+      ? JSON.stringify(tmdb)
+      : 'DATA TMDB TIDAK DIMUAT UNTUK PERTANYAAN INI. Jangan mengarang data TMDB.';
     const instructions=[
       'Kamu adalah NOVA, asisten admin NontonGratisan.',
-      'Kamu memiliki akses READ-ONLY ke katalog website.',
+      'Kamu memiliki dua sumber data yang WAJIB dipisahkan: TMDB dan PUSTAKA FILM.',
+      'TMDB = metadata/discovery dari The Movie Database. PUSTAKA FILM = data yang tersimpan di Google Sheet katalog website.',
+      'Jangan pernah menggabungkan, menghapus duplikasi, atau menganggap item TMDB otomatis menjadi item PUSTAKA FILM.',
+      'Jika judul yang sama ada di kedua sumber, tetap laporkan sebagai dua sumber terpisah dan jelaskan apakah judul tersebut tercatat di pustaka.',
+      'Kamu memiliki akses READ-ONLY ke katalog website.'
       'Gunakan hanya DATA KATALOG di bawah. Jangan mengarang judul, jumlah, atau status player.',
       'bisaDiputar=true berarti kolom Link/Player pada katalog terisi. bisaDiputar=false berarti belum ada Link/Player tercatat.',
       'Jika ditanya film yang bisa diputar, gunakan hanya bisaDiputar=true.',
@@ -72,8 +111,10 @@ export default async function handler(req,res){
       'Jangan mengubah, menghapus, atau menulis katalog, Google Sheet, TMDB, player, atau data pengguna melalui chat.',
       'Jangan memberikan atau mencari tautan streaming ilegal.',
       'Jawab dalam Bahasa Indonesia, ringkas dan informatif.',
-      'DATA KATALOG READ-ONLY:',
-      catalogBlock
+      'DATA PUSTAKA FILM — SUMBER TERPISAH DARI TMDB:',
+      catalogBlock,
+      'DATA TMDB — SUMBER TERPISAH. Hanya tersedia jika dimuat untuk pertanyaan:',
+      tmdbBlock
     ].join('\n\n');
 
     const r=await fetch('https://api.openai.com/v1/responses',{
