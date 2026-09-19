@@ -36,7 +36,7 @@ function catalogContext(text){
     tipe:typeKey?o[typeKey]||'':'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
-  const items=allItems.slice(0,250);
+  const items=allItems.slice(0,40);
   return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
 }
 
@@ -61,7 +61,7 @@ async function loadTMDBDiscovery(){
     if(!id||!title||seen.has(key)) return null;
     seen.add(key);
     return {tmdbId:x.id,judul:title,tahun:String(x.release_date||x.first_air_date||'').slice(0,4),tipe:type};
-  }).filter(Boolean).slice(0,100);
+  }).filter(Boolean).slice(0,20);
   return {available:true,source:'TMDB',items};
 }
 
@@ -102,7 +102,7 @@ export default async function handler(req,res){
     const tmdbComparison=tmdb.available ? {
       totalTMDB:tmdb.items.length,
       sudahTercatatDiPustaka:tmdb.items.filter(x=>libraryTitles.has(normalizeTitle(x.judul))).length,
-      belumTercatatDiPustaka:tmdb.items.filter(x=>!libraryTitles.has(normalizeTitle(x.judul))).map(x=>x.judul).slice(0,100)
+      belumTercatatDiPustaka:tmdb.items.filter(x=>!libraryTitles.has(normalizeTitle(x.judul)) ).map(x=>x.judul).slice(0,30)
     } : null;
     const tmdbBlock=tmdb.available
       ? JSON.stringify({...tmdb,comparison:tmdbComparison})
@@ -151,7 +151,11 @@ export default async function handler(req,res){
       })
     });
     const data=await r.json();
-    if(!r.ok) return res.status(r.status).json({error:data?.error?.message||'OpenAI request gagal'});
+    if(!r.ok){
+      const msg=data?.error?.message||'OpenAI request gagal';
+      const status=r.status===429?429:r.status;
+      return res.status(status).json({error:status===429?'NOVA sedang terlalu sibuk. Coba lagi beberapa saat lagi.':msg});
+    }
     const reply = typeof data.output_text==='string' && data.output_text.trim() ? data.output_text.trim() : (Array.isArray(data.output) ? data.output.flatMap(item=>Array.isArray(item?.content)?item.content.map(part=>typeof part?.text==='string'?part.text:(typeof part?.value==='string'?part.value:'')):[]).filter(Boolean).join('\n').trim() : '');
     if(!reply) return res.status(502).json({error:'OpenAI berhasil merespons, tetapi teks jawaban NOVA tidak ditemukan.'});
     return res.status(200).json({ok:true,reply});
