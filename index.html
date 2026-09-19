@@ -1400,7 +1400,8 @@
         // ================= LOAD LIBRARY =================
         async function loadLibraryFromGoogleSheets() {
             try {
-                const response = await fetchWithRetry('/api/catalog', 3, 20000);
+                // Catalog proxy is optional: TMDB/fallback must still render if it is slow.
+                const response = await fetchWithRetry('/api/catalog', 2, 8000);
                 const csvText = await response.text();
                 const parsedData = parseCSV(csvText);
                 if (parsedData.length === 0) throw new Error('Data CSV kosong');
@@ -1474,6 +1475,9 @@
                 { Judul: "JOKO KENDIL VIRAL TIKTOK- KETHOPRAK MINI SLAMET BUDOYO", Poster: "https://ik.imagekit.io/yhhmgwam7/k%20emdil%20(1).jpg", Link: "https://www.youtube-nocookie.com/embed/1p9AnYGAv2s?si=YK3HcUXS8Llbd1yj&start=60", Genre: "ketoprak, drama", Tahun: "2023", Rating: "8,8", Aktor: "", Deskripsi: "" }
             ];
             store.setState({ libraryData: fallbackData, isLibraryLoaded: true });
+            // Render fallback immediately so a slow/unavailable external source
+            // never leaves the public catalog empty.
+            try { renderAllSections(); } catch (e) { console.warn('Fallback render gagal:', e); }
         }
 
         // ================= FUNGSI TMDB =================
@@ -1488,10 +1492,10 @@
                 if (yearVal) endpointAppend += `&primary_release_year=${yearVal}&first_air_date_year=${yearVal}`;
                 
                 const results = await Promise.allSettled([
-                    fetchWithRetry(`https://api.themoviedb.org/3/trending/all/week?language=id-ID${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/discover/movie?language=id-ID&sort_by=popularity.desc${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/discover/tv?language=id-ID&sort_by=popularity.desc${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/discover/movie?language=id-ID&with_genres=53&sort_by=popularity.desc${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000)
+                    fetchWithRetry(`/api/tmdb?path=%2F3%2Ftrending%2Fall%2Fweek&language=id-ID${endpointAppend}`, 2, 8000),
+                    fetchWithRetry(`/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc${endpointAppend}`, 2, 8000),
+                    fetchWithRetry(`/api/tmdb?path=%2F3%2Fdiscover%2Ftv&language=id-ID&sort_by=popularity.desc${endpointAppend}`, 2, 8000),
+                    fetchWithRetry(`/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&with_genres=53&sort_by=popularity.desc${endpointAppend}`, 2, 8000)
                 ]);
                 
                 const newState = {};
@@ -3302,12 +3306,17 @@
             setupHeroCarousel();
             renderAllSections();
 
-            // Muat pustaka dan katalog sebelum mencoba membuka URL yang dibagikan.
+            // Render data lokal terlebih dahulu. Sumber jaringan hanya memperkaya katalog.
+            renderAllSections();
             try {
-                await loadLibraryFromGoogleSheets();
-                await fetchTMDBCatalogs();
+                await Promise.allSettled([
+                    loadLibraryFromGoogleSheets(),
+                    fetchTMDBCatalogs()
+                ]);
+                renderAllSections();
             } catch (e) {
                 console.warn('Inisialisasi katalog gagal:', e);
+                renderAllSections();
             }
 
             const handledSharedRoute = await openSharedRoute();
