@@ -5,7 +5,11 @@ async function forward(url, options={}){
   const text=await r.text();
   let data;
   try{data=JSON.parse(text)}catch{throw Object.assign(new Error('Google Apps Script tidak mengembalikan JSON'),{status:502,raw:text.slice(0,500)})}
-  if(!r.ok||data?.ok===false)throw Object.assign(new Error(data?.error||'Google Sheets komentar gagal'),{status:r.ok?400:r.status});
+  if(!r.ok||data?.ok===false) {
+    const err = data?.error || `Google Sheets komentar gagal (HTTP ${r.status})`;
+    console.warn('Comments upstream gagal:', err);
+    return { ok:false, upstreamError:true, error:err, comments:[] };
+  }
   return data;
 }
 
@@ -23,17 +27,20 @@ export default async function handler(req,res){
         res.setHeader('cache-control','no-store');
         return res.status(200).send(callback + '(' + JSON.stringify(data).replace(/</g,'\\u003c') + ');');
       }
-      return res.status(200).json(data);
+      // Komentar adalah fitur pelengkap: jangan biarkan kegagalan Google Apps Script
+      // membuat endpoint publik terus-menerus mengembalikan 4xx dan mengganggu halaman.
+      return res.status(200).json(data?.ok === false ? {ok:true, comments:[], degraded:true} : data);
     }
     if(req.method==='POST'){
       const body=req.body&&typeof req.body==='object'?req.body:{};
       const params=new URLSearchParams();
       for(const [k,v] of Object.entries(body))if(v!==undefined&&v!==null)params.set(k,String(v));
-      return res.status(200).json(await forward(COMMENTS_API_URL,{
+      const data = await forward(COMMENTS_API_URL,{
         method:'POST',
         headers:{'content-type':'application/x-www-form-urlencoded;charset=UTF-8'},
         body:params.toString()
-      }));
+      });
+      return res.status(200).json(data?.ok === false ? {ok:false, queued:true, degraded:true} : data);
     }
     return res.status(405).json({ok:false,error:'Method not allowed'});
   }catch(e){
