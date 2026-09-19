@@ -38,23 +38,23 @@ export default async function handler(req,res){
     const actorKey=find('actor','actors','aktor');
     const descKey=find('description','deskripsi','sinopsis');
     const issues=[];
-    const add=(type,row,message)=>issues.push({type,row,message});
+    const add=(type,row,message,action='Perlu verifikasi manual')=>issues.push({type,row,message,action});
     const seenLinks=new Map();
     const titleYears=[];
     objects.forEach(o=>{
       const d=o.data, title=d[titleKey]||'', link=norm(d[linkKey]), year=norm(d[yearKey]);
-      if(!title)add('missing-title',o.rowNumber,'Judul kosong');
-      if(link) { if(seenLinks.has(link)) add('duplicate-link',o.rowNumber,'Link sama dengan baris '+seenLinks.get(link)); else seenLinks.set(link,o.rowNumber); }
-      else add('missing-link',o.rowNumber,'Link kosong');
-      if(year && /\b(19|20)\d{2}\b/.test(title) && !title.includes(year)) add('year-conflict',o.rowNumber,'Tahun pada judul berbeda dengan kolom Tahun');
-      if(ratingKey && /^(?:[1-9]|10)$/.test(d[ratingKey]||'') && /episode|season/i.test(title)) add('rating-check',o.rowNumber,'Rating berupa angka bulat yang perlu diverifikasi sebagai rating atau nomor episode');
-      if(actorKey && !d[actorKey]) add('missing-actor',o.rowNumber,'Aktor kosong');
-      if(descKey && !d[descKey]) add('missing-description',o.rowNumber,'Deskripsi kosong');
-      if(genreKey && !d[genreKey]) add('missing-genre',o.rowNumber,'Genre kosong');
-      if(yearKey && !d[yearKey]) add('missing-year',o.rowNumber,'Tahun kosong');
+      if(!title)add('missing-title',o.rowNumber,'Judul kosong','Lengkapi Judul setelah verifikasi sumber metadata');
+      if(link) { if(seenLinks.has(link)) add('duplicate-link',o.rowNumber,'Link sama dengan baris '+seenLinks.get(link),'Verifikasi apakah link memang milik episode/baris ini'); else seenLinks.set(link,o.rowNumber); }
+      else add('missing-link',o.rowNumber,'Link kosong','Cari sumber/embed yang sah lalu lengkapi Link');
+      if(year && /\b(19|20)\d{2}\b/.test(title) && !title.includes(year)) add('year-conflict',o.rowNumber,'Tahun pada judul berbeda dengan kolom Tahun','Verifikasi tahun dari metadata sumber; jangan ubah otomatis');
+      if(ratingKey && /^(?:[1-9]|10)$/.test(d[ratingKey]||'') && /episode|season/i.test(title)) add('rating-check',o.rowNumber,'Rating berupa angka bulat yang perlu diverifikasi sebagai rating atau nomor episode','Verifikasi apakah nilai ini rating atau nomor episode; jangan ubah otomatis');
+      if(actorKey && !d[actorKey]) add('missing-actor',o.rowNumber,'Aktor kosong','Lengkapi dari metadata terverifikasi jika tersedia');
+      if(descKey && !d[descKey]) add('missing-description',o.rowNumber,'Deskripsi kosong','Lengkapi dari metadata terverifikasi jika tersedia');
+      if(genreKey && !d[genreKey]) add('missing-genre',o.rowNumber,'Genre kosong','Lengkapi genre dari metadata terverifikasi jika tersedia');
+      if(yearKey && !d[yearKey]) add('missing-year',o.rowNumber,'Tahun kosong','Lengkapi tahun dari metadata terverifikasi jika tersedia');
     });
     const unnamed=columns.filter(c=>!c);
-    if(unnamed.length)add('empty-column',1,'Ada '+unnamed.length+' kolom tanpa nama');
+    if(unnamed.length)add('empty-column',1,'Ada '+unnamed.length+' kolom tanpa nama','Tinjau kolom kosong dan hapus hanya setelah dipastikan tidak dipakai');
     const counts={};
     issues.forEach(x=>counts[x.type]=(counts[x.type]||0)+1);
     const lines=[
