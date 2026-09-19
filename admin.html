@@ -60,16 +60,15 @@ $('filmLookup').onclick=async()=>{
   const domains=Array.isArray(d.authorizedDomains)?d.authorizedDomains:[];
   const candidates=Array.isArray(d.candidates)?d.candidates:[];
   const candHtml=candidates.length?'<div style="margin-top:12px"><b>Hasil lain yang cocok:</b><div>'+candidates.map(c=>'<button class="tmdbCandidate" data-id="'+esc(c.tmdbId)+'" data-type="'+esc(c.tipe)+'" style="text-align:left;margin-top:6px">'+esc(c.judul)+' • '+esc(c.tahun||'-')+' • '+esc(c.tipe)+'</button>').join('')+'</div></div>':'';
-  box.innerHTML='<b>PREVIEW FILM — BELUM DISIMPAN</b><div style="margin-top:10px"><b>'+esc(x.judul)+'</b><br><small>'+esc(x.tipe)+' • '+esc(x.tahun||'-')+' • Rating '+esc(x.rating||'-')+' • '+esc(x.genre||'-')+'</small><p style="font-size:14px;color:#a1a1aa">'+esc(x.deskripsi||'Sinopsis tidak tersedia')+'</p><div style="font-size:13px;color:#a1a1aa">Aktor: '+esc(x.aktor||'Tidak tersedia')+'</div><div style="font-size:13px;color:#a1a1aa;margin-top:6px">Poster: '+esc(x.poster||'Tidak tersedia')+'</div></div><label style="display:block;margin-top:12px">Link sumber/player berizin</label><input id="filmLink" placeholder="https://domain-yang-kamu-izinkan/..."><small style="display:block;color:#71717a;margin-top:6px">TMDB hanya dipakai untuk metadata. Link film/player tidak diambil otomatis dari TMDB. Masukkan URL player dari sumber yang memang kamu izinkan.</small><small style="display:block;color:#a1a1aa;margin-top:6px">Domain yang diizinkan: '+esc(domains.length?domains.join(', '):'belum ada AUTHORIZED_EMBED_DOMAINS')+'</small><button id="saveFilm" style="margin-top:10px">💾 Simpan Film ke Google Sheet</button><div id="saveFilmStatus" style="margin-top:10px"></div>';
+  box.innerHTML='<b>PREVIEW FILM — BELUM DISIMPAN</b><div style="margin-top:10px"><b>'+esc(x.judul)+'</b><br><small>'+esc(x.tipe)+' • '+esc(x.tahun||'-')+' • Rating '+esc(x.rating||'-')+' • '+esc(x.genre||'-')+'</small><p style="font-size:14px;color:#a1a1aa">'+esc(x.deskripsi||'Sinopsis tidak tersedia')+'</p><div style="font-size:13px;color:#a1a1aa">Aktor: '+esc(x.aktor||'Tidak tersedia')+'</div><div style="font-size:13px;color:#a1a1aa;margin-top:6px">Poster: '+esc(x.poster||'Tidak tersedia')+'</div></div><small style="display:block;color:#a1a1aa;margin-top:12px">Link player tidak diisi di sini. Setelah metadata disimpan, isi kolom Link/Player langsung di Google Sheet secara manual.</small><button id="saveFilm" style="margin-top:10px">💾 Simpan Metadata ke Google Sheet</button><div id="saveFilmStatus" style="margin-top:10px"></div>';
   $('saveFilm').onclick=async()=>{
-   const b=$('saveFilm'),link=$('filmLink').value.trim(),st=$('saveFilmStatus');
-   if(!link){st.textContent='Link wajib diisi.';return}
-   if(!confirm('Simpan satu film ini ke Google Sheet?'))return;
-   b.disabled=true;st.textContent='Menyimpan...';
+   const b=$('saveFilm'),st=$('saveFilmStatus');
+   if(!confirm('Simpan metadata film ini ke Google Sheet?'))return;
+   b.disabled=true;st.textContent='Menyimpan metadata...';
    try{
-    const r=await fetch('/api/nova-add-film',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key,action:'save',title,year,embedUrl:link})});
+    const r=await fetch('/api/nova-add-film',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({adminKey:key,action:'save',title,year})});
     const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Gagal menyimpan');
-    st.textContent='✅ Film berhasil ditambahkan: '+(d.data?.judul||title);
+    st.textContent='✅ Metadata berhasil ditambahkan: '+(d.data?.judul||title)+'. Link player silakan diisi manual di Google Sheet.';
    }catch(e){st.textContent='Error: '+e.message;b.disabled=false}
   };
  }catch(e){box.textContent='Error: '+e.message}
