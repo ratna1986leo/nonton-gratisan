@@ -8,19 +8,19 @@ const SHEET_ID=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8c
 const SHEET_RANGE=process.env.GOOGLE_SHEET_RANGE||'A:Z';
 const TMDB_API_KEY=process.env.TMDB_API_KEY||'';
 
-async function googleAccessToken(){
+async function googleAuth(){
   const {getVercelOidcToken}=await import('@vercel/oidc');
   const {ExternalAccountClient}=await import('google-auth-library');
   const authClient=ExternalAccountClient.fromJSON({
-    type:'external_account',audience:GCP_STS_AUDIENCE,
+    type:'external_account',
+    audience:GCP_STS_AUDIENCE,
     subject_token_type:'urn:ietf:params:oauth:token-type:jwt',
     token_url:'https://sts.googleapis.com/v1/token',
     service_account_impersonation_url:'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'+GCP_SERVICE_ACCOUNT_EMAIL+':generateAccessToken',
-    subject_token_supplier:{getSubjectToken:getVercelOidcToken}
+    subject_token_supplier:{getSubjectToken:getVercelOidcToken},
+    scopes:['https://www.googleapis.com/auth/spreadsheets']
   });
-  const token=await authClient.getAccessToken();
-  if(!token)throw new Error('Google OIDC menghasilkan token kosong');
-  return token;
+  return authClient;
 }
 function auth(req){
   const expected=process.env.NOVA_ADMIN_KEY;
@@ -31,15 +31,15 @@ function auth(req){
 function norm(s){return String(s??'').trim().toLowerCase().replace(/[ _-]+/g,'');}
 function parseHeaders(values){return values[0]||[];}
 async function sheetsGet(range){
-  const token=await googleAccessToken();
-  const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(SHEET_ID)+'/values/'+encodeURIComponent(range),{headers:{Authorization:'Bearer '+token}});
-  const j=await r.json(); if(!r.ok)throw new Error(j.error?.message||'Google Sheets read gagal'); return j.values||[];
+  const authClient=await googleAuth();
+  const r=await authClient.request({url:'https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(SHEET_ID)+'/values/'+encodeURIComponent(range),method:'GET'});
+  return r.data?.values||[];
 }
 async function sheetsAppend(values){
-  const token=await googleAccessToken();
+  const authClient=await googleAuth();
   const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(SHEET_ID)+'/values/'+encodeURIComponent(SHEET_RANGE)+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&includeValuesInResponse=true';
-  const r=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values]})});
-  const j=await r.json(); if(!r.ok)throw new Error(j.error?.message||'Google Sheets append gagal'); return j;
+  const r=await authClient.request({url,method:'POST',headers:{'Content-Type':'application/json'},data:{majorDimension:'ROWS',values:[values]}});
+  return r.data;
 }
 async function tmdbLookup(title,year=''){
   if(!TMDB_API_KEY)throw new Error('TMDB_API_KEY belum disetel di Vercel');
