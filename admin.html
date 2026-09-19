@@ -138,6 +138,26 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
   .chat{min-height:430px}
   .sections{grid-template-columns:1fr}
 }
+/* NOVA Android app-shell */
+.novaBottomNav{display:none}
+.novaPanel{display:none}
+@media(max-width:700px){
+  .novaBottomNav{position:fixed;left:10px;right:10px;bottom:max(8px,env(safe-area-inset-bottom));height:58px;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:5px;border:1px solid rgba(154,124,255,.25);border-radius:18px;background:rgba(8,11,27,.9);backdrop-filter:blur(22px);box-shadow:0 10px 35px rgba(0,0,0,.42);z-index:50}
+  .novaNavBtn{border:0;border-radius:13px;background:transparent;color:#9895aa;font-size:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+  .novaNavBtn span{font-size:18px;line-height:1}
+  .novaNavBtn.active{color:#fff;background:linear-gradient(135deg,rgba(120,93,255,.35),rgba(255,107,214,.15))}
+  .novaPanel{display:none}
+  .novaPanel.active{display:block}
+  .sections{margin-bottom:76px}
+  body{padding-bottom:2px}
+  .stage{margin-bottom:0}
+  .stageInner{padding-bottom:6px}
+  .desktopOnlyTitle{display:none!important}
+  .appOnly{display:block}
+  .card{scroll-margin-top:60px}
+}
+@media(min-width:701px){.appOnly{display:none}}
+
 </style>
 </head>
 <body>
@@ -197,8 +217,15 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
   </div>
 </section>
 
+<nav class="novaBottomNav" aria-label="NOVA navigation">
+  <button class="novaNavBtn active" data-panel="home"><span>✦</span>Home</button>
+  <button class="novaNavBtn" data-panel="film"><span>🎬</span>Film</button>
+  <button class="novaNavBtn" data-panel="comments"><span>💬</span>Komentar</button>
+  <button class="novaNavBtn" data-panel="chat"><span>🧠</span>Chat</button>
+</nav>
+
 <div class="sections">
-  <div class="card">
+  <div class="card novaPanel" id="panel-film">
     <h2>🎬 Tambah Film</h2>
     <p class="muted">Cari metadata TMDB, cek hasilnya, lalu simpan metadata ke Google Sheet. Link player tetap diisi manual di Google Sheet.</p>
     <label>Judul film</label><input id="filmTitle" placeholder="Contoh: Resident Evil">
@@ -207,14 +234,14 @@ input,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid rgba(
     <div id="filmPreview" class="card" style="display:none;margin-top:12px"></div>
   </div>
 
-  <div class="card">
+  <div class="card novaPanel" id="panel-comments">
     <h2>💬 Highlight Komentar</h2>
     <p class="muted">Komentar terbaru dari seluruh web. NOVA membalas otomatis setelah komentar masuk.</p>
     <button class="action" id="refreshComments">🔄 Muat Highlight</button>
     <div id="commentsHighlight" style="margin-top:12px">Belum dimuat.</div>
   </div>
 
-  <div class="card full">
+  <div class="card full novaPanel" id="panel-chat">
     <h2>🧠 Chat NOVA</h2>
     <p class="muted">Panel ini tetap memakai otak NOVA produksi yang sama; tampilan visual di atas adalah layer baru.</p>
     <label>Admin Key</label><input id="key" type="password" autocomplete="off">
@@ -420,6 +447,22 @@ async function loadHighlights(){
  }catch(e){box.textContent='Error: '+e.message}
 }
 $('refreshComments').onclick=loadHighlights;
+
+// Android-style app navigation
+(function(){
+  const navs=[...document.querySelectorAll('.novaNavBtn')];
+  const panels={film:document.getElementById('panel-film'),comments:document.getElementById('panel-comments'),chat:document.getElementById('panel-chat')};
+  function activate(name){
+    navs.forEach(b=>b.classList.toggle('active',b.dataset.panel===name));
+    Object.entries(panels).forEach(([k,p])=>{if(p)p.classList.toggle('active',k===name)});
+    if(name==='home') window.scrollTo({top:0,behavior:'smooth'});
+    else if(panels[name]) panels[name].scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  navs.forEach(b=>b.addEventListener('click',()=>activate(b.dataset.panel)));
+  if(window.matchMedia('(max-width:700px)').matches){
+    Object.values(panels).forEach(p=>{if(p)p.classList.remove('active')});
+  }
+})();
 </script>
 </body>
 </html>
