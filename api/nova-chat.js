@@ -1,4 +1,48 @@
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.6-luna';
+const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
+
+function parseCSV(text){
+  const rows=[]; let row=[], cell='', quoted=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], next=text[i+1];
+    if(quoted){
+      if(ch==='"' && next==='"'){cell+='"'; i++;}
+      else if(ch==='"') quoted=false;
+      else cell+=ch;
+    }else if(ch==='"') quoted=true;
+    else if(ch===','){row.push(cell);cell='';}
+    else if(ch==='\n'){row.push(cell);rows.push(row);row=[];cell='';}
+    else if(ch!=='\r') cell+=ch;
+  }
+  if(cell!=='' || row.length){row.push(cell);rows.push(row);}
+  return rows;
+}
+
+function catalogContext(text){
+  const rows=parseCSV(text);
+  if(!rows.length) return {total:0,playable:0,unplayable:0,items:[]};
+  const columns=rows[0].map(x=>String(x||'').trim());
+  const data=rows.slice(1).filter(r=>r.some(v=>String(v||'').trim()));
+  const objects=data.map(r=>Object.fromEntries(columns.map((c,i)=>[c,String(r[i]??'').trim()])));
+  const find=(...names)=>{const wanted=names.map(x=>x.toLowerCase());return columns.find(c=>wanted.includes(c.toLowerCase()))};
+  const titleKey=find('title','judul','name')||columns[0];
+  const linkKey=find('link','url','video','embed','source');
+  const yearKey=find('year','tahun');
+  const typeKey=find('type','tipe','kategori');
+  const items=objects.slice(0,500).map(o=>({
+    judul:o[titleKey]||'',
+    tahun:yearKey?o[yearKey]||'':'',
+    tipe:typeKey?o[typeKey]||'':'',
+    bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
+  })).filter(x=>x.judul);
+  return {total:objects.length,playable:items.filter(x=>x.bisaDiputar).length,unplayable:items.filter(x=>!x.bisaDiputar).length,items};
+}
+
+async function loadCatalog(){
+  const r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'},cache:'no-store'});
+  if(!r.ok) throw new Error('Google Sheet katalog HTTP '+r.status);
+  return catalogContext(await r.text());
+}
 
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
@@ -10,13 +54,35 @@ export default async function handler(req,res){
   if(!message) return res.status(400).json({error:'Pesan kosong'});
   if(message.length>4000) return res.status(400).json({error:'Pesan terlalu panjang'});
   try{
+    let catalog;
+    try{ catalog=await loadCatalog(); }
+    catch(e){ catalog={total:0,playable:0,unplayable:0,items:[],error:e.message}; }
+    const catalogBlock=catalog.error
+      ? 'KATALOG TIDAK TERSEDIA. Jangan mengarang daftar film atau status player.'
+      : JSON.stringify(catalog);
+    const instructions=[
+      'Kamu adalah NOVA, asisten admin NontonGratisan.',
+      'Kamu memiliki akses READ-ONLY ke katalog website.',
+      'Gunakan hanya DATA KATALOG di bawah. Jangan mengarang judul, jumlah, atau status player.',
+      'bisaDiputar=true berarti kolom Link/Player pada katalog terisi. bisaDiputar=false berarti belum ada Link/Player tercatat.',
+      'Jika ditanya film yang bisa diputar, gunakan hanya bisaDiputar=true.',
+      'Jika ditanya film TMDB yang belum bisa diputar, gunakan bisaDiputar=false dan jelaskan bahwa player belum tercatat.',
+      'Jangan menganggap film ada di TMDB berarti otomatis bisa diputar.',
+      'Jangan mengklaim URL yang terisi pasti dapat diputar; data hanya menunjukkan player tercatat.',
+      'Jangan mengubah, menghapus, atau menulis katalog, Google Sheet, TMDB, player, atau data pengguna melalui chat.',
+      'Jangan memberikan atau mencari tautan streaming ilegal.',
+      'Jawab dalam Bahasa Indonesia, ringkas dan informatif.',
+      'DATA KATALOG READ-ONLY:',
+      catalogBlock
+    ].join('\n\n');
+
     const r=await fetch('https://api.openai.com/v1/responses',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+process.env.OPENAI_API_KEY},
       body:JSON.stringify({
         model:MODEL,
         store:false,
-        instructions:'Kamu adalah NOVA, asisten admin NontonGratisan. Pada versi ini kamu hanya boleh menjawab percakapan dan membantu analisis. Jangan mengubah, menghapus, atau menulis katalog, Google Sheet, TMDB, player, atau data pengguna.',
+        instructions,
         input:message
       })
     });
