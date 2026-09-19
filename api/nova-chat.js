@@ -30,13 +30,14 @@ function catalogContext(text){
   const linkKey=find('link','url','video','embed','source');
   const yearKey=find('year','tahun');
   const typeKey=find('type','tipe','kategori');
-  const items=objects.slice(0,250).map(o=>({
+  const allItems=objects.map(o=>({
     judul:o[titleKey]||'',
     tahun:yearKey?o[yearKey]||'':'',
     tipe:typeKey?o[typeKey]||'':'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
-  return {total:objects.length,playable:items.filter(x=>x.bisaDiputar).length,unplayable:items.filter(x=>!x.bisaDiputar).length,items};
+  const items=allItems.slice(0,250);
+  return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
 }
 
 async function loadTMDBDiscovery(){
@@ -91,13 +92,20 @@ export default async function handler(req,res){
       ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
       : JSON.stringify(catalog);
     let tmdb={available:false,source:'TMDB',items:[]};
-    const wantsTMDB=/\btmdb\b|the movie database|database film/i.test(message);
+    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message);
     if(wantsTMDB){
       try{ tmdb=await loadTMDBDiscovery(); }
       catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
     }
+    const normalizeTitle=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+    const libraryTitles=new Set((catalog.items||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
+    const tmdbComparison=tmdb.available ? {
+      totalTMDB:tmdb.items.length,
+      sudahTercatatDiPustaka:tmdb.items.filter(x=>libraryTitles.has(normalizeTitle(x.judul))).length,
+      belumTercatatDiPustaka:tmdb.items.filter(x=>!libraryTitles.has(normalizeTitle(x.judul))).map(x=>x.judul).slice(0,100)
+    } : null;
     const tmdbBlock=tmdb.available
-      ? JSON.stringify(tmdb)
+      ? JSON.stringify({...tmdb,comparison:tmdbComparison})
       : 'DATA TMDB TIDAK DIMUAT UNTUK PERTANYAAN INI. Jangan mengarang data TMDB.';
     const instructions=[
       'Kamu adalah NOVA, asisten admin NontonGratisan.',
@@ -109,7 +117,10 @@ export default async function handler(req,res){
       'Gunakan hanya DATA PUSTAKA FILM di bawah. Jangan mengarang judul, jumlah, atau status player.',
       'bisaDiputar=true berarti kolom Link/Player pada katalog terisi. bisaDiputar=false berarti belum ada Link/Player tercatat.',
       'Jika ditanya film yang bisa diputar, gunakan hanya bisaDiputar=true.',
-      'Jika ditanya film TMDB yang belum bisa diputar, gunakan bisaDiputar=false dan jelaskan bahwa player belum tercatat.',
+      'Jika ditanya film TMDB yang belum tercatat di pustaka, gunakan comparison.belumTercatatDiPustaka. Jangan menyebutnya sebagai film yang belum bisa diputar; itu dua hal yang berbeda.',
+      'Jika ditanya film yang belum bisa diputar, gunakan data PUSTAKA FILM dengan bisaDiputar=false. Jangan memakai daftar TMDB sebagai pengganti.',
+      'Jika ditanya perbandingan TMDB vs pustaka, jelaskan jumlah TMDB yang dimuat, jumlah yang sudah tercatat di pustaka, dan daftar yang belum tercatat jika tersedia.',
+      'Jika diminta jumlah katalog, gunakan total/playable/unplayable dari PUSTAKA FILM, bukan jumlah item yang dikirim dalam array (array dibatasi untuk menjaga ukuran request).',
       'Jangan menganggap film ada di TMDB berarti otomatis bisa diputar.',
       'Jangan mengklaim URL yang terisi pasti dapat diputar; data hanya menunjukkan player tercatat.',
       'Jangan mengubah, menghapus, atau menulis katalog, Google Sheet, TMDB, player, atau data pengguna melalui chat.',
