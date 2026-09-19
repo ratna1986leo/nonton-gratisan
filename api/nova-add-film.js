@@ -104,7 +104,8 @@ export default async function handler(req,res){
     const year=String(req.body?.year||'').trim();
     if(!title)return res.status(400).json({error:'Judul film wajib diisi'});
     const lookup=await tmdbLookup(title,year); const data=lookup.data;
-    if(action==='preview')return res.status(200).json({ok:true,readOnly:true,data,candidates:lookup.candidates});
+    const authorizedDomains=String(process.env.AUTHORIZED_EMBED_DOMAINS||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
+    if(action==='preview')return res.status(200).json({ok:true,readOnly:true,data,candidates:lookup.candidates,authorizedDomains});
     if(action!=='save')return res.status(400).json({error:'Action tidak dikenal'});
     const embedUrl=String(req.body?.embedUrl||'').trim();
     if(!embedUrl)throw new Error('Link sumber/player wajib diisi');
