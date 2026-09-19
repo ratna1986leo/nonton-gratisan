@@ -68,12 +68,12 @@ async function searchTMDB(query, type='all'){
 function extractTMDBSearch(message){
   const m=String(message||'').trim();
   const patterns=[
-    /(?:cari|carikan|search|temukan|tolong cari)\\s+(?:(?:film|movie|series|serial|tv)\\s+)?(.+?)(?:\\s+di\\s+tmdb|\\s+di\\s+the movie database)?$/i,
-    /(?:film|series|serial|tv)\\s+(.+?)\\s+(?:di\\s+tmdb|di\\s+the movie database)$/i
+    /(?:cari|carikan|search|temukan|tolong cari)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)(?:\s+di\s+tmdb|\s+di\s+the movie database)?$/i,
+    /(?:film|series|serial|tv)\s+(.+?)\s+(?:di\s+tmdb|di\s+the movie database)$/i
   ];
   for(const re of patterns){const hit=m.match(re);if(hit?.[1]){
-    let q=hit[1].replace(/\\s+(?:dong|bro|ya|please)$/i,'').trim();
-    if(q.length>=2) return {query:q,type:/\\b(series|serial|tv)\\b/i.test(m)?'series':/\\b(film|movie)\\b/i.test(m)?'film':'all'};
+    let q=hit[1].replace(/\s+(?:dong|bro|ya|please)$/i,'').trim();
+    if(q.length>=2) return {query:q,type:/\b(series|serial|tv)\b/i.test(m)?'series':/\b(film|movie)\b/i.test(m)?'film':'all'};
   }}
   return null;
 }
@@ -129,7 +129,7 @@ export default async function handler(req,res){
       ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
       : JSON.stringify(catalog);
     let tmdb={available:false,source:'TMDB',items:[]};
-    const tmdbSearch=extractTMDBSearch(message);\n    const wantsTMDB=/\\btmdb\\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
+    const tmdbSearch=extractTMDBSearch(message);\n    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
     if(wantsTMDB){
       try{ tmdb=await loadTMDBDiscovery(); }
       catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
