@@ -685,28 +685,7 @@
             .poster-card:hover { transform: none; }
             .poster-card:active { transform: scale(.975) !important; }
         }
-    /* Visitor notification center */
-#ng-notification-wrap{position:relative}
-#ng-notification-btn{position:relative;width:40px;height:40px;border-radius:12px;border:1px solid #27272a;background:#18181b;color:#d4d4d8;display:flex;align-items:center;justify-content:center;transition:.2s}
-#ng-notification-btn:hover,#ng-notification-btn:focus{border-color:#2563eb;color:#fff;outline:none}
-#ng-notification-count{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #09090b}
-#ng-notification-panel{position:absolute;right:0;top:48px;width:min(360px,calc(100vw - 24px));background:rgba(12,14,24,.98);border:1px solid #27272a;border-radius:18px;box-shadow:0 20px 60px rgba(0,0,0,.55);backdrop-filter:blur(20px);overflow:hidden;display:none;z-index:80}
-#ng-notification-panel.open{display:block;animation:ngNotifIn .18s ease-out}
-.ng-notif-head{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-bottom:1px solid #27272a}
-.ng-notif-head strong{font-size:13px}.ng-notif-head button{border:0;background:transparent;color:#71717a;font-size:11px}.ng-notif-list{max-height:360px;overflow:auto}
-.ng-notif-item{display:flex;gap:10px;padding:12px 14px;border-bottom:1px solid rgba(39,39,42,.7);cursor:pointer}
-.ng-notif-item:hover{background:#18181b}.ng-notif-item.unread{background:rgba(37,99,235,.07)}
-.ng-notif-icon{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:#18181b;flex:none;font-size:16px}
-.ng-notif-title{font-size:11px;font-weight:800;color:#f4f4f5}.ng-notif-text{font-size:10px;line-height:1.45;color:#a1a1aa;margin-top:2px}.ng-notif-time{font-size:9px;color:#52525b;margin-top:4px}
-.ng-notif-empty{padding:28px 16px;text-align:center;color:#71717a;font-size:11px}
-.ng-notif-foot{padding:9px 12px;border-top:1px solid #27272a;text-align:center}
-.ng-notif-foot button{border:0;background:transparent;color:#60a5fa;font-size:10px;font-weight:700}
-@keyframes ngNotifIn{from{opacity:0;transform:translateY(-6px) scale(.98)}to{opacity:1;transform:none}}
-@media(max-width:640px){
- #ng-notification-btn{width:38px;height:38px}
- #ng-notification-panel{position:fixed;top:58px;right:10px;width:calc(100vw - 20px);max-width:none}
- #ng-notification-wrap{position:static}
-}
+
 
 </style>
 
@@ -826,18 +805,6 @@
                     <button onclick="toggleMobileSearch()" class="sm:hidden focusable p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white touch-target" aria-label="Cari">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     </button>
-
-                    <div id="ng-notification-wrap">
-  <button id="ng-notification-btn" class="focusable touch-target" onclick="toggleVisitorNotifications(event)" aria-label="Notifikasi" aria-expanded="false" title="Notifikasi">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
-    <span id="ng-notification-count">0</span>
-  </button>
-  <div id="ng-notification-panel" role="dialog" aria-label="Notifikasi">
-    <div class="ng-notif-head"><strong>Notifikasi</strong><button onclick="markVisitorNotificationsRead(event)">Tandai dibaca</button></div>
-    <div id="ng-notification-list" class="ng-notif-list"><div class="ng-notif-empty">Belum ada notifikasi baru.</div></div>
-    <div class="ng-notif-foot"><button onclick="requestVisitorNotificationPermission(event)">🔔 Aktifkan notifikasi browser</button></div>
-  </div>
-</div>
 
                     <button onclick="toggleMobileMenu()" class="focusable lg:hidden p-2 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white touch-target" aria-label="Buka Menu Mobile">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
@@ -1232,153 +1199,6 @@
 
     <script>
         
-// ================= NOTIFIKASI PENGUNJUNG =================
-const VISITOR_NOTIF_KEY='ng_visitor_notifications_v1';
-const VISITOR_NOTIF_SEEN_KEY='ng_visitor_notif_seen_v1';
-const VISITOR_FILMS_KEY='ng_visitor_catalog_snapshot_v1';
-const VISITOR_COMMENTS_KEY='ng_visitor_comment_snapshot_v1';
-let visitorNotifications=[];
-let visitorNotifBusy=false;
-
-function readVisitorStorage(key,fallback){
-  try{const v=JSON.parse(localStorage.getItem(key)||'');return v??fallback}catch{return fallback}
-}
-function writeVisitorStorage(key,value){
-  try{localStorage.setItem(key,JSON.stringify(value))}catch{}
-}
-function visitorNotifId(type,id){return type+':'+String(id||'')}
-function addVisitorNotification(item){
-  const id=visitorNotifId(item.type,item.id);
-  if(visitorNotifications.some(n=>n.id===id))return false;
-  visitorNotifications.unshift({...item,id,createdAt:item.createdAt||Date.now(),read:false});
-  visitorNotifications=visitorNotifications.slice(0,40);
-  writeVisitorStorage(VISITOR_NOTIF_KEY,visitorNotifications);
-  return true;
-}
-function formatVisitorNotifTime(ts){
-  const d=new Date(ts); if(Number.isNaN(d.getTime()))return '';
-  const diff=Math.max(0,Date.now()-d.getTime());
-  if(diff<60000)return 'baru saja';
-  if(diff<3600000)return Math.floor(diff/60000)+' menit lalu';
-  if(diff<86400000)return Math.floor(diff/3600000)+' jam lalu';
-  return d.toLocaleDateString('id-ID',{day:'numeric',month:'short'});
-}
-function renderVisitorNotifications(){
-  const list=document.getElementById('ng-notification-list'),count=document.getElementById('ng-notification-count');
-  if(!list||!count)return;
-  const unread=visitorNotifications.filter(n=>!n.read).length;
-  count.textContent=unread>99?'99+':String(unread);
-  count.style.display=unread?'flex':'none';
-  if(!visitorNotifications.length){list.innerHTML='<div class="ng-notif-empty">Belum ada notifikasi baru.</div>';return}
-  list.innerHTML=visitorNotifications.map(n=>{
-    const icon=n.type==='film'?'🎬':'💬';
-    return '<div class="ng-notif-item '+(n.read?'':'unread')+'" onclick="openVisitorNotification(\''+String(n.id).replace(/'/g,'\\\'')+'\')">'+
-      '<div class="ng-notif-icon">'+icon+'</div><div class="min-w-0"><div class="ng-notif-title">'+escapeHtml(n.title||'Notifikasi')+'</div>'+
-      '<div class="ng-notif-text">'+escapeHtml(n.text||'')+'</div><div class="ng-notif-time">'+formatVisitorNotifTime(n.createdAt)+'</div></div></div>';
-  }).join('');
-}
-function toggleVisitorNotifications(e){
-  e?.stopPropagation();
-  const panel=document.getElementById('ng-notification-panel'),btn=document.getElementById('ng-notification-btn');
-  if(!panel)return;
-  const open=!panel.classList.contains('open');
-  panel.classList.toggle('open',open); btn?.setAttribute('aria-expanded',String(open));
-  if(open) renderVisitorNotifications();
-}
-function markVisitorNotificationsRead(e){
-  e?.stopPropagation();
-  visitorNotifications.forEach(n=>n.read=true);
-  writeVisitorStorage(VISITOR_NOTIF_KEY,visitorNotifications);
-  renderVisitorNotifications();
-}
-function openVisitorNotification(id){
-  const n=visitorNotifications.find(x=>x.id===id); if(!n)return;
-  n.read=true; writeVisitorStorage(VISITOR_NOTIF_KEY,visitorNotifications); renderVisitorNotifications();
-  const panel=document.getElementById('ng-notification-panel');
-  panel?.classList.remove('open');
-  document.getElementById('ng-notification-btn')?.setAttribute('aria-expanded','false');
-  if(n.type==='film' && n.filmTitle){
-    const input=document.getElementById('search-input');
-    const mobile=document.getElementById('mobile-search-input');
-    if(input){input.value=n.filmTitle; executeSearch(n.filmTitle);}
-    if(mobile)mobile.value=n.filmTitle;
-  }
-}
-async function requestVisitorNotificationPermission(e){
-  e?.stopPropagation();
-  if(!('Notification' in window)){showToast('Browser ini belum mendukung notifikasi.','ℹ️');return}
-  try{
-    const p=await Notification.requestPermission();
-    if(p==='granted'){
-      new Notification('NontonGratisan',{body:'Notifikasi film dan komentar akan ditampilkan saat tersedia.',icon:'/favicon.svg'});
-      showToast('Notifikasi browser berhasil diaktifkan.','🔔');
-    }else showToast('Izin notifikasi belum diberikan.','ℹ️');
-  }catch{showToast('Notifikasi browser tidak tersedia.','ℹ️')}
-}
-async function checkVisitorFilmNotifications(){
-  try{
-    const r=await fetch(GOOGLE_SHEETS_CSV_URL+'&_notif='+Date.now(),{cache:'no-store'});
-    if(!r.ok)return;
-    const text=await r.text();
-    const rows=parseCSV(text);
-    const films=rows.map((row,i)=>{
-      const title=String(row.Judul||row.Title||row.title||'').trim();
-      if(!title)return null;
-      const year=String(row.Tahun||row.Year||row.year||'').trim();
-      const id=String(row['TMDB ID']||row.tmdb_id||row.ID||row.id||title+'-'+year).trim();
-      return {id,title,year,rowIndex:i};
-    }).filter(Boolean);
-    const current=films.map(x=>x.id);
-    const previous=readVisitorStorage(VISITOR_FILMS_KEY,null);
-    writeVisitorStorage(VISITOR_FILMS_KEY,current);
-    if(!previous)return;
-    const old=new Set(previous);
-    films.slice(0,300).forEach(f=>{
-      if(!old.has(f.id)){
-        addVisitorNotification({type:'film',id:f.id,filmTitle:f.title,title:'Film baru di pustaka',text:f.title+(f.year?' ('+f.year+')':'')+' baru ditambahkan ke pustaka.',createdAt:Date.now(),mediaType:'movie'});
-      }
-    });
-    renderVisitorNotifications();
-  }catch(e){console.warn('Notifikasi film gagal:',e)}
-}
-async function checkVisitorCommentNotifications(){
-  try{
-    const u=new URL('/api/comments',location.origin);
-    u.searchParams.set('action','recent'); u.searchParams.set('limit','15'); u.searchParams.set('_',Date.now());
-    const r=await fetch(u.toString(),{cache:'no-store'});
-    if(!r.ok)return;
-    const data=await r.json(); if(!data?.ok||!Array.isArray(data.comments))return;
-    const comments=data.comments;
-    const ids=comments.map(c=>String(c.commentId||c.id||((c.date||'')+'|'+(c.name||'')+'|'+(c.text||''))));
-    const previous=readVisitorStorage(VISITOR_COMMENTS_KEY,null);
-    writeVisitorStorage(VISITOR_COMMENTS_KEY,ids);
-    if(!previous)return;
-    const old=new Set(previous);
-    comments.forEach(c=>{
-      const id=String(c.commentId||c.id||((c.date||'')+'|'+(c.name||'')+'|'+(c.text||'')));
-      if(!old.has(id)){
-        const name=String(c.name||'Pengunjung');
-        const media=String(c.title||'Film');
-        addVisitorNotification({type:'comment',id,title:'Komentar baru',text:name+' berkomentar di '+media+'.',createdAt:Date.now()});
-      }
-    });
-    renderVisitorNotifications();
-  }catch(e){console.warn('Notifikasi komentar gagal:',e)}
-}
-function startVisitorNotifications(){
-  visitorNotifications=readVisitorStorage(VISITOR_NOTIF_KEY,[]);
-  renderVisitorNotifications();
-  checkVisitorFilmNotifications();
-  checkVisitorCommentNotifications();
-  setInterval(()=>{checkVisitorFilmNotifications();checkVisitorCommentNotifications()},120000);
-  document.addEventListener('click',e=>{
-    const wrap=document.getElementById('ng-notification-wrap');
-    const panel=document.getElementById('ng-notification-panel');
-    if(wrap&&panel&&!wrap.contains(e.target)){panel.classList.remove('open');document.getElementById('ng-notification-btn')?.setAttribute('aria-expanded','false')}
-  });
-}
-
-
 // ================= KONSTANTA & STATE =================
         const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
         
@@ -1535,6 +1355,21 @@ function startVisitorNotifications(){
         }
         
         async function fetchWithRetry(url, maxRetries = 3, timeout = 10000) {
+            try {
+                const rawUrl = String(url || '');
+                if (rawUrl.startsWith('https://api.themoviedb.org/3/')) {
+                    const src = new URL(rawUrl);
+                    const proxy = new URL('/api/tmdb', window.location.origin);
+                    proxy.searchParams.set('path', src.pathname);
+                    src.searchParams.forEach((value, key) => {
+                        if (key !== 'api_key') proxy.searchParams.set(key, value);
+                    });
+                    url = proxy.toString();
+                }
+                if (rawUrl === GOOGLE_SHEETS_CSV_URL || rawUrl.startsWith(GOOGLE_SHEETS_CSV_URL + '&')) {
+                    url = '/api/catalog';
+                }
+            } catch (_) {}
             for (let attempt = 1; attempt <= maxRetries; attempt++) {
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -1565,7 +1400,7 @@ function startVisitorNotifications(){
         // ================= LOAD LIBRARY =================
         async function loadLibraryFromGoogleSheets() {
             try {
-                const response = await fetchWithRetry(GOOGLE_SHEETS_CSV_URL, 3, 120000);
+                const response = await fetchWithRetry('/api/catalog', 3, 20000);
                 const csvText = await response.text();
                 const parsedData = parseCSV(csvText);
                 if (parsedData.length === 0) throw new Error('Data CSV kosong');
@@ -3488,49 +3323,10 @@ function startVisitorNotifications(){
             }, 10000);
 
             hideLoading();
-            startVisitorNotifications();
-        };
+};
     </script>
     <script src="/phase1-ux.js" defer></script>
-
-<script>
-(() => {
-  const VAPID_PUBLIC_KEY='BBGIyHX-3RBYTqL2Xp8DDA-zwX0SVuyWm0_nQjea9qedDv05wrX14JxKHoJsLMncxZze4WSnxW_E3Q0xdjRIrP8';
-  const apiBase=location.origin;
-  const b64ToUint8Array=base64=>Uint8Array.from(atob(base64.replace(/-/g,'+').replace(/_/g,'/')),c=>c.charCodeAt(0));
-  async function registerPush(){
-    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)) return null;
-    const reg=await navigator.serviceWorker.register('/sw.js');
-    let sub=await reg.pushManager.getSubscription();
-    if(!sub){
-      const permission=await Notification.requestPermission();
-      if(permission!=='granted') throw new Error('Izin notifikasi ditolak');
-      sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64ToUint8Array(VAPID_PUBLIC_KEY)});
-    }
-    const r=await fetch(apiBase+'/api/push-subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({subscription:sub.toJSON(),userAgent:navigator.userAgent})});
-    if(!r.ok) throw new Error('Pendaftaran notifikasi gagal');
-    localStorage.setItem('ng_push_enabled','1');
-    return sub;
-  }
-  function renderPushButton(){
-    if(document.getElementById('nova-push-btn')) return;
-    if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window)) return;
-    const btn=document.createElement('button');btn.id='nova-push-btn';btn.type='button';
-    const enabled=Notification.permission==='granted'&&localStorage.getItem('ng_push_enabled')==='1';
-    btn.className=enabled?'enabled':'';
-    btn.innerHTML='<span class="p-dot"></span><span>'+ (enabled?'Notifikasi aktif':'Aktifkan notifikasi') +'</span>';
-    btn.addEventListener('click',async()=>{
-      btn.disabled=true;
-      try{await registerPush();btn.classList.add('enabled');btn.innerHTML='<span class="p-dot"></span><span>Notifikasi aktif</span>';showToast?.('Notifikasi aktif. Kamu akan mendapat kabar film baru.','🔔');}
-      catch(e){showToast?.(e.message||'Notifikasi belum bisa diaktifkan','⚠️');}
-      finally{btn.disabled=false;}
-    });
-    document.body.appendChild(btn);
-  }
-  window.NontonGratisanPush={register:registerPush};
-  window.addEventListener('load',()=>setTimeout(renderPushButton,1200));
-})();
-</script>
+>
 </body>
 <!-- stable production restore -->
 </html>
