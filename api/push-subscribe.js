@@ -19,7 +19,6 @@ async function ensureSheet(){
 function auth(req){const expected=process.env.NOVA_ADMIN_KEY;return !!expected&&(req.headers['x-nova-key']||req.body?.adminKey||'')===expected;}
 export default async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
-  if(!auth(req))return res.status(401).json({error:'Admin key salah'});
   try{
     const b=req.body||{}, sub=b.subscription;
     if(!sub?.endpoint||!sub?.keys?.p256dh||!sub?.keys?.auth)return res.status(400).json({error:'Subscription tidak lengkap'});
