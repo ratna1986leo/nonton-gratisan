@@ -195,18 +195,18 @@ window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stat
 async function sendNova(message){
  const key=$('key').value.trim();
  if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
- setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('send').disabled=true;
+ setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
  try{
   const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
   const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Request gagal');
   setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
   setTimeout(()=>setState('Happy'),900);
  }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
- finally{$('send').disabled=false}
+ finally{$('stageSend').disabled=false}
 }
-$('send').onclick=()=>sendNova($('message').value.trim());
-$('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('message').value=m;sendNova(m)};
-document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const m=b.dataset.prompt;$('message').value=m;sendNova(m)});
+$('stageSend').onclick=()=>sendNova($('stageMessage').value.trim());
+$('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('stageMessage').value=m;sendNova(m)};
+document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const m=b.dataset.prompt;$('stageMessage').value=m;sendNova(m)});
 
 $('filmLookup').onclick=async()=>{
  const key=$('key').value.trim(),title=$('filmTitle').value.trim(),year=$('filmYear').value.trim(),box=$('filmPreview');
