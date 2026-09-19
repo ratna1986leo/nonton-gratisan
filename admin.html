@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#080a18">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <title>NOVA — AI Movie Assistant</title>
 <style>
 :root{
@@ -42,7 +43,9 @@ button{cursor:pointer}
 .brow{position:absolute;z-index:8;top:43%;width:25%;height:7px;border-top:3px solid #513047;border-radius:50%}.brow.left{left:13%;transform:rotate(-4deg)}.brow.right{right:13%;transform:rotate(4deg)}.eye{position:absolute;z-index:9;top:47%;width:26%;height:18%;border-radius:50%;background:linear-gradient(#fff,#f7e7e4);border:1px solid rgba(88,47,65,.18);box-shadow:0 3px 9px rgba(82,34,65,.18);overflow:hidden}.eye.left{left:10%}.eye.right{right:10%}.eye:before{content:"";position:absolute;left:30%;top:13%;width:40%;height:66%;border-radius:50%;background:radial-gradient(circle at 50% 45%,#1a1014 0 22%,#5b3b31 24% 45%,#1b1014 49%);box-shadow:0 0 7px rgba(98,232,255,.2)}.eye i{position:absolute;left:40%;top:28%;width:9%;height:12%;border-radius:50%;background:#fff;z-index:2}.nose{position:absolute;z-index:8;left:47%;top:54%;width:7%;height:18%;border-right:2px solid rgba(151,83,98,.35);border-bottom:2px solid rgba(151,83,98,.22);border-radius:0 0 45% 0;transform:rotate(8deg)}.lip{position:absolute;z-index:10;left:34%;top:74%;width:32%;height:11%;border-bottom:4px solid #a84f6a;border-radius:0 0 50% 50%;box-shadow:0 2px 0 rgba(255,198,203,.65)}.cheek{position:absolute;z-index:5;top:62%;width:22%;height:12%;border-radius:50%;background:rgba(255,112,145,.16);filter:blur(7px)}.cheek.left{left:7%}.cheek.right{right:7%}.earring{position:absolute;z-index:10;top:60%;width:8px;height:18px;border:2px solid #8ef2ff;border-radius:50%;box-shadow:0 0 10px rgba(98,232,255,.5)}.earring.left{left:-2%}.earring.right{right:-2%}
 .portraitShoulder{position:absolute;z-index:3;bottom:8%;width:58%;height:30%;border-radius:55% 55% 18% 18%;background:linear-gradient(135deg,#f0d7df,#b79dc8 45%,#463a68);box-shadow:inset 0 14px 25px rgba(255,255,255,.1),0 18px 25px rgba(0,0,0,.22)}.portraitShoulder.left{left:3%;transform:rotate(7deg)}.portraitShoulder.right{right:3%;transform:rotate(-7deg)}.portraitClothes{position:absolute;z-index:5;left:27%;bottom:5%;width:46%;height:22%;border-radius:45% 45% 18% 18%;background:linear-gradient(145deg,#262348,#10152e);border:1px solid rgba(98,232,255,.35);box-shadow:inset 0 10px 25px rgba(255,107,214,.08)}.portraitClothes span{display:grid;place-items:center;height:100%;font-weight:800;font-size:38px;color:#b8f8ff;text-shadow:0 0 18px rgba(98,232,255,.7)}.portraitSpark{position:absolute;z-index:12;color:#c9b7ff;text-shadow:0 0 14px rgba(154,124,255,.9);animation:sparkFloat 3.5s ease-in-out infinite}.s1{top:17%;right:5%;font-size:23px}.s2{top:44%;left:3%;font-size:18px;animation-delay:.8s}.s3{bottom:28%;right:7%;font-size:12px;animation-delay:1.4s}.portraitName{position:absolute;z-index:14;left:50%;bottom:13%;transform:translateX(-50%);font-size:19px;letter-spacing:.18em;font-weight:800;color:#fff;text-shadow:0 0 15px rgba(98,232,255,.6);text-align:center}.portraitName small{display:block;margin-top:3px;font-size:7px;letter-spacing:.14em;color:#a7eefa}.portraitStatus{position:absolute;z-index:15;left:50%;bottom:1%;transform:translateX(-50%);white-space:nowrap;padding:7px 11px;border:1px solid rgba(98,232,255,.25);border-radius:999px;background:rgba(7,10,24,.72);backdrop-filter:blur(14px);font-size:9px;color:#c7faff}.portraitStatus .dot{display:inline-block;margin-right:5px}
 @keyframes portraitFloat{50%{transform:translateY(-8px)}}@keyframes sparkFloat{50%{transform:translateY(-8px) scale(1.08)}}@media(max-width:980px){.stageInner{grid-template-columns:1fr}.stage{min-height:1120px}.avatarSide{min-height:520px}.chat{min-height:520px}}@media(max-width:700px){.avatarSide{min-height:305px;height:305px}.neonText{top:8px;left:10px;font-size:13px;transform:none}.neonText span{display:none}.novaPortrait{width:270px;height:295px}.portraitFace{top:17%;height:45%}.portraitShoulder{bottom:7%;height:31%}.portraitName{bottom:12%;font-size:15px}.portraitStatus{bottom:1%;font-size:7px;padding:5px 8px}.portraitSpark{font-size:12px}.chat{height:310px;min-height:0;border-radius:15px}.chatHead{padding:9px 10px}.chatBody{padding:10px}.bubble{padding:9px 10px;font-size:11px}.controls{position:static;transform:none;width:100%;max-width:none;overflow-x:auto}.stateBtn{min-width:56px;padding:6px 5px;font-size:8px}.stateIcon{font-size:13px}}
-.stage{background:radial-gradient(circle at 34% 44%,rgba(255,107,214,.09),transparent 24%),radial-gradient(circle at 72% 30%,rgba(98,232,255,.08),transparent 28%),linear-gradient(135deg,#070817,#11102a 55%,#070816)}.chat{background:linear-gradient(180deg,rgba(7,10,28,.82),rgba(8,11,29,.68));border-color:rgba(98,232,255,.22)}</style>
+.stage{background:radial-gradient(circle at 34% 44%,rgba(255,107,214,.09),transparent 24%),radial-gradient(circle at 72% 30%,rgba(98,232,255,.08),transparent 28%),linear-gradient(135deg,#070817,#11102a 55%,#070816)}.chat{background:linear-gradient(180deg,rgba(7,10,28,.82),rgba(8,11,29,.68));border-color:rgba(98,232,255,.22)}
+.novaRateLimitNote{font-size:11px;color:#ffb7e9;margin-top:6px}
+</style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
 body.novaApp{margin:0;background:var(--nova-bg);color:var(--nova-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
@@ -192,18 +195,31 @@ function setState(name){
 
 window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stateBadge');if(p)p.dataset.state=name;if(badge)badge.innerHTML='<span class="dot"></span> '+(stateCopy[name]||'NOVA siap menemani');const face=$('.portraitFace'),lip=$('.lip');if(face)face.style.transform=name==='Thinking'?'translateY(-2px) scale(.99)':name==='Happy'?'translateY(-1px) scale(1.015)':'none';if(lip)lip.style.transform=name==='Speaking'?'scaleX(1.18)':name==='Happy'?'scaleX(1.08)':'scaleX(1)';};
 
+let novaBusy=false;
+let novaCooldownUntil=0;
 async function sendNova(message){
  const key=$('key').value.trim();
  if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
- setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
+ message=String(message||'').trim();
+ if(!message)return;
+ if(novaBusy){$('status').textContent='NOVA masih memproses pesan sebelumnya...';return}
+ const wait=Math.ceil((novaCooldownUntil-Date.now())/1000);
+ if(wait>0){$('status').textContent='NOVA sedang terkena batas API. Coba lagi sekitar '+wait+' detik lagi.';return}
+ novaBusy=true;setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
  try{
   const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
-  const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Request gagal');
+  const data=await r.json().catch(()=>({}));
+  if(r.status===429){
+    novaCooldownUntil=Date.now()+30000;
+    throw new Error(data.error||'NOVA sedang terkena rate limit OpenAI. Tunggu sebentar sebelum mencoba lagi.');
+  }
+  if(!r.ok)throw new Error(data.error||'Request gagal');
   setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
   setTimeout(()=>setState('Happy'),900);
  }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
- finally{$('stageSend').disabled=false}
+ finally{novaBusy=false;$('stageSend').disabled=false}
 }
+
 $('stageSend').onclick=()=>sendNova($('stageMessage').value.trim());
 $('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('stageMessage').value=m;sendNova(m)};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const m=b.dataset.prompt;$('stageMessage').value=m;sendNova(m)});
