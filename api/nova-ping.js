@@ -1,0 +1,1 @@
+export default function handler(req,res){res.status(200).json({ok:true,service:"NOVA",mode:"safe-isolated",catalogTouched:false,playerTouched:false,time:new Date().toISOString()});}
