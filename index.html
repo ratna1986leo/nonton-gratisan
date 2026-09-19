@@ -2909,7 +2909,7 @@
             if (!list || !mediaId) return;
 
             const endpoint = String(COMMENTS_API_URL || '').trim();
-            if (!/^https:\/\//i.test(endpoint)) {
+            if (!endpoint || !(/^(https:\/\/|\/)/i.test(endpoint))) {
                 list.innerHTML = `<p class="text-xs sm:text-sm text-red-400">URL server komentar tidak valid.</p>`;
                 renderPendingComments(mediaId);
                 return;
@@ -2981,7 +2981,7 @@
 
         async function sendQueuedComment(comment) {
             const endpoint = String(COMMENTS_API_URL || '').trim();
-            if (!/^https:\/\//i.test(endpoint)) return false;
+            if (!endpoint || !(/^(https:\/\/|\/)/i.test(endpoint))) return false;
             if (navigator.onLine === false) return false;
 
             const fields = {
@@ -2994,13 +2994,15 @@
             };
 
             try {
-                await fetch(endpoint, {
+                const response = await fetch(endpoint, {
                     method: 'POST',
-                    mode: 'no-cors',
+                    headers: {'content-type': 'application/x-www-form-urlencoded;charset=UTF-8'},
                     body: new URLSearchParams(fields),
                     keepalive: true
                 });
-                return true;
+                if (!response.ok) return false;
+                const data = await response.json();
+                return data && data.ok === true;
             } catch (e) {
                 return false;
             }
