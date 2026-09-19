@@ -1191,10 +1191,7 @@
 
     <script>
 function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}function escAttr(s){return escHtml(s).replace(/'/g,'&#39;')}
-// ================= KONSTANTA & STATE =================
-        const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
-        
-        const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA/gviz/tq?tqx=out:csv&gid=0";
+// ================= KONSTANTA & STATE =================\nconst GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA/gviz/tq?tqx=out:csv&gid=0";
         const PUSTAKA_SERVER_2 = "https://paceboook21.blogspot.com/p/video-preview-body-margin-0-padding-0_0619822090.html";
         const PUSTAKA_SERVER_3 = "https://paceboook21.blogspot.com/p/live-hot-box-sizing-border-box-margin-0.html";
 
@@ -1395,9 +1392,9 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
         // ================= LOAD LIBRARY =================
         async function loadLibraryFromGoogleSheets() {
             try {
-                const response = await fetchWithRetry(GOOGLE_SHEETS_CSV_URL, 3, 120000);
-                const csvText = await response.text();
-                const parsedData = parseCSV(csvText);
+                const response = await fetchWithRetry('/api/catalog', 3, 120000);
+                if (!response.ok) throw new Error('Katalog API HTTP ' + response.status);
+                const parsedData = await response.json();
                 if (parsedData.length === 0) throw new Error('Data CSV kosong');
                 store.setState({ libraryData: parsedData, isLibraryLoaded: true });
                 renderAllSections();
@@ -1483,10 +1480,10 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
                 if (yearVal) endpointAppend += `&primary_release_year=${yearVal}&first_air_date_year=${yearVal}`;
                 
                 const results = await Promise.allSettled([
-                    fetchWithRetry(`https://api.themoviedb.org/3/trending/all/week?language=id-ID${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/discover/movie?language=id-ID&sort_by=popularity.desc${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/discover/tv?language=id-ID&sort_by=popularity.desc${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/discover/movie?language=id-ID&with_genres=53&sort_by=popularity.desc${endpointAppend}&api_key=${DEFAULT_API_KEY}`, 2, 10000)
+                    fetchWithRetry(`/api/tmdb?path=/3/trending/all/week&language=id-ID${endpointAppend}`, 2, 10000),
+                    fetchWithRetry(`/api/tmdb?path=/3/discover/movie&language=id-ID&sort_by=popularity.desc${endpointAppend}`, 2, 10000),
+                    fetchWithRetry(`/api/tmdb?path=/3/discover/tv&language=id-ID&sort_by=popularity.desc${endpointAppend}`, 2, 10000),
+                    fetchWithRetry(`/api/tmdb?path=/3/discover/movie&language=id-ID&with_genres=53&sort_by=popularity.desc${endpointAppend}`, 2, 10000)
                 ]);
                 
                 const newState = {};
@@ -1986,8 +1983,8 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
             let tmdbMatches = [];
             try {
                 const results = await Promise.allSettled([
-                    fetchWithRetry(`https://api.themoviedb.org/3/search/movie?language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/search/tv?language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false&api_key=${DEFAULT_API_KEY}`, 2, 10000)
+                    fetchWithRetry(`/api/tmdb?path=/3/search/movie&language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false`, 2, 10000),
+                    fetchWithRetry(`/api/tmdb?path=/3/search/tv&language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false`, 2, 10000)
                 ]);
                 if (results[0].status === 'fulfilled' && results[0].value.ok) {
                     const data = await results[0].value.json();
@@ -2408,7 +2405,7 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
             setupVideoSource(item);
             if (!item.isLibraryItem) {
                 try {
-                    const res = await fetchWithRetry(`https://api.themoviedb.org/3/${item.type}/${item.id}/videos?language=id-ID&api_key=${DEFAULT_API_KEY}`, 2, 10000);
+                    const res = await fetchWithRetry(`/api/tmdb?path=/3/${item.type}/${item.id}/videos&language=id-ID`, 2, 10000);
                     if (res.ok) {
                         const data = await res.json();
                         const officialTrailer = data.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube') || data.results?.find(v => v.site === 'YouTube');
@@ -3248,7 +3245,7 @@ function escHtml(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':
                 let item = mediaCache.get(key);
                 if (!item) {
                     try {
-                        const res = await fetchWithRetry(`https://api.themoviedb.org/3/${type}/${numericId}?language=id-ID&api_key=${DEFAULT_API_KEY}`, 2, 10000);
+                        const res = await fetchWithRetry(`/api/tmdb?path=/3/${type}/${numericId}&language=id-ID`, 2, 10000);
                         if (res.ok) {
                             const data = await res.json();
                             item = normalizeTMDBItem({ ...data, media_type: type });
