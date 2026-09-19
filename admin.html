@@ -185,6 +185,32 @@ opacity:.9}
  .novaHero .chatBody{padding:12px 8px}
  .novaHero .chatInput{margin:0 7px 8px}
 }
+</style><style id="nova-function-first-v2">
+.novaHero{display:block!important;width:min(920px,100%);min-height:0!important;padding:18px 0 28px}
+.novaFunctionHeader{display:flex;align-items:center;gap:12px;margin:0 auto 14px;padding:12px 14px;border:1px solid rgba(154,124,255,.22);border-radius:16px;background:rgba(10,13,30,.72);backdrop-filter:blur(18px)}
+.novaFunctionMark{width:38px;height:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,#9a7cff,#ff6bd6);box-shadow:0 0 24px rgba(154,124,255,.3);font-size:20px}
+.novaFunctionTitle{font-size:16px;font-weight:800;letter-spacing:.12em}
+.novaFunctionSub{font-size:10px;color:#a8a7bd;margin-top:2px}
+.novaFunctionPulse{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:10px;color:#bff8d9}
+.novaFunctionPulse i{width:7px;height:7px;border-radius:50%;background:#38e6a2;box-shadow:0 0 10px #38e6a2}
+.novaHero .novaChatShell{width:100%;min-height:0;height:auto;margin:0}
+.novaHero .novaWelcome{display:none}
+.novaHero .chat{width:100%;height:auto;min-height:calc(100vh - 170px);max-height:none}
+.novaHero .chatBody{max-width:860px;width:100%;margin:0 auto}
+.novaHero .chatInput{max-width:860px;margin-left:auto;margin-right:auto}
+.novaHero .quick{max-width:860px}
+.novaStatusLine{max-width:860px;margin:6px auto 0}
+@media(max-width:700px){
+ .novaHero{width:100%;padding:8px 0 14px}
+ .novaFunctionHeader{margin-bottom:8px;padding:9px 10px;border-radius:13px}
+ .novaFunctionMark{width:32px;height:32px;border-radius:9px;font-size:16px}
+ .novaFunctionTitle{font-size:13px}.novaFunctionSub{font-size:8px}
+ .novaFunctionPulse{font-size:9px}
+ .novaHero .chat{min-height:calc(100vh - 142px);border-radius:15px}
+ .novaHero .chatBody{padding:12px 8px}
+ .novaHero .chatInput{margin:0 7px 8px}
+ .novaStatusLine{font-size:10px}
+}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
@@ -231,32 +257,13 @@ opacity:.9}
     </header>
 
     <section class="novaView active" id="view-chat">
-      <div class="novaHero"><div class="novaVisual">
-  <div class="novaRoom"></div><div class="novaWindow"><div class="novaCity"></div></div>
-  <div class="novaVisualText">NOVA ♡<small>Film bukan sekadar hiburan,<br>tapi juga tentang perasaan.</small></div>
-  <div class="novaPortrait" id="novaPortrait">
-    <div class="portraitGlow"></div><div class="portraitHalo"></div><div class="portraitHairBack"></div><div class="portraitNeck"></div>
-    <div class="portraitFace">
-      <div class="hairTop"></div><div class="bang left"></div><div class="bang right"></div>
-      <div class="brow left"></div><div class="brow right"></div>
-      <div class="eye left"><i></i></div><div class="eye right"><i></i></div><div class="nose"></div><div class="cheek left"></div><div class="cheek right"></div><div class="lip"></div>
-      <div class="earring left"></div><div class="earring right"></div>
-    </div>
-    <div class="portraitShoulder left"></div><div class="portraitShoulder right"></div>
-    <div class="portraitClothes"><span>✦</span></div>
-    <div class="portraitSpark s1">✦</div><div class="portraitSpark s2">♡</div><div class="portraitSpark s3">✧</div>
-    <div class="portraitName">NOVA<small>AI MOVIE ASSISTANT</small></div>
-    <div class="portraitStatus"><span class="dot"></span> ONLINE • READY</div>
+      <div class="novaHero"><div class="novaFunctionHeader">
+  <div class="novaFunctionMark">✦</div>
+  <div>
+    <div class="novaFunctionTitle">NOVA</div>
+    <div class="novaFunctionSub">AI Movie Assistant • siap membantu</div>
   </div>
-  <div class="novaVisualBadge"><i></i><strong>NOVA Online</strong>Selalu siap membantu kamu.</div>
-  <div class="novaStateDock">
-    <button class="stateBtn active" data-state="Idle"><span class="stateIcon">◉</span>Idle</button>
-    <button class="stateBtn" data-state="Listening"><span class="stateIcon">◌</span>Listen</button>
-    <button class="stateBtn" data-state="Thinking"><span class="stateIcon">◈</span>Think</button>
-    <button class="stateBtn" data-state="Speaking"><span class="stateIcon">◉</span>Speak</button>
-    <button class="stateBtn" data-state="Happy"><span class="stateIcon">♡</span>Happy</button>
-    <button class="stateBtn" data-state="Error"><span class="stateIcon">!</span>Error</button>
-  </div>
+  <div class="novaFunctionPulse"><i></i> Online</div>
 </div><div class="novaChatShell">
         <div class="novaWelcome">
           <div class="novaWelcomeIcon">✦</div>
@@ -316,16 +323,7 @@ const stateCopy={
  Happy:'Happy — NOVA merespons dengan hangat',
  Error:'Error — NOVA sedang memeriksa masalah'
 };
-document.querySelectorAll('.stateBtn').forEach(btn=>btn.onclick=()=>{
- document.querySelectorAll('.stateBtn').forEach(x=>x.classList.remove('active'));
- btn.classList.add('active');const badge=$('stateBadge');if(badge)badge.innerHTML='<span class="dot"></span> '+stateCopy[btn.dataset.state];});
-function setState(name){
- const b=[...document.querySelectorAll('.stateBtn')].find(x=>x.dataset.state===name);
- if(b)b.click();
-
-}
-
-window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stateBadge');if(p)p.dataset.state=name;if(badge)badge.innerHTML='<span class="dot"></span> '+(stateCopy[name]||'NOVA siap menemani');const face=$('.portraitFace'),lip=$('.lip');if(face)face.style.transform=name==='Thinking'?'translateY(-2px) scale(.99)':name==='Happy'?'translateY(-1px) scale(1.015)':'none';if(lip)lip.style.transform=name==='Speaking'?'scaleX(1.18)':name==='Happy'?'scaleX(1.08)':'scaleX(1)';};
+function setState(name){ return name; }
 
 let novaBusy=false;
 let novaCooldownUntil=0;
@@ -337,7 +335,7 @@ async function sendNova(message){
  if(novaBusy){$('status').textContent='NOVA masih memproses pesan sebelumnya...';return}
  const wait=Math.ceil((novaCooldownUntil-Date.now())/1000);
  if(wait>0){$('status').textContent='NOVA sedang terkena batas API. Coba lagi sekitar '+wait+' detik lagi.';return}
- novaBusy=true;setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
+ novaBusy=true;$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
  try{
   const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
   const data=await r.json().catch(()=>({}));
@@ -346,9 +344,8 @@ async function sendNova(message){
     throw new Error(data.error||'NOVA sedang terkena rate limit OpenAI. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
-  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
-  setTimeout(()=>setState('Happy'),900);
- }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
+  $('status').textContent=data.reply||JSON.stringify(data,null,2);
+ }catch(e){$('status').textContent='Error: '+e.message}
  finally{novaBusy=false;$('stageSend').disabled=false}
 }
 
