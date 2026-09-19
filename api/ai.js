@@ -1,11 +1,67 @@
-const crypto=require('crypto');
 const MODEL=process.env.OPENAI_MODEL||'gpt-5.6-luna';
-function base64url(input){return Buffer.from(input).toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')}
-function serviceAccount(){const raw=process.env.GOOGLE_SERVICE_ACCOUNT_JSON;if(!raw)throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON belum disetel di Vercel');try{return JSON.parse(raw)}catch(e){throw new Error('GOOGLE_SERVICE_ACCOUNT_JSON tidak valid')}}
-async function googleAccessToken(){const sa=serviceAccount(),now=Math.floor(Date.now()/1000);const header=base64url(JSON.stringify({alg:'RS256',typ:'JWT'})),claim=base64url(JSON.stringify({iss:sa.client_email,scope:'https://www.googleapis.com/auth/spreadsheets',aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600}));const signer=crypto.createSign('RSA-SHA256');signer.update(header+'.'+claim);signer.end();const assertion=header+'.'+claim+'.'+signer.sign(sa.private_key,'base64url');const r=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({grant_type:'urn:ietf:params:oauth:grant-type:jwt-bearer',assertion})}),j=await r.json();if(!r.ok)throw new Error(j.error_description||'Google OAuth gagal');return j.access_token}
-async function sheetsGet(range){const token=await googleAccessToken(),id=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA';const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range),{headers:{Authorization:'Bearer '+token}}),j=await r.json();if(!r.ok)throw new Error(j.error?.message||'Google Sheets read gagal');return j.values||[]}
-async function sheetsAppend(values){const token=await googleAccessToken(),id=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA',range=process.env.GOOGLE_SHEET_RANGE||'A:Z',url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&includeValuesInResponse=true';const r=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values]})}),j=await r.json();if(!r.ok)throw new Error(j.error?.message||'Google Sheets append gagal');return j}
-async function sheetsClear(range){const token=await googleAccessToken(),id=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA';const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+':clear',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'}),j=await r.json();if(!r.ok)throw new Error(j.error?.message||'Google Sheets clear gagal');return j}
+const GCP_PROJECT_NUMBER=process.env.GCP_PROJECT_NUMBER||'246566536973';
+const GCP_WORKLOAD_IDENTITY_POOL_ID=process.env.GCP_WORKLOAD_IDENTITY_POOL_ID||'vercel';
+const GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID=process.env.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID||'vercel';
+const GCP_SERVICE_ACCOUNT_EMAIL=process.env.GCP_SERVICE_ACCOUNT_EMAIL||'nova-vercel@apis-dan-services.iam.gserviceaccount.com';
+const GCP_STS_AUDIENCE='//iam.googleapis.com/projects/'+GCP_PROJECT_NUMBER+'/locations/global/workloadIdentityPools/'+GCP_WORKLOAD_IDENTITY_POOL_ID+'/providers/'+GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID;
+
+async function getVercelOidcToken(){
+  try{
+    const mod=await import('@vercel/oidc');
+    return await mod.getVercelOidcToken();
+  }catch(e){
+    throw new Error('Vercel OIDC token tidak tersedia: '+(e.message||'unknown error'));
+  }
+}
+async function googleAccessToken(){
+  const subjectToken=await getVercelOidcToken();
+  if(!subjectToken)throw new Error('Vercel OIDC token kosong');
+  const sts=await fetch('https://sts.googleapis.com/v1/token',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({
+      grant_type:'urn:ietf:params:oauth:grant-type:token-exchange',
+      audience:GCP_STS_AUDIENCE,
+      scope:'https://www.googleapis.com/auth/cloud-platform',
+      requested_token_type:'urn:ietf:params:oauth:token-type:access_token',
+      subject_token_type:'urn:ietf:params:oauth:token-type:jwt',
+      subject_token:subjectToken
+    })
+  });
+  const stsJson=await sts.json();
+  if(!sts.ok)throw new Error(stsJson.error_description||stsJson.error||'Google STS token exchange gagal');
+  const federatedToken=stsJson.access_token;
+  const impersonation=await fetch('https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'+encodeURIComponent(GCP_SERVICE_ACCOUNT_EMAIL)+':generateAccessToken',{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+federatedToken,'Content-Type':'application/json'},
+    body:JSON.stringify({scope:['https://www.googleapis.com/auth/spreadsheets']})
+  });
+  const impersonationJson=await impersonation.json();
+  if(!impersonation.ok)throw new Error(impersonationJson.error?.message||'Google service account impersonation gagal');
+  return impersonationJson.accessToken;
+}
+async function sheetsGet(range){
+  const token=await googleAccessToken(),id=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA';
+  const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range),{headers:{Authorization:'Bearer '+token}});
+  const j=await r.json();
+  if(!r.ok)throw new Error(j.error?.message||'Google Sheets read gagal');
+  return j.values||[];
+}
+async function sheetsAppend(values){
+  const token=await googleAccessToken(),id=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA',range=process.env.GOOGLE_SHEET_RANGE||'A:Z';
+  const url='https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS&includeValuesInResponse=true';
+  const r=await fetch(url,{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({majorDimension:'ROWS',values:[values]})});
+  const j=await r.json();
+  if(!r.ok)throw new Error(j.error?.message||'Google Sheets append gagal');
+  return j;
+}
+async function sheetsClear(range){
+  const token=await googleAccessToken(),id=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA';
+  const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+encodeURIComponent(id)+'/values/'+encodeURIComponent(range)+':clear',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},body:'{}'});
+  const j=await r.json();
+  if(!r.ok)throw new Error(j.error?.message||'Google Sheets clear gagal');
+  return j;
+}
 function headerKey(v){return String(v||'').trim().toLowerCase().replace(/[ _-]+/g,'')}
 function mapRow(headers,data){const aliases={judul:['judul','title','name'],tipe:['tipe','type','jenis'],tahun:['tahun','year'],genre:['genre'],poster:['poster','posterpath','image','gambar','thumbnail'],deskripsi:['deskripsi','description','overview','sinopsis'],link:['link','player','url','embed','embedurl'],rating:['rating'],aktor:['aktor','cast','actors']};return headers.map(h=>{const k=headerKey(h);for(const [field,names] of Object.entries(aliases))if(names.includes(k))return data[field]??'';return ''})}
 async function addToSheet(data){const values=await sheetsGet(process.env.GOOGLE_SHEET_RANGE||'1:1'),headers=values[0]||[];if(!headers.length)throw new Error('Header Google Sheet tidak ditemukan');const row=mapRow(headers,data);if(!row.some(Boolean))throw new Error('Kolom Google Sheet tidak cocok dengan field NOVA');return sheetsAppend(row)}
@@ -19,13 +75,6 @@ function audit(items){const missing={title:0,poster:0,genre:0,year:0,player:0},s
 function suggestions(items){const a=audit(items),s=[];if(a.missing.title)s.push({priority:'tinggi',issue:'Judul kosong',count:a.missing.title,action:'Lengkapi judul dari sumber katalog yang sah sebelum dipublikasikan.'});if(a.missing.poster)s.push({priority:'sedang',issue:'Poster kosong',count:a.missing.poster,action:'Lengkapi poster menggunakan aset yang penggunaannya berizin.'});if(a.missing.genre)s.push({priority:'sedang',issue:'Genre kosong',count:a.missing.genre,action:'Lengkapi genre berdasarkan metadata dari sumber yang sah.'});if(a.missing.year)s.push({priority:'sedang',issue:'Tahun kosong',count:a.missing.year,action:'Lengkapi tahun rilis berdasarkan sumber metadata yang sah.'});if(a.missing.player)s.push({priority:'tinggi',issue:'Player/link kosong atau tidak valid',count:a.missing.player,action:'Periksa dan ganti hanya dengan URL sumber/player yang berizin.'});if(a.duplicateGroups)s.push({priority:'sedang',issue:'Judul duplikat',count:a.duplicateGroups,action:'Tinjau grup duplikat dan gabungkan/hapus hanya setelah konfirmasi admin.'});if(!s.length)s.push({priority:'info',issue:'Tidak ada masalah dasar terdeteksi',count:0,action:'Katalog lolos pemeriksaan dasar; tetap lakukan pengecekan berkala.'});return{...a,suggestions:s}}
 async function catalog(){const r=await fetch(CATALOG_APPS_SCRIPT_URL,{cache:'no-store'});if(!r.ok)throw new Error('Katalog tidak bisa diakses: HTTP '+r.status);const text=await r.text();let data;try{data=JSON.parse(text)}catch{throw new Error('Apps Script katalog mengembalikan respons bukan JSON')}const rows=Array.isArray(data)?data:(Array.isArray(data.items)?data.items:(Array.isArray(data.data)?data.data:[]));if(!rows.length)throw new Error(data.error||'Katalog kosong atau format Apps Script tidak valid');return rows}
 const CATALOG_APPS_SCRIPT_URL=process.env.CATALOG_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbzXCYXUB7-aVkS6LAjHL8nlivXh3pAQ5IAX90hQ-Y7VKMFhdHMR4uhu3cecVh2-pr-roQ/exec';
-function parseCSV(text){const rows=[];let row=[],cell='',q=false;for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];if(c==='"'){if(q&&n==='"'){cell+='"';i++}else q=!q}else if(c===','&&!q){row.push(cell);cell=''}else if((c==='\n'||c==='\r')&&!q){if(c==='\r'&&n==='\n')i++;row.push(cell);if(row.some(v=>v.trim()))rows.push(row);row=[];cell=''}else cell+=c}if(cell||row.length){row.push(cell);if(row.some(v=>v.trim()))rows.push(row)}if(!rows.length)return[];const h=rows.shift().map(v=>v.trim().replace(/^\uFEFF/,'').toLowerCase());return rows.map(r=>Object.fromEntries(h.map((k,i)=>[k,(r[i]??'').trim()])));}
-function title(x){return x.judul||x.title||x.name||'Tanpa Judul'} function isSeries(x){const t=((x.tipe||x.type||x.jenis||'')+' '+title(x)+' '+(x.genre||'')).toLowerCase();return /series|tv|serial|drakor|k-drama|episode|season/.test(t)} function player(x){return String(x.link||x.player||x.url||'').trim()} function stats(items){const films=items.filter(x=>!isSeries(x)).length;return{total:items.length,films,series:items.length-films,noPlayer:items.filter(x=>!/^https?:\/\//i.test(player(x))).length}}
-function searchItems(items,q){const terms=q.toLowerCase().split(/\s+/).filter(Boolean);return items.filter(x=>{const s=JSON.stringify(x).toLowerCase();return terms.every(t=>s.includes(t))}).slice(0,40)}
-function audit(items){const missing={title:0,poster:0,genre:0,year:0,player:0},seen=new Map(),duplicates=[];for(const x of items){const t=title(x).trim();if(!t||t==='Tanpa Judul')missing.title++;if(!(x.poster||x.poster_path||x.image||x.gambar||x.thumbnail))missing.poster++;if(!String(x.genre??'').trim())missing.genre++;if(!String(x.tahun??x.year??'').trim())missing.year++;if(!/^https?:\/\//i.test(player(x)))missing.player++;const k=t.toLowerCase();if(k&&k!=='tanpa judul'){if(seen.has(k))duplicates.push({title:t,count:seen.get(k)+1});seen.set(k,(seen.get(k)||0)+1)}}return{...stats(items),missing,duplicates:duplicates.slice(0,30),duplicateGroups:duplicates.length}}
-function suggestions(items){const a=audit(items),s=[];if(a.missing.title)s.push({priority:'tinggi',issue:'Judul kosong',count:a.missing.title,action:'Lengkapi judul dari sumber katalog yang sah sebelum dipublikasikan.'});if(a.missing.poster)s.push({priority:'sedang',issue:'Poster kosong',count:a.missing.poster,action:'Lengkapi poster menggunakan aset yang penggunaannya berizin.'});if(a.missing.genre)s.push({priority:'sedang',issue:'Genre kosong',count:a.missing.genre,action:'Lengkapi genre berdasarkan metadata dari sumber yang sah.'});if(a.missing.year)s.push({priority:'sedang',issue:'Tahun kosong',count:a.missing.year,action:'Lengkapi tahun rilis berdasarkan sumber metadata yang sah.'});if(a.missing.player)s.push({priority:'tinggi',issue:'Player/link kosong atau tidak valid',count:a.missing.player,action:'Periksa dan ganti hanya dengan URL sumber/player yang berizin.'});if(a.duplicateGroups)s.push({priority:'sedang',issue:'Judul duplikat',count:a.duplicateGroups,action:'Tinjau grup duplikat dan gabungkan/hapus hanya setelah konfirmasi admin.'});if(!s.length)s.push({priority:'info',issue:'Tidak ada masalah dasar terdeteksi',count:0,action:'Katalog lolos pemeriksaan dasar; tetap lakukan pengecekan berkala.'});return{...a,suggestions:s}}
-async function catalog(){const r=await fetch(CATALOG_APPS_SCRIPT_URL,{cache:'no-store'});if(!r.ok)throw new Error('Katalog tidak bisa diakses: HTTP '+r.status);const text=await r.text();let data;try{data=JSON.parse(text)}catch{throw new Error('Apps Script katalog mengembalikan respons bukan JSON')}const rows=Array.isArray(data)?data:(Array.isArray(data.items)?data.items:(Array.isArray(data.data)?data.data:[]));if(!rows.length)throw new Error(data.error||'Katalog kosong atau format Apps Script tidak valid');return rows}
-
 function auth(req){if(String(process.env.NOVA_TEST_MODE||'').toLowerCase()==='true')return;const expected=process.env.NOVA_ADMIN_KEY;if(!expected)throw new Error('NOVA_ADMIN_KEY belum disetel di Vercel');if(!req.headers['x-nova-key']||req.headers['x-nova-key']!==expected){const e=new Error('Admin key salah atau belum diisi');e.status=401;throw e}}
 async function generateCommentReply(comment,style='ramah'){
   if(!process.env.OPENAI_API_KEY)throw new Error('OPENAI_API_KEY belum disetel di Vercel');
