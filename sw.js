@@ -100,3 +100,32 @@ self.addEventListener('fetch', event => {
     }))
   );
 });
+
+
+// Web Push notifications
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (_) {}
+  const title = data.title || 'NontonGratisan';
+  const options = {
+    body: data.body || 'Ada kabar baru dari NontonGratisan.',
+    icon: data.icon || '/favicon.svg',
+    badge: data.badge || '/favicon.svg',
+    tag: data.tag || 'nonton-gratisan',
+    renotify: true,
+    data: { url: data.url || '/' }
+  };
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const target = event.notification?.data?.url || '/';
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      const existing = list.find(c => 'focus' in c);
+      if (existing) { existing.navigate(target); return existing.focus(); }
+      return self.clients.openWindow(target);
+    })
+  );
+});
