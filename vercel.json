@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/nova-catalog-fix-preview",
+      "destination": "/api/nova-catalog-actions?mode=fix-preview"
+    },
+    {
       "source": "/admin",
       "destination": "/admin.html"
     },
