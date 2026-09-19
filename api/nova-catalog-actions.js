@@ -24,7 +24,8 @@ export default async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
   const expected=process.env.NOVA_ADMIN_KEY;
   if(!expected)return res.status(503).json({error:'NOVA_ADMIN_KEY belum disetel di Vercel'});
-  if(req.headers['x-nova-key']!==expected)return res.status(401).json({error:'Admin key salah'});
+  const supplied=(req.body&&typeof req.body==='object'&&req.body.adminKey)||req.headers['x-nova-key']||'';
+  if(supplied!==expected)return res.status(401).json({error:'Admin key salah'});
   try{
     const r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'}});
     if(!r.ok)throw new Error('Google Sheet HTTP '+r.status);
