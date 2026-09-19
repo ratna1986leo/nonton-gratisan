@@ -1,4 +1,5 @@
 const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || '';
 
 function parseCSV(text){
   const rows=[]; let row=[], cell='', quoted=false;
@@ -14,6 +15,15 @@ function parseCSV(text){
   return rows;
 }
 const norm=s=>String(s??'').trim().toLowerCase().replace(/\s+/g,' ');
+const cleanTitle=s=>String(s??'')
+  .replace(/^\s*nonton\s+/i,'')
+  .replace(/\s+sub\s+indo\s*$/i,'')
+  .replace(/\s+episode\s+\d+.*$/i,'')
+  .replace(/\s+-\s*season\s+\d+.*$/i,'')
+  .replace(/\s+season\s+\d+.*$/i,'')
+  .replace(/\s*\(\s*(?:19|20)\d{2}\s*\)\s*$/i,'')
+  .trim();
+
 function read(text){
   const rows=parseCSV(text); if(!rows.length)return {columns:[],objects:[]};
   const columns=rows[0].map(x=>String(x??'').trim());
@@ -22,6 +32,47 @@ function read(text){
 }
 function esc(s){
   return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function yearFromTitle(title){
+  const m=String(title||'').match(/\b(?:19|20)\d{2}\b/);
+  return m?m[0]:'';
+}
+function pickText(obj){
+  return obj?.overview || '';
+}
+async function tmdbSearch(title){
+  if(!TMDB_API_KEY)return null;
+  const q=encodeURIComponent(cleanTitle(title));
+  const url='https://api.themoviedb.org/3/search/multi?api_key='+encodeURIComponent(TMDB_API_KEY)+'&query='+q+'&language=id-ID&include_adult=false';
+  const r=await fetch(url,{headers:{accept:'application/json'}});
+  if(!r.ok)return null;
+  const d=await r.json();
+  const results=Array.isArray(d.results)?d.results:[];
+  return results.find(x=>x.media_type==='movie'||x.media_type==='tv')||null;
+}
+async function tmdbDetails(item){
+  if(!TMDB_API_KEY||!item?.id||!item?.media_type)return null;
+  const url='https://api.themoviedb.org/3/'+item.media_type+'/'+item.id+'?api_key='+encodeURIComponent(TMDB_API_KEY)+'&language=id-ID';
+  const r=await fetch(url,{headers:{accept:'application/json'}});
+  if(!r.ok)return null;
+  return await r.json();
+}
+function metadataFrom(item,details){
+  if(!item)return null;
+  const d=details||item;
+  const isTv=item.media_type==='tv';
+  const year=(isTv?d.first_air_date:d.release_date||'')?.slice(0,4)||'';
+  const genres=Array.isArray(d.genres)?d.genres.map(x=>x.name).filter(Boolean).join(', '):'';
+  const actors=Array.isArray(d.credits?.cast)?d.credits.cast.slice(0,8).map(x=>x.name).filter(Boolean).join(', '):'';
+  return {
+    type:item.media_type,
+    title:isTv?(d.name||item.name||''):(d.title||item.title||''),
+    year,
+    rating:typeof d.vote_average==='number'?d.vote_average.toFixed(1):'',
+    genre:genres,
+    actor:actors,
+    description:pickText(d)
+  };
 }
 export default async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
@@ -49,11 +100,11 @@ export default async function handler(req,res){
       const obj=byRow.get(row);
       if(!obj)continue;
       const d=obj.data, title=d[titleKey]||'';
-      let field='', oldValue='', proposed='', status='REVIEW MANUAL';
-      if(type==='missing-actor'){field=actorKey||'Aktor';oldValue=d[actorKey]||'';proposed='Tidak ada nilai otomatis — perlu metadata terverifikasi';}
-      else if(type==='missing-description'){field=descKey||'Deskripsi';oldValue=d[descKey]||'';proposed='Tidak ada nilai otomatis — perlu metadata terverifikasi';}
-      else if(type==='missing-genre'){field=genreKey||'Genre';oldValue=d[genreKey]||'';proposed='Tidak ada nilai otomatis — perlu metadata terverifikasi';}
-      else if(type==='missing-year'){field=yearKey||'Tahun';oldValue=d[yearKey]||'';proposed='Tidak ada nilai otomatis — perlu metadata terverifikasi';}
+      let field='', oldValue='', proposed='', status='REVIEW MANUAL', source='manual';
+      if(type==='missing-actor'){field=actorKey||'Aktor';oldValue=d[actorKey]||'';proposed='Cari metadata terverifikasi dari TMDB';}
+      else if(type==='missing-description'){field=descKey||'Deskripsi';oldValue=d[descKey]||'';proposed='Cari sinopsis terverifikasi dari TMDB';}
+      else if(type==='missing-genre'){field=genreKey||'Genre';oldValue=d[genreKey]||'';proposed='Cari genre terverifikasi dari TMDB';}
+      else if(type==='missing-year'){field=yearKey||'Tahun';oldValue=d[yearKey]||'';proposed='Cari tahun rilis terverifikasi dari TMDB';}
       else if(type==='missing-link'){field=linkKey||'Link';oldValue=d[linkKey]||'';proposed='Tidak ada URL otomatis — harus diverifikasi dari sumber/embed yang sah';}
       else if(type==='duplicate-link'){field=linkKey||'Link';oldValue=d[linkKey]||'';proposed='Tidak ada penggantian otomatis — cek kepemilikan link untuk episode ini';}
       else if(type==='year-conflict'){
@@ -64,9 +115,30 @@ export default async function handler(req,res){
       else if(type==='missing-title'){field=titleKey||'Judul';oldValue=title;proposed='Tidak ada nilai otomatis — perlu metadata terverifikasi';}
       else if(type==='empty-column'){field='Kolom tanpa nama';oldValue='';proposed='Jangan hapus otomatis — tinjau struktur Sheet';}
       else {field=type||'Temuan';oldValue='';proposed='Tidak ada usulan otomatis';}
-      proposals.push({row,type,title,field,oldValue,proposed,status});
+      
+      let meta=null;
+      if(['missing-actor','missing-description','missing-genre','missing-year'].includes(type) && TMDB_API_KEY && title){
+        try{
+          const hit=await tmdbSearch(title);
+          if(hit){
+            const details=await tmdbDetails(hit);
+            meta=metadataFrom(hit,details);
+            if(meta){
+              const value=type==='missing-actor'?meta.actor:type==='missing-description'?meta.description:type==='missing-genre'?meta.genre:meta.year;
+              if(value){
+                proposed=value;
+                source='TMDB';
+                status='REVIEW MANUAL — cocokkan dulu dengan judul/episode';
+              } else {
+                proposed='TMDB tidak menyediakan nilai untuk field ini';
+              }
+            }
+          }
+        }catch{}
+      }
+      proposals.push({row,type,title,field,oldValue,proposed,status,source,metadata:meta});
     }
     const safe=proposals.filter(x=>x.type!=='rating-check');
-    return res.status(200).json({ok:true,readOnly:true,count:safe.length,proposals:safe});
+    return res.status(200).json({ok:true,readOnly:true,count:safe.length,proposals:safe,tmdbAvailable:Boolean(TMDB_API_KEY)});
   }catch(e){return res.status(502).json({error:'Preview nilai gagal: '+(e.message||'unknown error')});}
 }
