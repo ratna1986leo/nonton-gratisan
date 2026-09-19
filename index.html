@@ -1287,8 +1287,14 @@ function markVisitorNotificationsRead(e){
 function openVisitorNotification(id){
   const n=visitorNotifications.find(x=>x.id===id); if(!n)return;
   n.read=true; writeVisitorStorage(VISITOR_NOTIF_KEY,visitorNotifications); renderVisitorNotifications();
-  if(n.type==='film' && n.mediaId){
-    try{showDetail(n.mediaId,n.mediaType||'movie')}catch{}
+  const panel=document.getElementById('ng-notification-panel');
+  panel?.classList.remove('open');
+  document.getElementById('ng-notification-btn')?.setAttribute('aria-expanded','false');
+  if(n.type==='film' && n.filmTitle){
+    const input=document.getElementById('search-input');
+    const mobile=document.getElementById('mobile-search-input');
+    if(input){input.value=n.filmTitle; executeSearch(n.filmTitle);}
+    if(mobile)mobile.value=n.filmTitle;
   }
 }
 async function requestVisitorNotificationPermission(e){
@@ -1322,7 +1328,7 @@ async function checkVisitorFilmNotifications(){
     const old=new Set(previous);
     films.slice(0,300).forEach(f=>{
       if(!old.has(f.id)){
-        addVisitorNotification({type:'film',id:f.id,mediaId:f.id,title:'Film baru di pustaka',text:f.title+(f.year?' ('+f.year+')':'')+' baru ditambahkan ke pustaka.',createdAt:Date.now(),mediaType:'movie'});
+        addVisitorNotification({type:'film',id:f.id,filmTitle:f.title,title:'Film baru di pustaka',text:f.title+(f.year?' ('+f.year+')':'')+' baru ditambahkan ke pustaka.',createdAt:Date.now(),mediaType:'movie'});
       }
     });
     renderVisitorNotifications();
@@ -3475,6 +3481,7 @@ function startVisitorNotifications(){
             }, 10000);
 
             hideLoading();
+            startVisitorNotifications();
         };
     </script>
     <script src="/phase1-ux.js" defer></script>
