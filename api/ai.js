@@ -5,40 +5,26 @@ const GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID=process.env.GCP_WORKLOAD_IDENTITY_P
 const GCP_SERVICE_ACCOUNT_EMAIL=process.env.GCP_SERVICE_ACCOUNT_EMAIL||'nova-vercel@apis-dan-services.iam.gserviceaccount.com';
 const GCP_STS_AUDIENCE='//iam.googleapis.com/projects/'+GCP_PROJECT_NUMBER+'/locations/global/workloadIdentityPools/'+GCP_WORKLOAD_IDENTITY_POOL_ID+'/providers/'+GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID;
 
-async function getVercelOidcToken(){
-  try{
-    const mod=await import('@vercel/oidc');
-    return await mod.getVercelOidcToken();
-  }catch(e){
-    throw new Error('Vercel OIDC token tidak tersedia: '+(e.message||'unknown error'));
-  }
-}
 async function googleAccessToken(){
-  const subjectToken=await getVercelOidcToken();
-  if(!subjectToken)throw new Error('Vercel OIDC token kosong');
-  const sts=await fetch('https://sts.googleapis.com/v1/token',{
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({
-      grant_type:'urn:ietf:params:oauth:grant-type:token-exchange',
-      audience:GCP_STS_AUDIENCE,
-      scope:'https://www.googleapis.com/auth/cloud-platform',
-      requested_token_type:'urn:ietf:params:oauth:token-type:access_token',
+  try{
+    const {getVercelOidcToken}=await import('@vercel/oidc');
+    const {ExternalAccountClient}=await import('google-auth-library');
+    const audience=GCP_STS_AUDIENCE;
+    const authClient=ExternalAccountClient.fromJSON({
+      type:'external_account',
+      audience,
       subject_token_type:'urn:ietf:params:oauth:token-type:jwt',
-      subject_token:subjectToken
-    })
-  });
-  const stsJson=await sts.json();
-  if(!sts.ok)throw new Error(stsJson.error_description||stsJson.error||'Google STS token exchange gagal');
-  const federatedToken=stsJson.access_token;
-  const impersonation=await fetch('https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'+encodeURIComponent(GCP_SERVICE_ACCOUNT_EMAIL)+':generateAccessToken',{
-    method:'POST',
-    headers:{'Authorization':'Bearer '+federatedToken,'Content-Type':'application/json'},
-    body:JSON.stringify({scope:['https://www.googleapis.com/auth/spreadsheets']})
-  });
-  const impersonationJson=await impersonation.json();
-  if(!impersonation.ok)throw new Error(impersonationJson.error?.message||'Google service account impersonation gagal');
-  return impersonationJson.accessToken;
+      token_url:'https://sts.googleapis.com/v1/token',
+      service_account_impersonation_url:'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'+encodeURIComponent(GCP_SERVICE_ACCOUNT_EMAIL)+':generateAccessToken',
+      subject_token_supplier:{getSubjectToken:getVercelOidcToken}
+    });
+    if(!authClient)throw new Error('Google ExternalAccountClient gagal dibuat');
+    const token=await authClient.getAccessToken();
+    if(!token)throw new Error('Google access token kosong');
+    return token;
+  }catch(e){
+    throw new Error('Google OIDC gagal: '+(e.message||'unknown error'));
+  }
 }
 async function sheetsGet(range){
   const token=await googleAccessToken(),id=process.env.GOOGLE_SHEET_ID||'1LDf4YmqI_v4cl1v52qwCBZv5W-gP00mO8choo_R7YVA';
