@@ -160,6 +160,22 @@ opacity:.9}
  .novaStateDock{display:none}
  .novaHero .novaChatShell{width:100%;min-height:0;height:410px}.novaHero .chat{height:410px;border-radius:18px}.novaHero .chatBody{padding:11px}.novaHero .chatInput{margin:0 9px 9px}
 }
+</style>/* NOVA function-first clean: remove visual avatar surface */
+<style id="nova-function-first-clean">
+.novaHero{display:block!important;width:min(900px,calc(100% - 34px));min-height:calc(100vh - 86px);padding:18px 0 28px}
+.novaVisual{display:none!important}
+.novaHero .novaChatShell{width:100%;min-height:calc(100vh - 110px);height:auto;margin:0}
+.novaHero .chat{width:100%;height:calc(100vh - 150px);min-height:560px;max-height:none}
+.novaHero .chatBody{max-width:860px;width:100%;margin:0 auto}
+.novaHero .chatInput{max-width:860px}
+.novaHero .quick{max-width:860px}
+@media(max-width:700px){
+ .novaHero{width:100%;padding:8px 9px 14px;min-height:0}
+ .novaHero .novaChatShell{min-height:0;height:calc(100vh - 70px)}
+ .novaHero .chat{height:calc(100vh - 90px);min-height:520px;border-radius:16px}
+ .novaHero .chatBody{padding:12px 8px}
+ .novaHero .chatInput{margin:0 7px 8px}
+}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
