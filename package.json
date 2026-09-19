@@ -1,1 +1,1 @@
-{"private":true,"dependencies":{"@vercel/oidc":"3.8.8","google-auth-library":"latest"}}
+{"private":true,"dependencies":{"@vercel/oidc":"3.8.8","google-auth-library":"latest","web-push":"latest"}}
