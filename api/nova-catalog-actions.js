@@ -1,3 +1,5 @@
+import handleFixPreview from '../lib/nova-catalog-fix-preview.js';
+
 const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
 
 function parseCSV(text){
@@ -22,6 +24,7 @@ function read(text){
 }
 export default async function handler(req,res){
   if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});
+  if(String(req.query?.mode||'')==='fix-preview') return handleFixPreview(req,res);
   const expected=process.env.NOVA_ADMIN_KEY;
   if(!expected)return res.status(503).json({error:'NOVA_ADMIN_KEY belum disetel di Vercel'});
   const supplied=(req.body&&typeof req.body==='object'&&req.body.adminKey)||req.headers['x-nova-key']||'';
