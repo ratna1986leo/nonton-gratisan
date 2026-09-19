@@ -112,6 +112,22 @@ export default async function handler(req,res){
     const row=mapRow(parseHeaders(headers),data);
     if(!row.some(Boolean))throw new Error('Kolom Google Sheet tidak cocok dengan field film');
     const saved=await sheetsAppend(row);
+    // Notifikasi push tidak boleh menggagalkan proses simpan film.
+    if(process.env.VAPID_PUBLIC_KEY&&process.env.VAPID_PRIVATE_KEY){
+      try{
+        await fetch('https://nonton-gratisan.vercel.app/api/push-send',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','x-nova-key':process.env.NOVA_ADMIN_KEY||''},
+          body:JSON.stringify({
+            title:'🎬 Film baru di NontonGratisan',
+            body:data.judul+(data.tahun?' ('+data.tahun+')':'')+' sudah masuk pustaka.',
+            url:'/?q='+encodeURIComponent(data.judul),
+            tag:'film-baru'
+          }),
+          signal:AbortSignal.timeout(5000)
+        });
+      }catch(_){}
+    }
     return res.status(200).json({ok:true,saved:true,data});
   }catch(e){return res.status(e.status||500).json({error:e.message||'Server error'});}
 }
