@@ -1105,7 +1105,7 @@
     <div class="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pb-2">
         <div class="site-native-banner site-native-banner-bottom" aria-label="Iklan native banner paling bawah halaman">
             <div class="native-ad-inner" id="native-ad-global-bottom">
-                <script async="async" data-cfasync="false" src="https://thrillingdeepcutlery.com/bfbcd7bcd4c8089720ba8ae9aa28ffa0/invoke.js"></script>
+                <!-- Native banner ad temporarily disabled: its external script can trigger unwanted first-click redirects. -->
                 <div id="container-bfbcd7bcd4c8089720ba8ae9aa28ffa0"></div>
             </div>
         </div>
@@ -2413,7 +2413,10 @@
             }
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
             document.getElementById('detail-section').classList.remove('hidden');
-            setupVideoSource(item);
+            // Jangan memuat iframe provider otomatis saat detail dibuka.
+            // Provider eksternal dapat memicu pop-under/redirect pada interaksi pertama.
+            currentVideoUrl = '';
+            prepareIframe('about:blank');
             if (!item.isLibraryItem) {
                 try {
                     const res = await fetchWithRetry(`https://api.themoviedb.org/3/${item.type}/${item.id}/videos?language=id-ID&api_key=${DEFAULT_API_KEY}`, 2, 10000);
@@ -2426,6 +2429,8 @@
             }
             loadDetailInteractions(item.id);
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Baseline iklan: hanya popup yang muncul setiap 20 menit.
+            // Semua sumber iklan lain tetap dimatikan selama tahap pengujian.
             startAdInterval();
         }
 
@@ -3100,19 +3105,8 @@
         let popupAdInitialized = false;
 
         function initPopupAds() {
-            if (popupAdInitialized) return;
-            popupAdInitialized = true;
-            // Gunakan script iklan yang diberikan user sebagai slot iklan di dalam popup.
-            const ad2 = document.createElement('script');
-            ad2.src = 'https://thrillingdeepcutlery.com/52/c7/0c/52c70cf2e73bd0a310dcccee04609f3b.js';
-            ad2.async = true;
-            document.getElementById('popup-ad-script-2')?.appendChild(ad2);
-
-            const ad3 = document.createElement('script');
-            ad3.src = 'https://thrillingdeepcutlery.com/ad/0f/7b/ad0f7bc9f88af0397be73b25504b576a.js';
-            ad3.async = true;
-            document.getElementById('popup-ad-script-3')?.appendChild(ad3);
-
+            // Popup ad scripts temporarily disabled while tracing first-click redirects.
+            // Keep the popup container and manual ad CTA available for later controlled testing.
         }
 
         function showAdPopup() {
@@ -3124,19 +3118,8 @@
             popup.setAttribute('aria-hidden', 'false');
         }
 
-        const SMART_LINK_URL = SUPPORT_AD_URL;
-
-        function openSmartLinkFirst(event) {
-            if (!event.isTrusted) return;
-            try {
-                window.open(SMART_LINK_URL, '_blank', 'noopener,noreferrer');
-            } catch (e) {}
-        }
-
-        document.addEventListener('click', function(event) {
-            const target = event.target.closest('[onclick*="navigateTo("][onclick], [onclick*="navigateToCollection("][onclick]');
-            if (target) openSmartLinkFirst(event);
-        }, true);
+        // Smart Link tetap tersedia untuk tombol iklan yang memang dipilih pengguna.
+        // Jangan buka iklan otomatis saat pengguna menavigasi situs.
 
         function startAdInterval() {
             if (adPopupInterval) clearInterval(adPopupInterval);
