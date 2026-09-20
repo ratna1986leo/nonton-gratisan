@@ -3126,18 +3126,8 @@
 
         const SMART_LINK_URL = SUPPORT_AD_URL;
 
-        function openSmartLinkFirst(event) {
-            if (!event.isTrusted) return;
-            try {
-                window.open(SMART_LINK_URL, '_blank', 'noopener,noreferrer');
-            } catch (e) {}
-        }
-
-        document.addEventListener('click', function(event) {
-            const target = event.target.closest('[onclick*="navigateTo("][onclick], [onclick*="navigateToCollection("][onclick]');
-            if (target) openSmartLinkFirst(event);
-        }, true);
-
+        // Smart Link hanya dibuka melalui tombol iklan yang memang dipilih pengguna.
+        // Tidak ada lagi click handler global pada menu/katalog/player.
         function startAdInterval() {
             if (adPopupInterval) clearInterval(adPopupInterval);
             initPopupAds();
