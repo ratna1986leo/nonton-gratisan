@@ -172,6 +172,43 @@ button.action{background:#202123;color:#fff;border-color:#202123}
 @media(max-width:900px){.novaHero .novaPortrait{width:340px;height:500px;min-height:0}}
 @media(max-width:700px){.novaHero .novaPortrait{width:240px;height:315px;min-height:0;border-radius:42% 42% 20% 20%}.novaHero .novaPortrait img{object-position:50% 8%}.novaHero .novaPortrait::after{bottom:9px;font-size:8px;padding:5px 9px}.novaHero .novaVisual{min-height:350px}}
 
+
+/* NOVA V8 — production visual direction based on approved mockup */
+:root{
+ --v8-bg:#07101f;--v8-side:#091426;--v8-panel:#0d1b31;--v8-panel2:#10223d;
+ --v8-line:rgba(98,232,255,.18);--v8-text:#edf7ff;--v8-muted:#91a6bd;
+ --v8-blue:#4da3ff;--v8-cyan:#62e8ff;--v8-purple:#8d72ff;--v8-pink:#ff6bd6;
+}
+body.novaApp{background:radial-gradient(circle at 70% 10%,rgba(77,163,255,.10),transparent 28%),linear-gradient(145deg,#050b16,#081528 52%,#050b16)!important;color:var(--v8-text)!important}
+.novaLayout{background:transparent!important}
+.novaSidebar{width:250px;flex-basis:250px;background:linear-gradient(180deg,#081426,#07111f)!important;border-right:1px solid rgba(98,232,255,.13)!important;color:#dcecff!important;padding:14px 12px!important;box-shadow:12px 0 40px rgba(0,0,0,.18)}
+.novaBrandMark{background:linear-gradient(135deg,#4d8dff,#9a6cff)!important;color:#fff!important;box-shadow:0 0 25px rgba(77,163,255,.28)}
+.novaBrand b{color:#fff!important}.novaBrand small{color:#7891ac!important}
+.novaCollapse,.novaMobileMenu{color:#9db2c9!important}.novaNewChat{border:1px solid rgba(98,232,255,.18)!important;background:linear-gradient(135deg,rgba(77,163,255,.16),rgba(141,114,255,.12))!important;color:#eef8ff!important}
+.novaNavTitle,.novaSideTitle{color:#68819b!important}.novaSideBtn,.novaFeature{color:#9fb2c6!important}.novaSideBtn span,.novaFeature span{color:#7fa0bf!important}.novaSideBtn:hover,.novaFeature:hover{background:rgba(77,163,255,.10)!important;color:#fff!important}.novaSideBtn.active{background:linear-gradient(135deg,rgba(49,104,206,.34),rgba(91,65,180,.24))!important;color:#fff!important;box-shadow:inset 2px 0 #62e8ff}
+.novaSideBottom{border-top-color:rgba(98,232,255,.12)!important;background:rgba(7,15,29,.34);padding:13px 4px 4px!important}
+.novaSideBottom label{color:#91a6bd!important;font-size:12px!important;font-weight:700!important;margin-bottom:7px!important}
+.novaSideBottom input#key{height:44px!important;border:1px solid rgba(98,232,255,.22)!important;border-radius:10px!important;background:#0c1a2e!important;color:#fff!important;font-size:13px!important;padding:0 12px!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.02)}
+.novaSideBottom input#key::placeholder{color:#7089a2!important;opacity:1!important}.novaSideBottom input#key:focus{border-color:#62e8ff!important;box-shadow:0 0 0 3px rgba(98,232,255,.10)!important}
+.novaOnline{color:#7891aa!important}.novaMain{background:transparent!important}.novaHeader{background:rgba(6,14,27,.88)!important;border-bottom-color:rgba(98,232,255,.12)!important;color:#fff!important}.novaPageTitle{color:#f4fbff!important}.novaPageSub,.novaHeaderStatus{color:#7891aa!important}.novaHeaderStatus i{background:#38e6a2!important;box-shadow:0 0 10px #38e6a2}
+#view-chat{background:transparent!important}.novaHero{max-width:1180px!important;padding:0 24px 70px!important}
+.novaVisual{display:block!important;min-height:680px!important;height:calc(100vh - 90px);max-height:820px;border:1px solid rgba(98,232,255,.16)!important;border-radius:26px!important;background:radial-gradient(circle at 50% 34%,rgba(141,114,255,.18),transparent 26%),radial-gradient(circle at 78% 65%,rgba(255,107,214,.09),transparent 24%),linear-gradient(145deg,#07101e,#0d1b31 58%,#07101e)!important;box-shadow:0 30px 90px rgba(0,0,0,.36)!important}
+.novaWindow{border-color:rgba(98,232,255,.10)!important}.novaVisualText{color:#fff!important;text-shadow:0 0 22px rgba(255,107,214,.55)!important}.novaVisualText small{color:#9ddcff!important}
+.novaHero .novaPortrait{display:block!important;width:410px!important;height:575px!important;max-width:70%!important;bottom:55px!important;z-index:12!important}
+.novaPortrait .portraitFace{box-shadow:inset -13px -13px 22px rgba(102,48,72,.16),0 18px 40px rgba(0,0,0,.28)!important}
+.novaVisualBadge{border-color:rgba(98,232,255,.20)!important;background:rgba(5,12,25,.76)!important;color:#a9c0d7!important}.novaVisualBadge strong{color:#fff!important}.novaVisualBadge i{background:#38e6a2!important;box-shadow:0 0 10px #38e6a2!important}
+.novaHero .novaChatShell{min-height:680px!important}.novaHero .chat{height:680px!important;min-height:680px!important;background:rgba(7,16,31,.72)!important;border:1px solid rgba(98,232,255,.15)!important;border-radius:26px!important;box-shadow:0 24px 70px rgba(0,0,0,.30)!important;backdrop-filter:blur(18px)!important}
+.novaHero .chatBody{padding:28px!important;background:transparent!important}.novaHero .bubble.ai{background:linear-gradient(135deg,rgba(77,163,255,.13),rgba(141,114,255,.10))!important;border:1px solid rgba(98,232,255,.16)!important;color:#eaf6ff!important;border-radius:18px!important}.novaHero .quick button{background:rgba(8,22,40,.76)!important;border-color:rgba(98,232,255,.18)!important;color:#cfe5f7!important;border-radius:11px!important}.novaHero .quick button:hover{background:rgba(77,163,255,.14)!important;color:#fff!important}
+.novaHero .chatInput{position:static!important;width:auto!important;max-width:none!important;margin:0 18px 18px!important;background:rgba(10,24,43,.92)!important;border:1px solid rgba(98,232,255,.22)!important;border-radius:15px!important;box-shadow:0 10px 30px rgba(0,0,0,.24)!important}.novaHero .chatInput input{color:#fff!important}.novaHero .chatInput input::placeholder{color:#6f88a0!important}.novaHero .sendBtn{background:linear-gradient(135deg,#4da3ff,#7a63ff)!important;color:#fff!important}.novaHero .sendBtn:hover{filter:brightness(1.08)}
+.novaHero .novaStatusLine{color:#7891aa!important}
+.novaStateDock{border-color:rgba(98,232,255,.18)!important;background:rgba(5,12,25,.78)!important}.novaStateDock .stateBtn{color:#7f95aa!important}.novaStateDock .stateBtn.active{background:linear-gradient(135deg,rgba(77,163,255,.26),rgba(141,114,255,.20))!important;color:#fff!important}
+#view-film,#view-comments{background:transparent!important;padding:28px 24px!important}.novaFeatureCard{background:rgba(10,22,39,.92)!important;border:1px solid rgba(98,232,255,.16)!important;color:#eef7ff!important;box-shadow:0 20px 60px rgba(0,0,0,.22)!important}.novaFeatureCard .muted{color:#8ea4ba!important}
+.novaFeatureCard .filmFormGrid{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:12px;margin-top:18px}.novaFeatureCard .filmField label{display:block;margin:0 0 7px;color:#d9edff;font-size:12px;font-weight:700}.novaFeatureCard .filmField input{width:100%!important;height:44px!important;border:1px solid rgba(98,232,255,.18)!important;border-radius:10px!important;background:#08182b!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:14px!important;padding:0 12px!important}.novaFeatureCard .filmField input::placeholder{color:#6f88a0!important}.novaFeatureCard .filmField input:focus{border-color:#62e8ff!important;box-shadow:0 0 0 3px rgba(98,232,255,.10)!important}.novaFeatureCard .action{background:linear-gradient(135deg,#4d8dff,#765cff)!important;color:#fff!important;border:0!important;border-radius:10px!important}
+@media(max-width:980px){.novaHero{display:flex!important;flex-direction:column!important}.novaVisual{height:540px!important;min-height:540px!important}.novaHero .novaPortrait{width:330px!important;height:470px!important}.novaHero .novaChatShell{width:100%!important;min-height:520px!important}.novaHero .chat{height:520px!important;min-height:520px!important}}
+@media(max-width:700px){.novaSidebar{background:#081426!important}.novaHero{padding:8px 9px 20px!important}.novaVisual{height:350px!important;min-height:350px!important;border-radius:20px!important}.novaHero .novaPortrait{width:225px!important;height:310px!important;bottom:20px!important}.novaHero .novaChatShell{height:410px!important}.novaHero .chat{height:410px!important;min-height:410px!important;border-radius:18px!important}.novaHero .chatBody{padding:12px!important}.novaHero .chatInput{margin:0 9px 9px!important}.novaFeatureCard .filmFormGrid{grid-template-columns:1fr}}
+/* voice */
+.novaVoiceBtn{width:42px;height:42px;min-width:42px;border:1px solid rgba(98,232,255,.20);border-radius:10px;background:#0c1b2f;color:#dff8ff;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px}.novaVoiceBtn:hover{background:#122844;border-color:#62e8ff}.novaVoiceBtn.listening{background:#153b62;border-color:#62e8ff;box-shadow:0 0 0 4px rgba(98,232,255,.10),0 0 22px rgba(98,232,255,.18)}.novaVoiceHint{display:none;position:absolute;left:14px;bottom:66px;background:#071426;color:#fff;border:1px solid rgba(98,232,255,.18);border-radius:10px;padding:8px 11px;font-size:11px}.chatInput.voice-listening .novaVoiceHint{display:block}
+
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
@@ -333,8 +370,8 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
     </div>
 
     <div class="novaSideBottom">
-      <label>Admin Key</label>
-      <input id="key" type="password" autocomplete="off" placeholder="Masukkan Admin Key">
+      <label for="key">🔐 Admin Key</label>
+      <input id="key" type="password" autocomplete="off" placeholder="Masukkan Admin Key" aria-label="Admin Key">
       <div class="novaOnline"><i></i> NOVA Online</div>
     </div>
   </aside>
@@ -392,7 +429,7 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
               <button data-prompt="Lihat status player">Status player</button>
             </div>
           </div>
-          <div class="chatInput"><input id="stageMessage" placeholder="Tulis pesan ke NOVA..."><button class="sendBtn" id="stageSend">↑</button></div>
+          <div class="chatInput" id="novaChatInput"><input id="stageMessage" placeholder="Tulis pesan ke NOVA..."><button class="novaVoiceBtn" id="novaVoiceBtn" type="button" aria-label="Panggil NOVA" title="Panggil NOVA">🎙️</button><button class="sendBtn" id="stageSend">↑</button><div class="novaVoiceHint">Sebut “NOVA” lalu perintahmu</div></div>
         </div>
       </div></div>
       <div class="novaStatusLine" id="status"></div>
@@ -402,8 +439,10 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
       <div class="card novaFeatureCard">
         <h2>🎬 Tambah Film</h2>
         <p class="muted">Cari metadata TMDB, cek hasilnya, lalu simpan metadata ke Google Sheet. Link player tetap diisi manual di Google Sheet.</p>
-        <label>Judul film</label><input id="filmTitle" placeholder="Contoh: Resident Evil">
-        <input id="filmYear" inputmode="numeric" maxlength="4" placeholder="Tahun (opsional, mis. 2026)">
+        <div class="filmFormGrid">
+          <div class="filmField"><label for="filmTitle">🎬 Judul film</label><input id="filmTitle" type="text" autocomplete="off" placeholder="Contoh: Resident Evil"></div>
+          <div class="filmField"><label for="filmYear">📅 Tahun</label><input id="filmYear" type="text" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="Mis. 2026"></div>
+        </div>
         <button class="action" id="filmLookup">🔎 Cari & Ambil Metadata TMDB</button>
         <div id="filmPreview" class="card" style="display:none;margin-top:12px"></div>
       </div>
@@ -445,7 +484,41 @@ window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stat
 
 let novaBusy=false;
 let novaCooldownUntil=0;
-async function sendNova(message){
+
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let novaRecognition=null,novaListening=false;
+function speakNova(text){
+ if(!('speechSynthesis' in window)||!text)return;
+ window.speechSynthesis.cancel();
+ const u=new SpeechSynthesisUtterance(String(text).replace(/<[^>]*>/g,' '));
+ u.lang='id-ID';u.rate=1;u.pitch=1;
+ u.onstart=()=>setState('Speaking');u.onend=()=>setState('Happy');
+ window.speechSynthesis.speak(u);
+}
+function stopNovaListening(){
+ novaListening=false;const b=$('novaVoiceBtn'),box=$('novaChatInput');
+ if(b)b.classList.remove('listening');if(box)box.classList.remove('voice-listening');
+ if(novaRecognition){try{novaRecognition.stop()}catch(_){}}
+}
+function startNovaListening(){
+ if(!SpeechRecognition){$('status').textContent='Voice command belum didukung browser ini. Coba Chrome/Edge terbaru.';return}
+ if(novaListening){stopNovaListening();setState('Idle');return}
+ novaRecognition=new SpeechRecognition();novaRecognition.lang='id-ID';novaRecognition.continuous=false;novaRecognition.interimResults=false;novaRecognition.maxAlternatives=1;
+ novaListening=true;$('novaVoiceBtn').classList.add('listening');$('novaChatInput').classList.add('voice-listening');$('status').textContent='NOVA mendengarkan... Sebut “NOVA” lalu perintahmu.';setState('Listening');
+ novaRecognition.onresult=(e)=>{
+  const t=String(e.results?.[0]?.[0]?.transcript||'').trim(),m=t.toLowerCase().match(/\bnova\b[,:;\-]?\s*(.*)$/i);
+  if(!m){$('status').textContent='Belum terdengar panggilan “NOVA”. Coba lagi.';setState('Listening');return}
+  const command=String(m[1]||'').trim();
+  if(!command){$('status').textContent='Saya dengar, bro. Perintahnya apa?';stopNovaListening();return}
+  $('stageMessage').value=command;stopNovaListening();sendNova(command,true);
+ };
+ novaRecognition.onerror=(e)=>{$('status').textContent=e.error==='not-allowed'?'Izin mikrofon ditolak. Izinkan mikrofon untuk memakai panggilan NOVA.':'Voice error: '+e.error;stopNovaListening();setState('Error')};
+ novaRecognition.onend=()=>{if(novaListening)stopNovaListening()};
+ try{novaRecognition.start()}catch(e){$('status').textContent='Mikrofon belum siap. Coba lagi.';stopNovaListening()}
+}
+$('novaVoiceBtn').onclick=startNovaListening;
+
+async function sendNova(message,fromVoice=false){
  const key=$('key').value.trim();
  if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
  message=String(message||'').trim();
@@ -462,7 +535,7 @@ async function sendNova(message){
     throw new Error(data.error||'NOVA sedang terkena rate limit OpenAI. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
-  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
+  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);if(fromVoice)speakNova(data.reply||'Perintah sudah diproses.');
   setTimeout(()=>setState('Happy'),900);
  }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
  finally{novaBusy=false;$('stageSend').disabled=false}
