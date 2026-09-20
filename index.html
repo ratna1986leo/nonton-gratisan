@@ -2429,7 +2429,8 @@
             }
             loadDetailInteractions(item.id);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            startAdInterval();
+            // Step 5 tracing: hentikan timer popup otomatis sementara.
+            // CTA iklan manual tetap tersedia melalui popup/tombol yang dipilih pengguna.
         }
 
         function setupVideoSource(item) {
