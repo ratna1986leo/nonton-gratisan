@@ -437,6 +437,24 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
   .novaHero .chatInput{margin:0 9px 9px!important}
 }
 </style>
+<style id="nova-production-v8-avatar-fix">
+/* Replace broken/placeholder raster avatar with a stable CSS cinematic avatar. */
+.novaCssAvatar{overflow:visible!important;background:transparent!important}
+.novaCssAvatar .portraitGlow{inset:8% 7% 3%!important}
+.novaCssAvatar .portraitHalo{top:4%!important;height:72%!important}
+.novaCssAvatar .portraitName{bottom:14%!important}
+.novaCssAvatar .portraitStatus{bottom:2%!important}
+.novaCssAvatar .portraitFace{box-shadow:inset -13px -13px 22px rgba(102,48,72,.16),0 18px 40px rgba(0,0,0,.28)!important}
+.novaCssAvatar .portraitClothes span{font-size:28px!important}
+.novaWelcome h1{color:#f3f8ff!important;text-shadow:0 0 18px rgba(98,232,255,.12)!important}
+.novaWelcome p{color:#91a6bd!important}
+.novaPresenceCard{display:none!important}
+@media(max-width:700px){
+ .novaCssAvatar{width:225px!important;height:310px!important}
+ .novaCssAvatar .portraitName{bottom:12%!important}
+ .novaCssAvatar .portraitStatus{bottom:1%!important}
+}
+</style>
 </head>
 <body class="novaApp">
 <div class="novaLayout">
@@ -486,7 +504,23 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
       <div class="novaHero"><div class="novaVisual">
   <div class="novaRoom"></div><div class="novaWindow"><div class="novaCity"></div></div>
   <div class="novaVisualText">NOVA ♡<small>Film bukan sekadar hiburan,<br>tapi juga tentang perasaan.</small></div>
-  <div class="novaPortrait" id="novaPortrait" aria-label="NOVA cinematic avatar"><img src="/assets/nova-avatar.jpg" alt="NOVA AI assistant avatar" loading="eager"></div>
+  <div class="novaPortrait novaCssAvatar" id="novaPortrait" aria-label="NOVA cinematic avatar">
+  <div class="portraitGlow"></div><div class="portraitHalo"></div>
+  <div class="portraitHairBack"></div><div class="portraitNeck"></div>
+  <div class="portraitFace">
+    <div class="hairTop"></div><div class="bang left"></div><div class="bang right"></div>
+    <div class="brow left"></div><div class="brow right"></div>
+    <div class="eye left"><i></i></div><div class="eye right"><i></i></div>
+    <div class="nose"></div><div class="lip"></div>
+    <div class="cheek left"></div><div class="cheek right"></div>
+    <div class="earring left"></div><div class="earring right"></div>
+  </div>
+  <div class="portraitShoulder left"></div><div class="portraitShoulder right"></div>
+  <div class="portraitClothes"><span>✦</span></div>
+  <div class="portraitSpark s1">✦</div><div class="portraitSpark s2">✧</div><div class="portraitSpark s3">+</div>
+  <div class="portraitName">NOVA<small>AI MOVIE ASSISTANT</small></div>
+  <div class="portraitStatus"><span class="dot"></span> READY</div>
+</div>
   <div class="novaCore" aria-label="NOVA AI presence" hidden>
     <div class="coreRings"><i></i><i></i><i></i></div>
     <div class="coreOrbit orbitA"></div><div class="coreOrbit orbitB"></div>
