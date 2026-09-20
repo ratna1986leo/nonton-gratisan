@@ -172,6 +172,25 @@ button.action{background:#202123;color:#fff;border-color:#202123}
 @media(max-width:900px){.novaHero .novaPortrait{width:340px;height:500px;min-height:0}}
 @media(max-width:700px){.novaHero .novaPortrait{width:240px;height:315px;min-height:0;border-radius:42% 42% 20% 20%}.novaHero .novaPortrait img{object-position:50% 8%}.novaHero .novaPortrait::after{bottom:9px;font-size:8px;padding:5px 9px}.novaHero .novaVisual{min-height:350px}}
 
+
+/* NOVA voice controls */
+.novaVoiceBtn{
+  width:42px;height:42px;min-width:42px;border:1px solid #d6d7dc;border-radius:10px;
+  background:#fff;color:#24262b;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:17px;transition:.16s ease;
+}
+.novaVoiceBtn:hover{background:#f4f4f6;border-color:#bfc1c8}
+.novaVoiceBtn.listening{
+  background:#111827;color:#fff;border-color:#111827;box-shadow:0 0 0 4px rgba(17,24,39,.10);
+}
+.novaVoiceHint{
+  display:none;position:absolute;left:14px;bottom:66px;background:#111827;color:#fff;
+  border-radius:10px;padding:8px 11px;font-size:11px;box-shadow:0 8px 24px rgba(0,0,0,.14);
+}
+.chatInput{position:relative}
+.chatInput.voice-listening .novaVoiceHint{display:block}
+@media(max-width:700px){.novaVoiceBtn{width:40px;height:40px;min-width:40px}}
+
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
@@ -392,7 +411,12 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
               <button data-prompt="Lihat status player">Status player</button>
             </div>
           </div>
-          <div class="chatInput"><input id="stageMessage" placeholder="Tulis pesan ke NOVA..."><button class="sendBtn" id="stageSend">↑</button></div>
+          <div class="chatInput" id="novaChatInput">
+  <input id="stageMessage" placeholder="Tulis pesan ke NOVA...">
+  <button class="novaVoiceBtn" id="novaVoiceBtn" type="button" aria-label="Panggil NOVA" title="Panggil NOVA">🎙️</button>
+  <button class="sendBtn" id="stageSend">↑</button>
+  <div class="novaVoiceHint">Sebut “NOVA” lalu perintahmu</div>
+</div>
         </div>
       </div></div>
       <div class="novaStatusLine" id="status"></div>
@@ -445,7 +469,80 @@ window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stat
 
 let novaBusy=false;
 let novaCooldownUntil=0;
-async function sendNova(message){
+
+const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+let novaRecognition=null;
+let novaListening=false;
+
+function speakNova(text){
+  if(!('speechSynthesis' in window)||!text)return;
+  window.speechSynthesis.cancel();
+  const utterance=new SpeechSynthesisUtterance(String(text).replace(/<[^>]*>/g,' '));
+  utterance.lang='id-ID';
+  utterance.rate=1;
+  utterance.pitch=1;
+  utterance.onstart=()=>setState('Speaking');
+  utterance.onend=()=>setState('Happy');
+  window.speechSynthesis.speak(utterance);
+}
+
+function stopNovaListening(){
+  novaListening=false;
+  const btn=$('novaVoiceBtn'),box=$('novaChatInput');
+  if(btn)btn.classList.remove('listening');
+  if(box)box.classList.remove('voice-listening');
+  if(novaRecognition){try{novaRecognition.stop()}catch(_){}}
+  setState('Idle');
+}
+
+function startNovaListening(){
+  if(!SpeechRecognition){
+    $('status').textContent='Voice command belum didukung browser ini. Coba Chrome/Edge terbaru.';
+    return;
+  }
+  if(novaListening){stopNovaListening();return}
+  novaRecognition=new SpeechRecognition();
+  novaRecognition.lang='id-ID';
+  novaRecognition.continuous=false;
+  novaRecognition.interimResults=false;
+  novaRecognition.maxAlternatives=1;
+  novaListening=true;
+  $('novaVoiceBtn').classList.add('listening');
+  $('novaChatInput').classList.add('voice-listening');
+  $('status').textContent='NOVA mendengarkan... Sebut “NOVA” lalu perintahmu.';
+  setState('Listening');
+  novaRecognition.onresult=(event)=>{
+    const transcript=String(event.results?.[0]?.[0]?.transcript||'').trim();
+    const normalized=transcript.toLowerCase();
+    const wakeMatch=normalized.match(/\bnova\b[,:;\-]?\s*(.*)$/i);
+    if(!wakeMatch){
+      $('status').textContent='Belum terdengar panggilan “NOVA”. Coba lagi.';
+      setState('Listening');
+      return;
+    }
+    const command=String(wakeMatch[1]||'').trim();
+    if(!command){
+      $('stageMessage').value='';
+      $('status').textContent='Saya dengar, bro. Perintahnya apa?';
+      stopNovaListening();
+      return;
+    }
+    $('stageMessage').value=command;
+    stopNovaListening();
+    sendNova(command,true);
+  };
+  novaRecognition.onerror=(event)=>{
+    const msg=event.error==='not-allowed'?'Izin mikrofon ditolak. Izinkan mikrofon untuk memakai panggilan NOVA.':'Voice error: '+event.error;
+    $('status').textContent=msg;
+    stopNovaListening();
+  };
+  novaRecognition.onend=()=>{if(novaListening)stopNovaListening()};
+  try{novaRecognition.start()}catch(e){$('status').textContent='Mikrofon belum siap. Coba tekan tombol panggil lagi.';stopNovaListening()}
+}
+
+$('novaVoiceBtn').onclick=startNovaListening;
+
+async function sendNova(message,fromVoice=false){
  const key=$('key').value.trim();
  if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
  message=String(message||'').trim();
@@ -462,7 +559,7 @@ async function sendNova(message){
     throw new Error(data.error||'NOVA sedang terkena rate limit OpenAI. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
-  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
+  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);if(fromVoice)speakNova(data.reply||'Perintah sudah diproses.');
   setTimeout(()=>setState('Happy'),900);
  }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
  finally{novaBusy=false;$('stageSend').disabled=false}
