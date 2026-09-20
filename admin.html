@@ -445,23 +445,46 @@ window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stat
 
 let novaBusy=false;
 let novaCooldownUntil=0;
+let novaNextAllowedAt=0;
+const NOVA_CLIENT_MIN_INTERVAL_MS=10000;
+let novaCooldownTimer=null;
+
+function startNovaCooldown(ms){
+ novaCooldownUntil=Math.max(novaCooldownUntil,Date.now()+Math.max(1000,Number(ms)||1000));
+ if(novaCooldownTimer)clearInterval(novaCooldownTimer);
+ const tick=()=>{
+   const wait=Math.max(0,novaCooldownUntil-Date.now());
+   if(wait<=0){
+     clearInterval(novaCooldownTimer);novaCooldownTimer=null;
+     if(!$('stageSend').disabled && !novaBusy)$('status').textContent='NOVA siap menerima perintah.';
+     return;
+   }
+   $('status').textContent='NOVA sedang menjaga batas API. Coba lagi dalam '+Math.ceil(wait/1000)+' detik.';
+ };
+ tick();
+ novaCooldownTimer=setInterval(tick,500);
+}
+
 async function sendNova(message){
  const key=$('key').value.trim();
  if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
  message=String(message||'').trim();
  if(!message)return;
  if(novaBusy){$('status').textContent='NOVA masih memproses pesan sebelumnya...';return}
- const wait=Math.ceil((novaCooldownUntil-Date.now())/1000);
- if(wait>0){$('status').textContent='NOVA sedang terkena batas API. Coba lagi sekitar '+wait+' detik lagi.';return}
+ const now=Date.now();
+ const wait=Math.max(novaCooldownUntil-now,novaNextAllowedAt-now);
+ if(wait>0){startNovaCooldown(wait);return}
  novaBusy=true;setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
  try{
   const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
   const data=await r.json().catch(()=>({}));
   if(r.status===429){
-    novaCooldownUntil=Date.now()+30000;
-    throw new Error(data.error||'NOVA sedang terkena rate limit OpenAI. Tunggu sebentar sebelum mencoba lagi.');
+    const retryMs=Math.max(5000,(Number(data.retryAfterSec)||20)*1000);
+    startNovaCooldown(retryMs);
+    throw new Error(data.error||'NOVA sedang terkena rate limit API. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
+  novaNextAllowedAt=Date.now()+NOVA_CLIENT_MIN_INTERVAL_MS;
   setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
   setTimeout(()=>setState('Happy'),900);
  }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
