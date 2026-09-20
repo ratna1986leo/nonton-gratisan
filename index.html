@@ -3100,19 +3100,8 @@
         let popupAdInitialized = false;
 
         function initPopupAds() {
-            if (popupAdInitialized) return;
-            popupAdInitialized = true;
-            // Gunakan script iklan yang diberikan user sebagai slot iklan di dalam popup.
-            const ad2 = document.createElement('script');
-            ad2.src = 'https://thrillingdeepcutlery.com/52/c7/0c/52c70cf2e73bd0a310dcccee04609f3b.js';
-            ad2.async = true;
-            document.getElementById('popup-ad-script-2')?.appendChild(ad2);
-
-            const ad3 = document.createElement('script');
-            ad3.src = 'https://thrillingdeepcutlery.com/ad/0f/7b/ad0f7bc9f88af0397be73b25504b576a.js';
-            ad3.async = true;
-            document.getElementById('popup-ad-script-3')?.appendChild(ad3);
-
+            // Popup ad scripts temporarily disabled while tracing first-click redirects.
+            // Keep the popup container and manual ad CTA available for later controlled testing.
         }
 
         function showAdPopup() {
