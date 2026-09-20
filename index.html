@@ -1080,13 +1080,25 @@
 // Step 10 diagnostic: block known external redirect destinations from click/open navigation.
 // Temporary only, to confirm whether a third-party redirect is involved.
 document.addEventListener('click', function(event) {
-    const link = event.target.closest('a[href]');
-    if (!link) return;
+    const target = event.target.closest?.('[onclick*="navigateTo("], [onclick*="navigateToCollection("]');
+    if (!target) return;
+
+    // Step 11 diagnostic: take full control of menu clicks before any later
+    // third-party listener can observe the click. This preserves navigation
+    // while proving whether another click listener is causing the redirect.
+    event.preventDefault();
+    event.stopImmediatePropagation();
+
+    const handler = target.getAttribute('onclick') || '';
     try {
-        const url = new URL(link.href, window.location.href);
-        if (url.hostname === 'thrillingdeepcutlery.com' || url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
-            event.preventDefault();
-            event.stopImmediatePropagation();
+        if (handler.includes('navigateToCollection(')) {
+            const match = handler.match(/navigateToCollection\(['"]([^'"]+)['"]\)/);
+            if (match) navigateToCollection(match[1]);
+            if (handler.includes('toggleMobileMenu(')) toggleMobileMenu();
+        } else {
+            const match = handler.match(/navigateTo\(['"]([^'"]+)['"]\)/);
+            if (match) navigateTo(match[1]);
+            if (handler.includes('toggleMobileMenu(')) toggleMobileMenu();
         }
     } catch (_) {}
 }, true);
