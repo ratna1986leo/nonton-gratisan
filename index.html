@@ -2429,8 +2429,9 @@
             }
             loadDetailInteractions(item.id);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            // Step 5 tracing: hentikan timer popup otomatis sementara.
-            // CTA iklan manual tetap tersedia melalui popup/tombol yang dipilih pengguna.
+            // Baseline iklan: hanya popup yang muncul setiap 20 menit.
+            // Semua sumber iklan lain tetap dimatikan selama tahap pengujian.
+            startAdInterval();
         }
 
         function setupVideoSource(item) {
