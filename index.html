@@ -387,98 +387,6 @@
             margin: 0 0.5rem;
         }
 
-        .site-native-banner {
-            width: 100%;
-            min-height: 90px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0.75rem 0;
-            padding: 0.5rem;
-            background: #0b0b0f;
-            border: 1px solid #27272a;
-            border-radius: 1rem;
-            overflow: hidden;
-        }
-        .site-native-banner .native-ad-inner {
-            width: 100%;
-            min-height: 90px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        .site-native-banner ins, .site-native-banner iframe, .site-native-banner > div {
-            max-width: 100% !important;
-        }
-        .ad-popup-box {
-            width: min(94vw, 560px);
-            max-height: min(90vh, 760px);
-            padding: 1.75rem;
-        }
-        .ad-popup-icon { font-size: 3.25rem; margin-bottom: 0.5rem; }
-        .ad-popup-box h3 { font-size: 1.35rem; line-height: 1.3; }
-        .ad-popup-box p { font-size: 1rem; line-height: 1.6; max-width: 470px; }
-        .popup-ad-slot { min-height: 120px; padding: 0.65rem; }
-        .popup-ad-actions button { padding: 0.9rem 1.2rem; font-size: 0.95rem; min-height: 48px; }
-        @media (max-width: 640px) {
-            .site-native-banner { min-height: 70px; margin: 0.5rem 0; border-radius: 0.8rem; }
-            .site-native-banner .native-ad-inner { min-height: 70px; }
-            .ad-popup-box { padding: 1.25rem; }
-            .ad-popup-icon { font-size: 2.8rem; }
-            .ad-popup-box h3 { font-size: 1.15rem; }
-            .ad-popup-box p { font-size: 0.92rem; }
-        }
-
-        #popup-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            z-index: 200;
-            background: rgba(0,0,0,0.88);
-            backdrop-filter: blur(6px);
-            align-items: center;
-            justify-content: center;
-            padding: 1rem;
-        }
-
-        .ad-popup-box {
-            width: min(92vw, 460px);
-            max-height: min(86vh, 720px);
-            overflow-y: auto;
-            background: #18181b;
-            border: 1px solid #3f3f46;
-            border-radius: 1rem;
-            padding: 1.25rem;
-            text-align: center;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.65);
-        }
-        .ad-popup-icon { font-size: 2.3rem; margin-bottom: 0.35rem; }
-        .ad-popup-box h3 { color:#fff; font-weight:800; font-size:1.05rem; margin-bottom:0.5rem; }
-        .ad-popup-box p { color:#a1a1aa; font-size:0.86rem; line-height:1.5; margin:0 auto 0.9rem; max-width: 390px; }
-        .popup-ad-slot {
-            min-height: 90px;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            gap:0.5rem;
-            overflow:hidden;
-            margin-bottom:1rem;
-            border:1px solid #27272a;
-            border-radius:0.75rem;
-            background:#09090b;
-            padding:0.4rem;
-        }
-        .popup-ad-script { width:100%; min-height: 20px; overflow:hidden; }
-        .popup-ad-actions { display:flex; flex-wrap:wrap; gap:0.75rem; justify-content:center; }
-        .popup-ad-actions button { border:none; padding:0.72rem 1rem; border-radius:0.65rem; font-weight:700; cursor:pointer; }
-        .popup-secondary-btn { background:#27272a; color:#fff; }
-        .popup-primary-btn { background:#2563eb; color:#fff; }
-        @media (max-width: 480px) {
-            .ad-popup-box { padding: 1rem; }
-            .popup-ad-actions button { flex:1 1 150px; }
-        }
 
         /* ================= MOBILE / SMART TV / FULLSCREEN ================= */
         .player-fullscreen-btn {
@@ -1101,16 +1009,6 @@
     </div>
 
 
-    <!-- NATIVE BANNER GLOBAL: selalu berada di area paling bawah halaman -->
-    <div class="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pb-2">
-        <div class="site-native-banner site-native-banner-bottom" aria-label="Iklan native banner paling bawah halaman">
-            <div class="native-ad-inner" id="native-ad-global-bottom">
-                <!-- Native banner ad temporarily disabled: its external script can trigger unwanted first-click redirects. -->
-                <div id="container-bfbcd7bcd4c8089720ba8ae9aa28ffa0"></div>
-            </div>
-        </div>
-    </div>
-
     <footer class="bg-zinc-950 border-t border-zinc-800 py-6 sm:py-8 mt-8 no-print">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 text-center space-y-3">
             <p class="text-xs sm:text-sm text-zinc-400">© 2026 <span class="text-white font-bold">NontonGratisan</span> - Nonton Film & TV Series Subtitle Indonesia Gratis</p>
@@ -1174,26 +1072,6 @@
                 <textarea id="req-note-input" rows="3" placeholder="Contoh: Mohon perbaiki server 1 error..." class="focusable w-full bg-zinc-950 border border-zinc-800 rounded-lg sm:rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-brand-500 resize-none"></textarea>
             </div>
             <button onclick="submitRequest()" class="focusable w-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm py-3 rounded-lg sm:rounded-xl shadow-md touch-target">Kirim Request</button>
-        </div>
-    </div>
-
-    <div id="popup-overlay" aria-hidden="true" aria-live="polite">
-        <div class="ad-popup-box" role="dialog" aria-modal="true" aria-labelledby="support-ad-title">
-            <div class="ad-popup-icon">📢</div>
-            <h3 id="support-ad-title">Dukung Kami dengan Menonton Iklan</h3>
-            <p>Iklan membantu situs ini tetap gratis. Silakan tutup untuk melanjutkan menonton.</p>
-
-            <div id="popup-ad-slot" class="popup-ad-slot" aria-label="Iklan">
-                <div id="popup-ad-script-1" class="popup-ad-script"></div>
-                <div id="popup-ad-script-2" class="popup-ad-script"></div>
-                <div id="popup-ad-script-3" class="popup-ad-script"></div>
-                <div id="popup-ad-script-4" class="popup-ad-script"></div>
-            </div>
-
-            <div class="popup-ad-actions">
-                <button type="button" onclick="closePopup()" class="popup-secondary-btn">Tutup &amp; Lanjut</button>
-                <button type="button" onclick="goToAd()" class="popup-primary-btn">Kunjungi Iklan</button>
-            </div>
         </div>
     </div>
 
@@ -2072,8 +1950,7 @@
         function scrollCarousel(elementId, distance) { const container = document.getElementById(elementId); if (container) container.scrollBy({ left: distance, behavior: 'smooth' }); }
 
         // ================= DETAIL & PLAYER =================
-        let adPopupInterval = null;
-        let currentVideoUrl = '';
+let currentVideoUrl = '';
         let iframeLoadTimer = null;
         let iframeLoadToken = 0;
         let iframeReadyTimer = null;
@@ -2431,8 +2308,7 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             // Baseline iklan: hanya popup yang muncul setiap 20 menit.
             // Semua sumber iklan lain tetap dimatikan selama tahap pengujian.
-            startAdInterval();
-        }
+}
 
         function setupVideoSource(item) {
             const iframe = document.getElementById('video-iframe');
@@ -2753,8 +2629,7 @@
 
         function closeDetailPage() {
             document.getElementById('detail-section').classList.add('hidden');
-            if (adPopupInterval) { clearInterval(adPopupInterval); adPopupInterval = null; }
-            const state = store.getState();
+const state = store.getState();
             const sections = { home: ['hero-section', 'trending-section', 'movies-section', 'series-section', 'thriller-section'], movies: ['movies-section'], tv: ['series-section'], watchlist: ['watchlist-section'] };
             const toShow = sections[state.activeTab] || sections.home;
             document.querySelectorAll('#main-content > *').forEach(s => s.classList.add('hidden'));
@@ -3101,44 +2976,7 @@
             titleInput.value = ''; if (noteInput) noteInput.value = '';
             closeRequestModal();
         }
-        const SUPPORT_AD_URL = 'https://thrillingdeepcutlery.com/f3deengg?key=1acdf64065adc72ae8103d33ede9a49a';
-        let popupAdInitialized = false;
 
-        function initPopupAds() {
-            // Popup ad scripts temporarily disabled while tracing first-click redirects.
-            // Keep the popup container and manual ad CTA available for later controlled testing.
-        }
-
-        function showAdPopup() {
-            const detail = document.getElementById('detail-section');
-            const popup = document.getElementById('popup-overlay');
-            if (!popup || !detail || detail.classList.contains('hidden')) return;
-            initPopupAds();
-            popup.style.display = 'flex';
-            popup.setAttribute('aria-hidden', 'false');
-        }
-
-        // Smart Link tetap tersedia untuk tombol iklan yang memang dipilih pengguna.
-        // Jangan buka iklan otomatis saat pengguna menavigasi situs.
-
-        function startAdInterval() {
-            if (adPopupInterval) clearInterval(adPopupInterval);
-            initPopupAds();
-            adPopupInterval = setInterval(showAdPopup, 20 * 60 * 1000);
-        }
-
-        function closePopup() {
-            const popup = document.getElementById('popup-overlay');
-            if (!popup) return;
-            popup.style.display = 'none';
-            popup.setAttribute('aria-hidden', 'true');
-        }
-
-        function goToAd() {
-            const popup = document.getElementById('popup-overlay');
-            if (popup) { popup.style.display = 'none'; popup.setAttribute('aria-hidden', 'true'); }
-            window.open(SUPPORT_AD_URL, '_blank', 'noopener,noreferrer');
-        }
         function toggleMobileMenu() { const menu = document.getElementById('mobile-menu'); if (menu) menu.classList.toggle('hidden'); }
         function toggleMobileDropdown() { const dropdown = document.getElementById('mobile-dropdown'); const arrow = document.getElementById('mobile-dropdown-arrow'); if (dropdown) { dropdown.classList.toggle('hidden'); if (arrow) arrow.textContent = dropdown.classList.contains('hidden') ? '▼' : '▲'; } }
         function toggleDesktopDropdown() { const dropdown = document.getElementById('desktop-dropdown'); if (dropdown) dropdown.classList.toggle('active'); }
