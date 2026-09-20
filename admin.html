@@ -343,7 +343,101 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
  .novaHero .bubble{font-size:13px;padding:12px 13px}.novaHero .chatInput{left:10px;right:10px;bottom:10px;width:auto;max-width:none}.novaHero .quick button{font-size:10px;padding:7px 9px}
  #view-film,#view-comments{padding:16px 10px}.novaFeatureCard{padding:16px;border-radius:10px}
 }
-</style></head>
+</style><style id="nova-production-v8-final">
+/* Final cascade fix: keep the approved cinematic NOVA visual visible above legacy UI overrides. */
+.novaHero{
+  display:grid!important;
+  grid-template-columns:minmax(380px,1fr) minmax(420px,560px)!important;
+  gap:28px!important;
+  align-items:center!important;
+  width:min(1180px,calc(100% - 34px))!important;
+  max-width:none!important;
+  margin:0 auto!important;
+  min-height:calc(100vh - 86px)!important;
+  padding:18px 0 70px!important;
+}
+.novaVisual{
+  display:block!important;
+  position:relative!important;
+  min-height:680px!important;
+  height:calc(100vh - 90px)!important;
+  max-height:820px!important;
+  border-radius:26px!important;
+  overflow:hidden!important;
+  border:1px solid rgba(98,232,255,.16)!important;
+  background:
+    radial-gradient(circle at 50% 34%,rgba(141,114,255,.18),transparent 26%),
+    radial-gradient(circle at 78% 65%,rgba(255,107,214,.09),transparent 24%),
+    linear-gradient(145deg,#07101e,#0d1b31 58%,#07101e)!important;
+  box-shadow:0 30px 90px rgba(0,0,0,.36)!important;
+}
+.novaVisual:before{display:block!important}
+.novaHero .novaPortrait{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  width:410px!important;
+  height:575px!important;
+  max-width:70%!important;
+  bottom:55px!important;
+  z-index:12!important;
+}
+.novaHero .novaChatShell{
+  display:flex!important;
+  width:auto!important;
+  height:auto!important;
+  min-height:680px!important;
+}
+.novaHero .chat{
+  display:flex!important;
+  height:680px!important;
+  min-height:680px!important;
+  border:1px solid rgba(98,232,255,.15)!important;
+  border-radius:26px!important;
+  background:rgba(7,16,31,.72)!important;
+  box-shadow:0 24px 70px rgba(0,0,0,.30)!important;
+  color:#eef7ff!important;
+}
+.novaHero .chatBody{background:transparent!important}
+.novaHero .bubble.ai{
+  background:linear-gradient(135deg,rgba(77,163,255,.13),rgba(141,114,255,.10))!important;
+  border:1px solid rgba(98,232,255,.16)!important;
+  color:#eaf6ff!important;
+}
+.novaHero .bubble.user{background:rgba(31,56,86,.55)!important;color:#eef7ff!important}
+.novaHero .quick button{
+  background:rgba(8,22,40,.76)!important;
+  border-color:rgba(98,232,255,.18)!important;
+  color:#cfe5f7!important;
+}
+.novaHero .chatInput{
+  position:static!important;
+  width:auto!important;
+  max-width:none!important;
+  margin:0 18px 18px!important;
+  background:rgba(10,24,43,.92)!important;
+  border:1px solid rgba(98,232,255,.22)!important;
+}
+.novaHero .chatInput input{color:#fff!important}
+.novaHero .chatInput input::placeholder{color:#6f88a0!important}
+#view-chat{background:transparent!important}
+@media(max-width:980px){
+  .novaHero{display:flex!important;flex-direction:column!important;width:min(760px,calc(100% - 20px))!important;min-height:0!important}
+  .novaVisual{width:100%!important;height:540px!important;min-height:540px!important}
+  .novaHero .novaPortrait{width:330px!important;height:470px!important}
+  .novaHero .novaChatShell{width:100%!important;min-height:520px!important}
+  .novaHero .chat{height:520px!important;min-height:520px!important}
+}
+@media(max-width:700px){
+  .novaHero{display:flex!important;width:100%!important;padding:8px 9px 20px!important;gap:10px!important}
+  .novaVisual{height:350px!important;min-height:350px!important;border-radius:20px!important}
+  .novaHero .novaPortrait{width:225px!important;height:310px!important;max-width:none!important;bottom:20px!important}
+  .novaHero .novaChatShell{height:410px!important;min-height:410px!important}
+  .novaHero .chat{height:410px!important;min-height:410px!important;border-radius:18px!important}
+  .novaHero .chatInput{margin:0 9px 9px!important}
+}
+</style>
+</head>
 <body class="novaApp">
 <div class="novaLayout">
   <aside class="novaSidebar" id="novaSidebar">
