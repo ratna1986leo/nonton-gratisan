@@ -3121,6 +3121,14 @@ const state = store.getState();
             script.src = 'https://thrillingdeepcutlery.com/52/c7/0c/52c70cf2e73bd0a310dcccee04609f3b.js';
             script.async = true;
             host.appendChild(script);
+
+            // Iklan #2 — diuji terpisah, tetap tanpa click handler/Smart Link.
+            const host2 = document.getElementById('popup-ad-script-3');
+            if (!host2) return;
+            const script2 = document.createElement('script');
+            script2.src = 'https://thrillingdeepcutlery.com/ad/0f/7b/ad0f7bc9f88af0397be73b25504b576a.js';
+            script2.async = true;
+            host2.appendChild(script2);
         }
 
         function startAdInterval() {
@@ -3177,6 +3185,7 @@ const state = store.getState();
         };
     </script>
     <div id="popup-ad-script-2" style="display:none" aria-hidden="true"></div>
+    <div id="popup-ad-script-3" style="display:none" aria-hidden="true"></div>
     <script src="/phase1-ux.js" defer></script>
 </body>
 <!-- stable production restore -->
