@@ -559,6 +559,59 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
  .novaCssAvatar .portraitFace:after{font-size:10px}
 }
 </style>
+<style id="nova-production-v8-avatar-proportion-v2">
+/* Final proportion pass from preview screenshot: elegant adult-inspired facial proportions, less chibi. */
+.novaCssAvatar .portraitFace{
+  left:27%!important;top:18%!important;width:46%!important;height:45%!important;
+  border-radius:50% 50% 48% 48%!important;
+}
+.novaCssAvatar .portraitHairBack{
+  left:11%!important;top:8%!important;width:78%!important;height:75%!important;
+  border-radius:48% 48% 36% 36%!important;
+}
+.novaCssAvatar .hairTop{
+  left:-4%!important;top:-9%!important;width:108%!important;height:41%!important;
+}
+.novaCssAvatar .bang{height:34%!important;width:25%!important}
+.novaCssAvatar .bang.left{left:12%!important}.novaCssAvatar .bang.right{right:12%!important}
+.novaCssAvatar .brow{top:45%!important;width:23%!important;border-top-width:2px!important}
+.novaCssAvatar .brow.left{left:14%!important}.novaCssAvatar .brow.right{right:14%!important}
+.novaCssAvatar .eye{
+  top:49%!important;width:17%!important;height:12%!important;border:none!important;
+  background:radial-gradient(ellipse at 50% 55%,#fff 0 46%,transparent 48%)!important;
+  box-shadow:none!important;
+}
+.novaCssAvatar .eye.left{left:17%!important}.novaCssAvatar .eye.right{right:17%!important}
+.novaCssAvatar .eye:before{
+  left:31%!important;top:12%!important;width:38%!important;height:76%!important;
+  background:radial-gradient(circle at 50% 45%,#171014 0 22%,#5a4040 24% 48%,#171014 51%)!important;
+}
+.novaCssAvatar .eye i{left:43%!important;top:25%!important;width:11%!important;height:14%!important}
+.novaCssAvatar .nose{left:47.5%!important;top:55%!important;width:6%!important;height:17%!important;border-width:1px!important}
+.novaCssAvatar .lip{
+  left:39%!important;top:76%!important;width:22%!important;height:7%!important;
+  border-bottom-width:3px!important;
+}
+.novaCssAvatar .cheek{top:64%!important;width:16%!important;height:8%!important;filter:blur(8px)!important}
+.novaCssAvatar .cheek.left{left:10%!important}.novaCssAvatar .cheek.right{right:10%!important}
+.novaCssAvatar .portraitNeck{left:41%!important;width:18%!important;height:20%!important;top:57%!important}
+.novaCssAvatar .portraitShoulder{
+  width:53%!important;height:26%!important;bottom:7%!important;
+}
+.novaCssAvatar .portraitShoulder.left{left:8%!important}.novaCssAvatar .portraitShoulder.right{right:8%!important}
+.novaCssAvatar .portraitClothes{
+  left:33%!important;width:34%!important;height:21%!important;bottom:4%!important;
+}
+.novaCssAvatar .portraitName{bottom:12%!important;font-size:16px!important}
+.novaCssAvatar .portraitStatus{bottom:1%!important}
+@media(max-width:980px){
+ .novaHero .novaPortrait{width:300px!important;height:445px!important}
+}
+@media(max-width:700px){
+ .novaHero .novaPortrait{width:205px!important;height:285px!important}
+ .novaCssAvatar .portraitName{font-size:11px!important}
+}
+</style>
 </head>
 <body class="novaApp">
 <div class="novaLayout">
