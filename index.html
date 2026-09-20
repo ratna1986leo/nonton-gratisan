@@ -2413,7 +2413,10 @@
             }
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
             document.getElementById('detail-section').classList.remove('hidden');
-            setupVideoSource(item);
+            // Jangan memuat iframe provider otomatis saat detail dibuka.
+            // Provider eksternal dapat memicu pop-under/redirect pada interaksi pertama.
+            currentVideoUrl = '';
+            prepareIframe('about:blank');
             if (!item.isLibraryItem) {
                 try {
                     const res = await fetchWithRetry(`https://api.themoviedb.org/3/${item.type}/${item.id}/videos?language=id-ID&api_key=${DEFAULT_API_KEY}`, 2, 10000);
