@@ -413,7 +413,11 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
       <div class="card novaFeatureCard">
         <h2>💬 Komentar</h2>
         <p class="muted">Komentar terbaru dari seluruh web. NOVA membalas otomatis setelah komentar masuk.</p>
-        <button class="action" id="refreshComments">🔄 Muat Komentar</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="action" id="refreshComments">🔄 Muat Komentar</button>
+          <button class="action" id="autoReplyComments">🤖 Balas Otomatis dengan NOVA</button>
+        </div>
+        <div id="autoReplyStatus" class="muted" style="margin-top:8px"></div>
         <div id="commentsHighlight" style="margin-top:12px">Belum dimuat.</div>
       </div>
     </section>
@@ -510,6 +514,32 @@ async function loadHighlights(){
  }catch(e){box.textContent='Error: '+e.message}
 }
 $('refreshComments').onclick=loadHighlights;
+
+async function autoReplyComments(){
+ const key=$('key').value.trim(),status=$('autoReplyStatus'),btn=$('autoReplyComments');
+ if(!key){status.textContent='Isi Admin Key terlebih dahulu.';return}
+ btn.disabled=true; status.textContent='Memuat komentar yang belum dibalas...';
+ try{
+  const r=await fetch('/api/nova-comments',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'recent',limit:100})});
+  const d=await r.json().catch(()=>({})); if(!r.ok)throw new Error(d.error||'Komentar gagal dimuat');
+  const comments=(Array.isArray(d.comments)?d.comments:[]).filter(x=>!String(x.reply||'').trim());
+  if(!comments.length){status.textContent='✅ Semua komentar yang dimuat sudah dibalas.';return}
+  let ok=0,fail=0;
+  for(const comment of comments){
+   try{
+    const rr=await fetch('/api/nova-comment-bot',{method:'POST',headers:{'Content-Type':'application/json','x-nova-bot-secret':key},body:JSON.stringify({comment})});
+    const rd=await rr.json().catch(()=>({}));
+    if(!rr.ok||rd.error)throw new Error(rd.error||'Gagal membalas');
+    ok++;
+    status.textContent='🤖 NOVA membalas '+ok+'/'+comments.length+' komentar...';
+   }catch(e){fail++}
+  }
+  status.textContent='✅ Selesai. Berhasil: '+ok+' • Gagal: '+fail+'.';
+  await loadHighlights();
+ }catch(e){status.textContent='Error: '+e.message}
+ finally{btn.disabled=false}
+}
+$('autoReplyComments').onclick=autoReplyComments;
 
 // Android-style app navigation
 (function(){

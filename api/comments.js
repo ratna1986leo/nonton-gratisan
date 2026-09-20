@@ -40,7 +40,33 @@ export default async function handler(req,res){
         headers:{'content-type':'application/x-www-form-urlencoded;charset=UTF-8'},
         body:params.toString()
       });
-      return res.status(200).json(data?.ok === false ? {ok:false, queued:true, degraded:true} : data);
+      if(data?.ok === false) return res.status(200).json({ok:false, queued:true, degraded:true});
+
+      // Balas otomatis setelah komentar publik benar-benar diterima.
+      // Jika AI gagal, komentar tetap sukses agar fitur komentar tidak ikut rusak.
+      if(String(body.action||'') === 'add'){
+        try{
+          const {generateReply,replyToSheet}=await import('./nova-comment-bot.js');
+          const commentId=String(
+            data?.commentId ||
+            data?.id ||
+            data?.comment?.commentId ||
+            data?.comment?.id ||
+            body.commentId ||
+            body.clientId ||
+            ''
+          ).trim();
+          if(!commentId) throw new Error('Comment ID tidak tersedia dari server komentar');
+          const comment={...body,commentId};
+          const reply=await generateReply(comment);
+          await replyToSheet(comment,reply);
+          return res.status(200).json({...data,novaReply:{ok:true,reply}});
+        }catch(e){
+          console.warn('NOVA auto-reply gagal:',e?.message||e);
+          return res.status(200).json({...data,novaReply:{ok:false,error:e?.message||'NOVA gagal membalas'}});
+        }
+      }
+      return res.status(200).json(data);
     }
     return res.status(405).json({ok:false,error:'Method not allowed'});
   }catch(e){
