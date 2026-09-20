@@ -40,6 +40,42 @@ function catalogContext(text){
   return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
 }
 
+const NOVA_MIN_INTERVAL_MS = Number(process.env.NOVA_MIN_INTERVAL_MS || 10000);
+const NOVA_MAX_REQUESTS_PER_WINDOW = Number(process.env.NOVA_MAX_REQUESTS_PER_WINDOW || 18);
+const NOVA_RATE_WINDOW_MS = Number(process.env.NOVA_RATE_WINDOW_MS || 10*60*1000);
+const novaRateStore = globalThis.__NOVA_RATE_STORE || new Map();
+globalThis.__NOVA_RATE_STORE = novaRateStore;
+
+function getClientId(req){
+  const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();
+  const real=String(req.headers['x-real-ip']||'').trim();
+  return forwarded || real || 'shared';
+}
+
+function checkNovaRate(clientId){
+  const now=Date.now();
+  const prev=novaRateStore.get(clientId)||{last:0,times:[]};
+  const times=prev.times.filter(t=>now-t<NOVA_RATE_WINDOW_MS);
+  if(prev.last && now-prev.last<NOVA_MIN_INTERVAL_MS){
+    return {ok:false,retryAfterMs:NOVA_MIN_INTERVAL_MS-(now-prev.last),reason:'interval'};
+  }
+  if(times.length>=NOVA_MAX_REQUESTS_PER_WINDOW){
+    return {ok:false,retryAfterMs:Math.max(1000,NOVA_RATE_WINDOW_MS-(now-times[0])),reason:'window'};
+  }
+  novaRateStore.set(clientId,{last:now,times});
+  return {ok:true,remaining:Math.max(0,NOVA_MAX_REQUESTS_PER_WINDOW-times.length-1)};
+}
+
+function secondsFromRateHeader(value){
+  const raw=String(value||'').trim();
+  if(!raw)return 0;
+  if(/^\d+(?:\.\d+)?$/.test(raw))return Math.ceil(Number(raw));
+  const m=raw.match(/^(\d+(?:\.\d+)?)(ms|s|m|h)$/i);
+  if(!m)return 0;
+  const n=Number(m[1]),unit=m[2].toLowerCase();
+  return Math.ceil(unit==='ms'?n/1000:unit==='s'?n:unit==='m'?n*60:n*3600);
+}
+
 async function searchTMDB(query, type='all'){
   if(!TMDB_API_KEY) return {available:false,source:'TMDB',query,type,items:[],error:'TMDB_API_KEY belum disetel'};
   const clean=String(query||'').trim();
@@ -118,6 +154,13 @@ export default async function handler(req,res){
   if(!expected) return res.status(503).json({error:'NOVA_ADMIN_KEY belum disetel di Vercel'});
   if(req.headers['x-nova-key']!==expected) return res.status(401).json({error:'Admin key salah'});
   if(!process.env.OPENAI_API_KEY) return res.status(503).json({error:'OPENAI_API_KEY belum disetel di Vercel'});
+  const clientId=getClientId(req);
+  const rate=checkNovaRate(clientId);
+  if(!rate.ok){
+    const retryAfter=Math.max(1,Math.ceil(rate.retryAfterMs/1000));
+    res.setHeader('Retry-After',String(retryAfter));
+    return res.status(429).json({error:'NOVA membatasi frekuensi permintaan agar tidak menabrak rate limit. Tunggu '+retryAfter+' detik.',retryAfterSec:retryAfter,reason:rate.reason});
+  }
   const message=typeof req.body?.message==='string'?req.body.message.trim():'';
   if(!message) return res.status(400).json({error:'Pesan kosong'});
   if(message.length>4000) return res.status(400).json({error:'Pesan terlalu panjang'});
@@ -187,14 +230,24 @@ export default async function handler(req,res){
         model:MODEL,
         store:false,
         instructions,
-        input:message
+        input:message,
+        max_output_tokens:600
       })
     });
     const data=await r.json();
     if(!r.ok){
       const msg=data?.error?.message||'OpenAI request gagal';
       const status=r.status===429?429:r.status;
-      return res.status(status).json({error:status===429?'NOVA sedang terlalu sibuk. Coba lagi beberapa saat lagi.':msg});
+      if(status===429){
+        const retryHeader=r.headers.get('retry-after')||r.headers.get('x-ratelimit-reset-requests')||r.headers.get('x-ratelimit-reset-tokens');
+        const retryAfterSec=Math.max(5,secondsFromRateHeader(retryHeader)||20);
+        res.setHeader('Retry-After',String(retryAfterSec));
+        return res.status(429).json({
+          error:'NOVA terkena batas API sementara. Tunggu '+retryAfterSec+' detik sebelum mencoba lagi.',
+          retryAfterSec
+        });
+      }
+      return res.status(status).json({error:msg});
     }
     const reply = typeof data.output_text==='string' && data.output_text.trim() ? data.output_text.trim() : (Array.isArray(data.output) ? data.output.flatMap(item=>Array.isArray(item?.content)?item.content.map(part=>typeof part?.text==='string'?part.text:(typeof part?.value==='string'?part.value:'')):[]).filter(Boolean).join('\n').trim() : '');
     if(!reply) return res.status(502).json({error:'OpenAI berhasil merespons, tetapi teks jawaban NOVA tidak ditemukan.'});
