@@ -1,4 +1,4 @@
-const CACHE = 'nontongratisan-pwa-v4';
+const CACHE = 'nontongratisan-pwa-v5-redirect-test';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
@@ -35,7 +35,7 @@ async function injectCommentsEnhancer(response) {
     if (html.includes('/comments-enhancer.js')) {
       return new Response(html, { status: response.status, statusText: response.statusText, headers: response.headers });
     }
-    const injected = html.replace(/<\/body>/i, '<script src="/comments-enhancer.js?v=1" defer></script></body>');
+    const injected = html.replace(/<\\/body>/i, '<script src="/comments-enhancer.js?v=1" defer></script></body>');
     return new Response(injected, { status: response.status, statusText: response.statusText, headers: response.headers });
   } catch (_) {
     return response;
@@ -57,7 +57,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const request = event.request;
   if (request.method !== 'GET') return;
-
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
 
@@ -100,7 +99,6 @@ self.addEventListener('fetch', event => {
     }))
   );
 });
-
 
 // Web Push notifications
 self.addEventListener('push', event => {
