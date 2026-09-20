@@ -3182,10 +3182,17 @@ const state = store.getState();
             }, 10000);
 
             hideLoading();
+            // Mulai timer iklan setelah aplikasi selesai dimuat.
+            // Iklan tetap baru dimuat setelah 20 menit.
+            startAdInterval();
         };
     </script>
     <div id="popup-ad-script-2" style="display:none" aria-hidden="true"></div>
     <div id="popup-ad-script-3" style="display:none" aria-hidden="true"></div>
+
+    <!-- IKLAN TEST #3: native banner, tanpa Smart Link/click handler -->
+    <script async="async" data-cfasync="false" src="https://thrillingdeepcutlery.com/bfbcd7bcd4c8089720ba8ae9aa28ffa0/invoke.js"></script>
+    <div id="container-bfbcd7bcd4c8089720ae8ae9aa28ffa0"></div>
     <script src="/phase1-ux.js" defer></script>
 </body>
 <!-- stable production restore -->
