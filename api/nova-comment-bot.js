@@ -57,7 +57,7 @@ function auth(req){
   if(supplied!==expected) throw Object.assign(new Error('Webhook secret salah'),{status:401});
 }
 
-async function draftReply(c){
+export async function draftReply(c){
   if(!process.env.OPENAI_API_KEY) throw Object.assign(new Error('OPENAI_API_KEY belum disetel di Vercel'),{status:503});
   const input=[
     'Kamu adalah NOVA, asisten komunitas NontonGratisan.',
@@ -87,7 +87,7 @@ async function draftReply(c){
   return String(a).trim();
 }
 
-async function replyToSheet(c,reply){
+export async function replyToSheet(c,reply){
   const fields={
     action:'reply',
     commentId:String(c.commentId||c.id||'').trim(),
@@ -111,6 +111,18 @@ async function replyToSheet(c,reply){
   return data||{ok:true};
 }
 
+export async function generateReply(c){
+  let reply=await draftReply(c);
+  const wantsRec=/rekomendasi|film lain|mirip|genre|selanjutnya|film terbaru|apa lagi|saran film/i.test(String(c.text||''));
+  if(wantsRec){
+    const recs=await getRecommendations(c);
+    if(recs.length){
+      reply += '\\n\\n🎬 Rekomendasi dari Pustaka Film:\\n' + recs.map((x,i)=>String(i+1)+'. '+x.title+(x.year?' ('+x.year+')':'')+' — '+x.url).join('\\n');
+    }
+  }
+  return reply;
+}
+
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
   try{
@@ -119,14 +131,7 @@ export default async function handler(req,res){
     const commentId=String(c.commentId||c.id||'').trim();
     if(!commentId) return res.status(400).json({error:'Comment ID wajib diisi'});
 
-    let reply=await draftReply(c);
-    const wantsRec=/rekomendasi|film lain|mirip|genre|selanjutnya|film terbaru|apa lagi|saran film/i.test(String(c.text||''));
-    if(wantsRec){
-      const recs=await getRecommendations(c);
-      if(recs.length){
-        reply += '\\n\\n🎬 Rekomendasi dari Pustaka Film:\\n' + recs.map((x,i)=>`${i+1}. ${x.title}${x.year?' ('+x.year+')':''} — ${x.url}`).join('\\n');
-      }
-    }
+    const reply=await generateReply(c);
     const result=await replyToSheet(c,reply);
 
     return res.status(200).json({ok:true,commentId,reply,result});
