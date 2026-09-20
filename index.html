@@ -3106,6 +3106,28 @@ const state = store.getState();
             return true;
         }
 
+                // ================= IKLAN TEST #1 =================
+        // Hanya satu sumber iklan, dimuat setelah 20 menit.
+        // Tidak ada Smart Link, click handler, banner, atau redirect otomatis.
+        let adPopupInterval = null;
+        let popupAdInitialized = false;
+
+        function initPopupAds() {
+            if (popupAdInitialized) return;
+            popupAdInitialized = true;
+            const host = document.getElementById('popup-ad-script-2');
+            if (!host) return;
+            const script = document.createElement('script');
+            script.src = 'https://thrillingdeepcutlery.com/52/c7/0c/52c70cf2e73bd0a310dcccee04609f3b.js';
+            script.async = true;
+            host.appendChild(script);
+        }
+
+        function startAdInterval() {
+            if (adPopupInterval) clearInterval(adPopupInterval);
+            adPopupInterval = setInterval(initPopupAds, 20 * 60 * 1000);
+        }
+
         // ================= INISIALISASI =================
         window.onload = async function () {
             updateFullscreenButton();
@@ -3153,6 +3175,7 @@ const state = store.getState();
 
             hideLoading();
 };
+        <div id="popup-ad-script-2" style="display:none" aria-hidden="true"></div>
     </script>
     <script src="/phase1-ux.js" defer></script>
 </body>
