@@ -1077,6 +1077,20 @@
 
     <script>
         
+// Step 10 diagnostic: block known external redirect destinations from click/open navigation.
+// Temporary only, to confirm whether a third-party redirect is involved.
+document.addEventListener('click', function(event) {
+    const link = event.target.closest('a[href]');
+    if (!link) return;
+    try {
+        const url = new URL(link.href, window.location.href);
+        if (url.hostname === 'thrillingdeepcutlery.com' || url.hostname === 'youtube.com' || url.hostname === 'www.youtube.com') {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+    } catch (_) {}
+}, true);
+
 // ================= KONSTANTA & STATE =================
         const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
         
