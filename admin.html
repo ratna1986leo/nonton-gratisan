@@ -313,12 +313,18 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
  #view-film,#view-comments{padding:16px 10px}.novaFeatureCard{padding:16px;border-radius:10px}
 }
 
-/* NOVA avatar preview fix: tampilkan panel visual yang sebelumnya disembunyikan oleh production ChatGPT layout. */
+/* NOVA avatar preview refinement: foto utuh, tanpa overlay dekoratif yang menutupi gambar. */
 .novaHero{display:grid!important;width:calc(100% - 32px)!important;max-width:1180px!important;margin:0 auto!important;grid-template-columns:minmax(340px,430px) minmax(0,1fr)!important;gap:24px!important;align-items:stretch!important;min-height:0!important;padding:22px 0 110px!important}
-.novaHero .novaVisual{display:block!important;min-height:620px!important;height:calc(100vh - 170px)!important;max-height:760px!important}
-.novaHero .novaPortrait{display:block!important}
+.novaHero .novaVisual{display:flex!important;align-items:center!important;justify-content:center!important;min-height:620px!important;height:calc(100vh - 170px)!important;max-height:760px!important;padding:18px!important}
+.novaHero .novaVisualText,
+.novaHero .novaPresenceCard,
+.novaHero .novaVisualBadge,
+.novaHero .novaStateDock{display:none!important}
+.novaHero .novaPortrait{display:block!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none!important;border-radius:22px!important;overflow:hidden!important;background:#0b1020!important;box-shadow:0 18px 45px rgba(0,0,0,.18)!important;filter:none!important}
+.novaHero .novaPortrait::before,
+.novaHero .novaPortrait::after{display:none!important}
 .novaHero .novaCore{display:none!important}
-.novaHero .novaPortrait img{display:block!important;width:100%!important;height:100%!important;object-fit:cover!important;object-position:50% 10%!important;filter:none!important}
+.novaHero .novaPortrait img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;object-position:center!important;background:#0b1020!important;filter:none!important}
 .novaHero .novaChatShell{min-width:0!important;width:100%!important}
 @media(max-width:1050px){
  .novaHero{grid-template-columns:320px minmax(0,1fr)!important;gap:18px!important}
@@ -326,8 +332,8 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 }
 @media(max-width:780px){
  .novaHero{display:block!important;width:100%!important;padding:0 14px 86px!important}
- .novaHero .novaVisual{display:block!important;height:360px!important;min-height:360px!important;max-height:none!important;margin-bottom:16px!important;border-radius:18px!important}
- .novaHero .novaPortrait{width:250px!important;height:330px!important;min-height:0!important}
+ .novaHero .novaVisual{display:block!important;height:360px!important;min-height:360px!important;max-height:none!important;margin-bottom:16px!important;padding:8px!important;border-radius:18px!important}
+ .novaHero .novaPortrait{width:100%!important;height:100%!important;border-radius:14px!important}
 }
 </style></head>
 <body class="novaApp">
