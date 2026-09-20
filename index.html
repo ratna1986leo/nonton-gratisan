@@ -2928,7 +2928,7 @@
                     const reply = escapeHtml(comment.reply || '');
                     const replyLinked = reply.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-cyan-300 underline break-all">$1</a>');
                     const initial = escapeHtml((comment.name || 'A').charAt(0).toUpperCase());
-                    const replyHtml = reply ? `<div class="mt-2 ml-1 p-2 rounded-lg border border-zinc-700 bg-zinc-900/70"><div class="text-[10px] font-bold text-brand-400">🤖 NOVA</div><p class="text-xs sm:text-sm text-zinc-300 break-words mt-1">${replyLinked}</p></div>` : '';
+                    const replyHtml = reply ? `<div class="nova-reply mt-3 ml-0 sm:ml-1 rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.08] via-zinc-900/90 to-zinc-950/90 p-3 shadow-lg shadow-blue-950/20"><div class="flex items-center justify-between gap-2"><div class="flex items-center gap-2"><span class="nova-avatar w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-400/20 flex items-center justify-center text-sm">🤖</span><div><div class="text-[10px] font-extrabold tracking-wider text-blue-300 uppercase">NOVA</div><div class="text-[9px] text-zinc-500">Asisten NontonGratisan</div></div></div><span class="nova-status text-[9px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-2 py-1">● AKTIF</span></div><p class="text-xs sm:text-sm text-zinc-200 leading-relaxed break-words mt-3">${replyLinked}</p></div>` : '';
                     return `<div class="comment-item flex gap-2 sm:gap-3 items-start p-2 rounded-lg"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs sm:text-sm font-bold text-brand-500 shrink-0">${initial}</div><div class="space-y-1 min-w-0"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs sm:text-sm font-bold text-white">${name}</span><span class="text-[10px] text-zinc-500">${date}</span></div><p class="text-xs sm:text-sm text-zinc-300 break-words">${text}</p>${replyHtml}</div></div>`;
                 }).join('');
             }
@@ -3096,23 +3096,31 @@
             titleInput.value = ''; if (noteInput) noteInput.value = '';
             closeRequestModal();
         }
-        const SUPPORT_AD_URL = 'https://thrillingdeepcutlery.com/f3deengg?key=1acdf64065adc72ae8103d33ede9a49a';
+        // ================= IKLAN TERPUSAT =================
+        // Native banner: satu sumber iklan banner yang dipakai di seluruh situs.
+        const NATIVE_AD_SCRIPT = 'https://thrillingdeepcutlery.com/14265da1f50076fa1b06c7f09c88e333/invoke.js';
+        const NATIVE_AD_CONTAINER_ID = 'container-14265da1f50076fa1b06c7f09c88e333';
+
+        // Popup: hanya script popup yang diberikan, tanpa click handler global.
+        const POPUP_AD_SCRIPT = 'https://thrillingdeepcutlery.com/88/b9/51/88b9513bda08260951afccbb0185d900.js';
+
+        // Smart Link: hanya dibuka saat tombol iklan dipilih secara eksplisit.
+        const SMART_LINK_URL = 'https://thrillingdeepcutlery.com/ufnz7c4mvp?key=52fc465c702f04ff0dc98c9aaca4f684';
+
+        // Social bar: satu script bar sosial yang diberikan.
+        const SOCIAL_BAR_SCRIPT = 'https://thrillingdeepcutlery.com/6d/d4/a6/6dd4a6603d58dd78876f0393f4399b16.js';
+
         let popupAdInitialized = false;
 
         function initPopupAds() {
             if (popupAdInitialized) return;
             popupAdInitialized = true;
-            // Gunakan script iklan yang diberikan user sebagai slot iklan di dalam popup.
-            const ad2 = document.createElement('script');
-            ad2.src = 'https://thrillingdeepcutlery.com/52/c7/0c/52c70cf2e73bd0a310dcccee04609f3b.js';
-            ad2.async = true;
-            document.getElementById('popup-ad-script-2')?.appendChild(ad2);
-
-            const ad3 = document.createElement('script');
-            ad3.src = 'https://thrillingdeepcutlery.com/ad/0f/7b/ad0f7bc9f88af0397be73b25504b576a.js';
-            ad3.async = true;
-            document.getElementById('popup-ad-script-3')?.appendChild(ad3);
-
+            const host = document.getElementById('popup-ad-script-4') || document.getElementById('popup-ad-script-2');
+            if (!host) return;
+            const script = document.createElement('script');
+            script.src = POPUP_AD_SCRIPT;
+            script.async = true;
+            host.appendChild(script);
         }
 
         function showAdPopup() {
@@ -3124,23 +3132,8 @@
             popup.setAttribute('aria-hidden', 'false');
         }
 
-        const SMART_LINK_URL = SUPPORT_AD_URL;
-
-        function openSmartLinkFirst(event) {
-            if (!event.isTrusted) return;
-            try {
-                window.open(SMART_LINK_URL, '_blank', 'noopener,noreferrer');
-            } catch (e) {}
-        }
-
-        document.addEventListener('click', function(event) {
-            const target = event.target.closest('[onclick*="navigateTo("][onclick], [onclick*="navigateToCollection("][onclick]');
-            if (target) openSmartLinkFirst(event);
-        }, true);
-
         function startAdInterval() {
             if (adPopupInterval) clearInterval(adPopupInterval);
-            initPopupAds();
             adPopupInterval = setInterval(showAdPopup, 20 * 60 * 1000);
         }
 
@@ -3152,10 +3145,10 @@
         }
 
         function goToAd() {
-            const popup = document.getElementById('popup-overlay');
-            if (popup) { popup.style.display = 'none'; popup.setAttribute('aria-hidden', 'true'); }
-            window.open(SUPPORT_AD_URL, '_blank', 'noopener,noreferrer');
+            closePopup();
+            window.open(SMART_LINK_URL, '_blank', 'noopener,noreferrer');
         }
+
         function toggleMobileMenu() { const menu = document.getElementById('mobile-menu'); if (menu) menu.classList.toggle('hidden'); }
         function toggleMobileDropdown() { const dropdown = document.getElementById('mobile-dropdown'); const arrow = document.getElementById('mobile-dropdown-arrow'); if (dropdown) { dropdown.classList.toggle('hidden'); if (arrow) arrow.textContent = dropdown.classList.contains('hidden') ? '▼' : '▲'; } }
         function toggleDesktopDropdown() { const dropdown = document.getElementById('desktop-dropdown'); if (dropdown) dropdown.classList.toggle('active'); }
@@ -3334,6 +3327,15 @@
             hideLoading();
 };
     </script>
+    <!-- IKLAN NATIVE GLOBAL: sumber iklan banner tunggal -->
+    <div id="native-banner-ad" class="site-native-banner w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-4 no-print" aria-label="Iklan">
+        <div id="container-14265da1f50076fa1b06c7f09c88e333" class="native-ad-inner"></div>
+    </div>
+    <script async="async" data-cfasync="false" src="https://thrillingdeepcutlery.com/14265da1f50076fa1b06c7f09c88e333/invoke.js"></script>
+
+    <!-- SOCIAL BAR: sumber iklan sosial tunggal -->
+    <script src="https://thrillingdeepcutlery.com/6d/d4/a6/6dd4a6603d58dd78876f0393f4399b16.js"></script>
+
     <script src="/phase1-ux.js" defer></script>
 </body>
 <!-- stable production restore -->
