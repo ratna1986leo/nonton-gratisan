@@ -3137,11 +3137,43 @@ const state = store.getState();
             script2.src = 'https://thrillingdeepcutlery.com/ad/0f/7b/ad0f7bc9f88af0397be73b25504b576a.js';
             script2.async = true;
             host2.appendChild(script2);
+
+            // Iklan popup #5 — script popup tambahan, tanpa menangkap klik menu/player.
+            const popupHost = document.getElementById('popup-ad-script-4');
+            if (popupHost) {
+                const popupScript = document.createElement('script');
+                popupScript.src = 'https://thrillingdeepcutlery.com/88/b9/51/88b9513bda08260951afccbb0185d900.js';
+                popupScript.async = true;
+                popupHost.appendChild(popupScript);
+            }
         }
 
         function startAdInterval() {
             if (adPopupInterval) clearInterval(adPopupInterval);
             adPopupInterval = setInterval(initPopupAds, 20 * 60 * 1000);
+        }
+
+        const SMART_LINK_URL = 'https://thrillingdeepcutlery.com/ufnz7c4mvp?key=52fc465c702f04ff0dc98c9aaca4f684';
+
+        function openSmartLinkPopup() {
+            const popup = document.getElementById('smartlink-popup');
+            if (!popup) return;
+            popup.classList.remove('hidden');
+            popup.classList.add('flex');
+            popup.setAttribute('aria-hidden', 'false');
+        }
+
+        function closeSmartLinkPopup() {
+            const popup = document.getElementById('smartlink-popup');
+            if (!popup) return;
+            popup.classList.add('hidden');
+            popup.classList.remove('flex');
+            popup.setAttribute('aria-hidden', 'true');
+        }
+
+        function openSmartLink() {
+            window.open(SMART_LINK_URL, '_blank', 'noopener,noreferrer');
+            closeSmartLinkPopup();
         }
 
         // ================= INISIALISASI =================
@@ -3193,10 +3225,10 @@ const state = store.getState();
             // Mulai timer iklan setelah aplikasi selesai dimuat.
             // Iklan tetap baru dimuat setelah 20 menit.
             startAdInterval();
-        };
+            // Tampilkan Smart Link popup setelah 20 menit, hanya sebagai popup terjadwal.\n            setTimeout(openSmartLinkPopup, 20 * 60 * 1000);\n        };
     </script>
     <div id="popup-ad-script-2" style="display:none" aria-hidden="true"></div>
-    <div id="popup-ad-script-3" style="display:none" aria-hidden="true"></div>
+    <div id="popup-ad-script-3" style="display:none" aria-hidden="true"></div>\n    <div id="popup-ad-script-4" style="display:none" aria-hidden="true"></div>\n\n    <!-- Smart Link: hanya dibuka lewat tombol popup, bukan klik global -->\n    <div id="smartlink-popup" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-black/70 p-4 no-print" aria-hidden="true">\n        <div class="w-full max-w-sm rounded-2xl border border-zinc-700 bg-zinc-900 p-5 text-center shadow-2xl">\n            <p class="text-white font-bold text-lg">Dukung NontonGratisan</p>\n            <p class="mt-2 text-sm text-zinc-400">Klik tombol di bawah untuk melanjutkan.</p>\n            <div class="mt-4 flex gap-2 justify-center">\n                <button type="button" onclick="closeSmartLinkPopup()" class="rounded-lg border border-zinc-700 px-4 py-2 text-sm text-zinc-300">Tutup</button>\n                <button type="button" onclick="openSmartLink()" class="rounded-lg bg-brand-500 px-4 py-2 text-sm font-bold text-white">Lanjut</button>\n            </div>\n        </div>\n    </div>
 
     <script async="async" data-cfasync="false" src="https://thrillingdeepcutlery.com/14265da1f50076fa1b06c7f09c88e333/invoke.js"></script>
     <script src="/phase1-ux.js" defer></script>
