@@ -652,7 +652,47 @@ body{
   .novaPortrait{height:330px!important;width:215px!important}
 }
 </style>
-<style id="nova-admin-v11-chat-layout">
+<style id="nova-admin-v12-polish">
+/* NOVA v12 — proporsi responsif, welcome lebih ke atas, tetap gaya ChatGPT */
+.novaHero{width:min(1000px,calc(100% - 44px))!important;padding:18px 0 96px!important}
+.novaHero .novaWelcome{padding:28px 4px 22px!important}
+.novaWelcome h1{
+  font-size:clamp(29px,3.2vw,40px)!important;
+  line-height:1.12!important;
+  font-weight:600!important;
+  letter-spacing:-.035em!important;
+  margin:0 0 10px!important;
+}
+.novaWelcome p{
+  font-size:clamp(12px,1.08vw,14px)!important;
+  line-height:1.6!important;
+  max-width:720px!important;
+  color:#666!important;
+}
+.novaHero .quick{gap:8px!important;margin:12px auto 20px!important;max-width:900px!important}
+.novaHero .quick button{
+  padding:9px 13px!important;
+  font-size:clamp(11px,.92vw,12.5px)!important;
+  line-height:1.3!important;
+  border-radius:10px!important;
+}
+.novaHero .bubble{font-size:clamp(13px,.98vw,14px)!important;line-height:1.65!important}
+.novaHero .chatInput{max-width:900px!important}
+.novaSideBottom{position:sticky!important;bottom:0!important;background:rgba(249,250,250,.98)!important}
+@media(min-width:1400px){
+  .novaHero{max-width:1080px!important}
+  .novaWelcome h1{font-size:42px!important}
+  .novaWelcome p{font-size:14px!important}
+}
+@media(max-width:700px){
+  .novaHero{width:calc(100% - 14px)!important;padding:8px 0 82px!important}
+  .novaHero .novaWelcome{padding:22px 4px 18px!important}
+  .novaWelcome h1{font-size:clamp(27px,7vw,32px)!important}
+  .novaWelcome p{font-size:12px!important}
+  .novaHero .quick{gap:6px!important;margin-top:10px!important}
+  .novaHero .quick button{font-size:10px!important;padding:7px 9px!important}
+}
+</style><style id="nova-admin-v11-chat-layout">
 body.novaApp{min-height:100vh!important;background:radial-gradient(circle at 10% 10%,rgba(16,185,129,.22),transparent 30%),radial-gradient(circle at 90% 18%,rgba(139,92,246,.24),transparent 32%),linear-gradient(135deg,#071b16 0%,#102a20 42%,#281844 76%,#120d22 100%)!important}
 .novaLayout{min-height:100vh!important;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(139,92,246,.12))!important}
 .novaSidebar{width:300px!important;min-width:300px!important;flex:0 0 300px!important;padding:16px 14px!important;background:rgba(249,250,250,.97)!important;border-right:1px solid rgba(0,0,0,.09)!important}
