@@ -1160,5 +1160,41 @@ $('refreshComments').onclick=loadHighlights;
  }));
 })();
 </script>
-</body>
+<style id="nova-admin-v14-sidebar-fix">
+/* v14 sidebar fix: no horizontal clipping, compact feature area, Chat NOVA easy to reach */
+.novaLayout{overflow:hidden!important}
+.novaSidebar{
+  width:220px!important;min-width:220px!important;flex:0 0 220px!important;
+  box-sizing:border-box!important;min-height:100vh!important;
+  overflow:hidden!important;
+}
+.novaSideTop,.novaSideNav,.novaFeatureList,.novaSideBottom{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+.novaSideTop{flex:0 0 auto!important}
+.novaSideNav{overflow:visible!important;flex:0 0 auto!important}
+.novaSideBtn,.novaFeature{
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  box-sizing:border-box!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.novaSideBtn[data-view="chat"]{
+  background:#ececf0!important;color:#202123!important;font-weight:800!important;
+  min-height:42px!important;font-size:13px!important;
+}
+.novaSideBtn[data-view="chat"] span{font-size:11px!important}
+.novaFeatureList{
+  flex:1 1 auto!important;min-height:0!important;height:auto!important;
+  max-height:230px!important;overflow-y:auto!important;overflow-x:hidden!important;
+  scrollbar-width:thin!important;padding-right:3px!important;
+}
+.novaFeature{min-height:32px!important;padding:6px 8px!important;font-size:11px!important}
+.novaFeature span{width:20px!important;flex:0 0 20px!important}
+.novaSideBottom{
+  flex:0 0 auto!important;margin-top:8px!important;padding:9px 3px 3px!important;
+  overflow:hidden!important;
+}
+.novaSideBottom input#key{max-width:100%!important;box-sizing:border-box!important}
+@media(max-width:700px){
+  .novaSidebar{width:240px!important;min-width:240px!important;flex-basis:240px!important}
+  .novaFeatureList{max-height:240px!important}
+}
+</style></body>
 </html>
