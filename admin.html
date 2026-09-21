@@ -712,6 +712,80 @@ body.novaApp{min-height:100vh!important;background:radial-gradient(circle at 10%
 .novaHero .chatInput{position:sticky!important;bottom:14px!important;width:auto!important;max-width:none!important;margin:12px 18px 18px!important;z-index:5!important}.novaHero .bubble{max-width:860px!important;font-size:14px!important}.novaHero .quick{max-width:860px!important}
 @media(max-width:800px){.novaSidebar{width:290px!important;min-width:290px!important;flex-basis:290px!important}.novaHero{width:calc(100% - 24px)!important;padding:16px 0 90px!important}}
 @media(max-width:700px){.novaSidebar{width:292px!important;min-width:292px!important}.novaSideBtn,.novaFeature{min-height:50px!important;font-size:14px!important}.novaHero{width:calc(100% - 14px)!important;padding:8px 0 82px!important}.novaHero .chat{min-height:520px!important;border-radius:16px!important}.novaHero .chatBody{padding:14px!important;min-height:420px!important}.novaHero .chatInput{margin:8px!important}}
+</style><style id="nova-admin-v13-visible-gradient">
+/* NOVA v13 — background hijau/ungu harus terlihat jelas di area chat */
+body.novaApp{
+  background:
+    radial-gradient(ellipse at 8% 12%,rgba(16,185,129,.55),transparent 34%),
+    radial-gradient(ellipse at 92% 18%,rgba(139,92,246,.55),transparent 36%),
+    linear-gradient(135deg,#06231a 0%,#0f3a2d 36%,#32205a 72%,#150e2b 100%)!important;
+}
+.novaMain{
+  position:relative!important;
+  min-width:0!important;
+  background:
+    radial-gradient(circle at 5% 20%,rgba(16,185,129,.42),transparent 30%),
+    radial-gradient(circle at 95% 25%,rgba(139,92,246,.48),transparent 32%),
+    linear-gradient(135deg,#0a2c22 0%,#174a38 34%,#392568 70%,#160f2f 100%)!important;
+}
+.novaMain:before{
+  content:"";position:fixed;inset:58px 0 0 300px;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(circle at 10% 30%,rgba(16,185,129,.22),transparent 28%),
+    radial-gradient(circle at 88% 25%,rgba(139,92,246,.24),transparent 30%);
+}
+.novaHeader,.novaView{position:relative;z-index:1}
+.novaHeader{
+  background:rgba(250,250,251,.82)!important;
+  backdrop-filter:blur(16px)!important;
+  border-bottom-color:rgba(255,255,255,.32)!important;
+}
+.novaHero{
+  position:relative!important;
+  z-index:1!important;
+  width:min(1000px,calc(100% - 44px))!important;
+}
+.novaHero .novaWelcome{
+  background:rgba(255,255,255,.82)!important;
+  border:1px solid rgba(255,255,255,.50)!important;
+  border-radius:22px!important;
+  padding:28px 28px 24px!important;
+  box-shadow:0 18px 55px rgba(0,0,0,.12)!important;
+  backdrop-filter:blur(18px)!important;
+}
+.novaHero .novaWelcome h1{color:#17202b!important}
+.novaHero .novaWelcome p{color:#4f5965!important}
+.novaHero .chat{
+  background:transparent!important;
+  box-shadow:none!important;
+}
+.novaHero .chatBody{
+  background:transparent!important;
+}
+.novaHero .ai{
+  background:rgba(255,255,255,.93)!important;
+  border-color:rgba(255,255,255,.65)!important;
+  box-shadow:0 8px 28px rgba(0,0,0,.06)!important;
+}
+.novaHero .user{
+  background:rgba(255,255,255,.86)!important;
+  border:1px solid rgba(255,255,255,.55)!important;
+  box-shadow:0 8px 24px rgba(0,0,0,.06)!important;
+}
+.novaHero .quick button{
+  background:rgba(255,255,255,.92)!important;
+  border-color:rgba(255,255,255,.72)!important;
+  box-shadow:0 5px 16px rgba(0,0,0,.06)!important;
+}
+.novaHero .chatInput{
+  background:rgba(255,255,255,.96)!important;
+  border-color:rgba(255,255,255,.78)!important;
+  box-shadow:0 10px 32px rgba(0,0,0,.15)!important;
+}
+@media(max-width:700px){
+  .novaMain:before{inset:52px 0 0 0}
+  .novaHero .novaWelcome{padding:22px 18px 20px!important;border-radius:18px!important}
+}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
