@@ -27,52 +27,78 @@ function parseCSV(text){
 function catalogContext(text){
   const rows=parseCSV(text);
   if(!rows.length) return {total:0,playable:0,unplayable:0,movieCount:0,seriesCount:0,items:[],playableItems:[],unplayableItems:[]};
+
   const columns=rows[0].map(x=>String(x||'').trim());
   const data=rows.slice(1).filter(r=>r.some(v=>String(v||'').trim()));
   const objects=data.map(r=>Object.fromEntries(columns.map((c,i)=>[c,String(r[i]??'').trim()])));
+
   const normKey=value=>normalizeText(value).replace(/[^a-z0-9]+/g,'');
-  const find=(...names)=>{
+  const findExact=(...names)=>{
     const wanted=names.map(normKey);
-    return columns.find(c=>wanted.includes(normKey(c)))
-      || columns.find(c=>wanted.some(w=>normKey(c).includes(w)));
+    return columns.find(c=>wanted.includes(normKey(c)));
   };
-  const titleKey=find('title','judul','name')||columns[0];
-  const linkKey=find('link','url','video','embed','embed_url','source','player','play','play_url');
-  const yearKey=find('year','tahun','release_year','tahun_rilis');
-  const episodeKey=find('episode','episodes','episode_count','jumlah episode','jumlah_episodes','jml episode','eps','jumlah eps','total episode');
-  const typeKey=find('type','tipe','kategori','category','jenis','format','media_type','media type','media','content_type');
+
+  // Schema Sheet NOVA saat ini:
+  // Judul | Poster | Link | Genre | Tahun | Rating | Aktor | Deskripsi
+  const titleKey=findExact('title','judul','name')||columns[0];
+  const linkKey=findExact('link','url','video','embed','embed_url','source','player','play','play_url');
+  const yearKey=findExact('year','tahun','release_year','tahun_rilis');
+  const genreKey=findExact('genre','genres');
+
+  const extractEpisode=(title)=>{
+    const m=String(title||'').match(/\\b(?:episode|eps)\\s*[-.]?\\s*(\\d+)\\b/i);
+    return m?m[1]:'';
+  };
+
+  const cleanSeriesTitle=(title)=>{
+    return String(title||'')
+      .replace(/\\s*[-–—]?\\s*(?:season|musim)\\s*\\d+\\s*(?:[-–—]?\\s*)?(?:episode|eps)\\s*[-.]?\\s*\\d+.*$/i,'')
+      .replace(/\\s*[-–—]?\\s*(?:episode|eps)\\s*[-.]?\\s*\\d+.*$/i,'')
+      .replace(/\\s*\\[[^\\]]*\\]\\s*$/,'')
+      .trim();
+  };
+
   const allItems=objects.map(o=>{
-    const tipe=typeKey?String(o[typeKey]||'').trim():'';
-    const episode=episodeKey?String(o[episodeKey]||'').trim():'';
-    const rowText=Object.values(o).join(' | ');
-    const seriesHint=/\b(?:series|serial|tv\s*series|tv|seri|web\s*series)\b/i.test(tipe)
-      || Boolean(episode)
-      || (/\b(?:episode|eps|season|musim)\b/i.test(rowText) && /\b(?:series|serial|tv)\b/i.test(rowText));
+    const judul=o[titleKey]||'';
+    const genre=genreKey?String(o[genreKey]||'').trim():'';
+    const episode=extractEpisode(judul);
+    const seriesHint=/\\b(?:series|serial|tv\\s*series|web\\s*series|seri)\\b/i.test(genre)
+      || /\\b(?:season|musim|episode|eps)\\s*[-.]?\\s*\\d+/i.test(judul);
     const jenis=seriesHint?'series':'movie';
+    const seriesTitle=jenis==='series'?cleanSeriesTitle(judul):'';
+
     return {
-      judul:o[titleKey]||'',
+      judul,
       tahun:yearKey?o[yearKey]||'':'',
-      tipe,
+      tipe:genre,
+      genre,
       jenis,
       episode,
+      seriesTitle,
       bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
     };
   }).filter(x=>x.judul);
-  const canonicalType=x=>x.jenis;
+
+  const seriesGroups=new Map();
+  for(const item of allItems.filter(x=>x.jenis==='series')){
+    const key=normalizeTitle(item.seriesTitle||item.judul);
+    if(!seriesGroups.has(key)) seriesGroups.set(key,{judul:item.seriesTitle||item.judul,tahun:item.tahun,episodes:[]});
+    seriesGroups.get(key).episodes.push(item);
+  }
+
+  const seriesList=[...seriesGroups.values()];
   return {
     total:allItems.length,
     playable:allItems.filter(x=>x.bisaDiputar).length,
     unplayable:allItems.filter(x=>!x.bisaDiputar).length,
-    movieCount:allItems.filter(x=>canonicalType(x)==='movie').length,
-    seriesCount:allItems.filter(x=>canonicalType(x)==='series').length,
-    // Simpan seluruh katalog untuk pencarian internal. Judul tetap tidak dikeluarkan
-    // kecuali user meminta judul tertentu secara eksplisit.
+    movieCount:allItems.filter(x=>x.jenis==='movie').length,
+    seriesCount:seriesList.length,
+    seriesList,
     items:allItems,
     playableItems:allItems.filter(x=>x.bisaDiputar),
     unplayableItems:allItems.filter(x=>!x.bisaDiputar)
   };
 }
-
 async function loadCatalog(){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),8000);
@@ -272,14 +298,15 @@ export default async function handler(req,res){
     // "Cek series" adalah permintaan detail: jumlah + judul + jumlah episode.
     if(/\bcek\s+(?:data\s+)?series\b/i.test(normalizeText(message))){
       await ensureCatalog();
-      const items=catalog.items.filter(x=>x.jenis==='series');
-      const lines=items.map((x,i)=>{
-        const ep=x.episode || '-';
-        return (i+1)+'. '+x.judul+' — '+ep+' episode';
+      const seriesList=catalog.seriesList||[];
+      const lines=seriesList.map((x,i)=>{
+        const episodes=[...x.episodes].sort((a,b)=>(Number(a.episode)||999)-(Number(b.episode)||999));
+        const epText=episodes.map(e=>'Ep '+(e.episode||'?')).join(', ');
+        return (i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+episodes.length+' episode'+(epText?' — '+epText:'');
       });
       return res.status(200).json({
-        ok:true,source:'catalog',items,
-        reply:'📺 Data Series di Pustaka: '+items.length+' judul\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data series.')
+        ok:true,source:'catalog',items:seriesList,
+        reply:'📺 Data Series di Pustaka: '+seriesList.length+' judul\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data series.')
       });
     }
 
