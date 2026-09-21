@@ -240,7 +240,8 @@ export default async function handler(req,res){
   if(message.length>1000) return res.status(400).json({error:'Pesan terlalu panjang'});
 
   try{
-    const catalog=await loadCatalog();
+    let catalog=null;
+    const ensureCatalog=async()=>{ if(!catalog) catalog=await loadCatalog(); return catalog; };
     const catalogSearch=extractCatalogSearch(message);
 
     if(isCatalogOverviewIntent(message)){
@@ -263,6 +264,7 @@ export default async function handler(req,res){
 
     for(const type of ['series','movie','all']){
       if(isCatalogTypeIntent(message,type)){
+        await ensureCatalog();
         const items=type==='series'?catalog.items.filter(x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)):type==='movie'?catalog.items.filter(x=>/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)):catalog.items;
         const label=type==='series'?'series':type==='movie'?'film':'seluruh film/series';
         const lines=items.slice(0,30).map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.bisaDiputar?'bisa diputar':'belum ada player'));
@@ -294,6 +296,7 @@ export default async function handler(req,res){
     }
 
     if(catalogSearch){
+      await ensureCatalog();
       const q=normalizeTitle(catalogSearch.query);
       const matches=catalog.items.filter(x=>normalizeTitle(x.judul).includes(q)).slice(0,12);
       if(!matches.length) return res.status(200).json({ok:true,source:'catalog',reply:'🔎 Aku tidak menemukan “'+catalogSearch.query+'” di pustaka.'});
