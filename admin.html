@@ -521,7 +521,44 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
   .novaVisual{height:330px!important;min-height:330px!important}
   .novaHero .novaPortrait{width:210px!important;height:300px!important}
 }
-</style></head>
+<style id="nova-visual-fix-v1">
+/* Poster NOVA harus tetap menjadi kolom kiri; jangan ikut tersembunyi oleh rule lama. */
+.novaVisual{
+  display:block!important;
+  grid-column:1!important;
+  width:100%!important;
+  height:620px!important;
+  min-height:620px!important;
+}
+.novaHero .novaChatShell{
+  grid-column:2!important;
+  width:100%!important;
+  height:620px!important;
+  min-height:620px!important;
+}
+.novaHero .novaPortrait{
+  display:block!important;
+}
+@media(max-width:800px){
+  .novaVisual{
+    display:block!important;
+    width:100%!important;
+    height:360px!important;
+    min-height:360px!important;
+  }
+  .novaHero .novaChatShell{
+    width:100%!important;
+    height:460px!important;
+    min-height:460px!important;
+  }
+}
+@media(max-width:700px){
+  .novaVisual{
+    height:330px!important;
+    min-height:330px!important;
+  }
+}
+</style></style></head>
 <body class="novaApp">
 <div class="novaLayout">
   <aside class="novaSidebar" id="novaSidebar">
