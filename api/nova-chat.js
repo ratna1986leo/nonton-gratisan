@@ -30,23 +30,35 @@ function catalogContext(text){
   const columns=rows[0].map(x=>String(x||'').trim());
   const data=rows.slice(1).filter(r=>r.some(v=>String(v||'').trim()));
   const objects=data.map(r=>Object.fromEntries(columns.map((c,i)=>[c,String(r[i]??'').trim()])));
+  const normKey=value=>normalizeText(value).replace(/[^a-z0-9]+/g,'');
   const find=(...names)=>{
-    const wanted=names.map(x=>x.toLowerCase());
-    return columns.find(c=>wanted.includes(c.toLowerCase()));
+    const wanted=names.map(normKey);
+    return columns.find(c=>wanted.includes(normKey(c)))
+      || columns.find(c=>wanted.some(w=>normKey(c).includes(w)));
   };
   const titleKey=find('title','judul','name')||columns[0];
   const linkKey=find('link','url','video','embed','embed_url','source','player','play','play_url');
-  const yearKey=find('year','tahun');
-  const episodeKey=find('episode','episodes','episode_count','jumlah episode','jumlah_episodes','jml episode','eps');
-  const typeKey=find('type','tipe','kategori','category','jenis','format','media_type','media type','media');
-  const allItems=objects.map(o=>({
-    judul:o[titleKey]||'',
-    tahun:yearKey?o[yearKey]||'':'',
-    tipe:typeKey?String(o[typeKey]||'').trim():'',
-    episode:episodeKey?String(o[episodeKey]||'').trim():'',
-    bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
-  })).filter(x=>x.judul);
-  const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)||Boolean(x.episode)?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)?'movie':'movie';
+  const yearKey=find('year','tahun','release_year','tahun_rilis');
+  const episodeKey=find('episode','episodes','episode_count','jumlah episode','jumlah_episodes','jml episode','eps','jumlah eps','total episode');
+  const typeKey=find('type','tipe','kategori','category','jenis','format','media_type','media type','media','content_type');
+  const allItems=objects.map(o=>{
+    const tipe=typeKey?String(o[typeKey]||'').trim():'';
+    const episode=episodeKey?String(o[episodeKey]||'').trim():'';
+    const rowText=Object.values(o).join(' | ');
+    const seriesHint=/\b(?:series|serial|tv\s*series|tv|seri|web\s*series)\b/i.test(tipe)
+      || Boolean(episode)
+      || (/\b(?:episode|eps|season|musim)\b/i.test(rowText) && /\b(?:series|serial|tv)\b/i.test(rowText));
+    const jenis=seriesHint?'series':'movie';
+    return {
+      judul:o[titleKey]||'',
+      tahun:yearKey?o[yearKey]||'':'',
+      tipe,
+      jenis,
+      episode,
+      bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
+    };
+  }).filter(x=>x.judul);
+  const canonicalType=x=>x.jenis;
   return {
     total:allItems.length,
     playable:allItems.filter(x=>x.bisaDiputar).length,
@@ -260,7 +272,7 @@ export default async function handler(req,res){
     // "Cek series" adalah permintaan detail: jumlah + judul + jumlah episode.
     if(/\bcek\s+(?:data\s+)?series\b/i.test(normalizeText(message))){
       await ensureCatalog();
-      const items=catalog.items.filter(x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe));
+      const items=catalog.items.filter(x=>x.jenis==='series');
       const lines=items.map((x,i)=>{
         const ep=x.episode || '-';
         return (i+1)+'. '+x.judul+' — '+ep+' episode';
@@ -283,7 +295,7 @@ export default async function handler(req,res){
       if(isCatalogTypeIntent(message,type)){
         await ensureCatalog();
         const items=type==='movie'
-          ? catalog.items.filter(x=>/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe))
+          ? catalog.items.filter(x=>x.jenis==='movie')
           : catalog.items;
         const label=type==='movie'?'film bioskop':'seluruh film/series';
         const playerText='▶️ Ada player: '+items.filter(x=>x.bisaDiputar).length+' | ⏳ Belum ada player: '+items.filter(x=>!x.bisaDiputar).length;
