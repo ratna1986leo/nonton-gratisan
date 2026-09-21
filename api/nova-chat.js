@@ -134,15 +134,15 @@ function normalizeIntentText(message){
 }
 function shouldUseNovaAgent(message){
   const m=normalizeIntentText(message);
-  return /\\b(rekomendasi|rekomendasikan|sarankan|saran|cocok|pilihkan|pilih yang|menurut kamu|menurutmu|analisis|analisa|bandingkan|perbandingan|jelaskan kenapa|kenapa|mengapa|apa pendapat|pendapat|ceritakan|ngobrol|bicara|bantu aku memilih|bantu saya memilih|ide|masukan)\\b/i.test(m)
-    || /^halo\\b/i.test(m)
-    || /\\bterima kasih\\b/i.test(m)
-    || /\\bselamat (pagi|siang|sore|malam)\\b/i.test(m);
+  return /\b(rekomendasi|rekomendasikan|sarankan|saran|cocok|pilihkan|pilih yang|menurut kamu|menurutmu|analisis|analisa|bandingkan|perbandingan|jelaskan kenapa|kenapa|mengapa|apa pendapat|pendapat|ceritakan|ngobrol|bicara|bantu aku memilih|bantu saya memilih|ide|masukan)\b/i.test(m)
+    || /^halo\b/i.test(m)
+    || /\bterima kasih\b/i.test(m)
+    || /\bselamat (pagi|siang|sore|malam)\b/i.test(m);
 }
 
 function isCatalogOverviewIntent(message){
   const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
-  return /(?:cek|lihat|tampilkan|daftar|list|sebutkan|apa saja|film apa|ada apa|isi)\b.*\b(?:pustaka|katalog)\b/i.test(m)
+  return /(?:cek|lihat|tampilkan|daftar|list|sebutkan|apa saja|film apa|ada apa|isi|inspeksi|data)\b.*\b(?:pustaka|katalog)\b/i.test(m)
     || /\b(?:pustaka|katalog)\s+(?:film|series|serial)\b/i.test(m);
 }
 function isPlayableIntent(message){
@@ -335,7 +335,7 @@ export default async function handler(req,res){
         const {runNovaAgent}=await import('./nova-agent.js');
         const selectedCatalogItems=selectCatalogItems(catalog,message);
         let tmdbForAgent={available:false,source:'TMDB',items:[]};
-        const wantsTMDB=/\\btmdb\\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message);
+        const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message);
         if(wantsTMDB){
           try{tmdbForAgent=await loadTMDBDiscovery();}
           catch(e){tmdbForAgent={available:false,source:'TMDB',items:[],error:e.message};}
