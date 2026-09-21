@@ -120,6 +120,22 @@ async function searchTMDB(query, type='all'){
   return {available:true,source:'TMDB',query:clean,type,totalResults:Number(data.total_results||items.length),items};
 }
 
+function extractCatalogSearch(message){
+  const m=String(message||'').trim();
+  const patterns=[
+    /(?:cari|carikan|cek|temukan|apakah ada)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)\s+(?:di|dalam)\s+(?:pustaka|katalog)(?:\s+film)?$/i,
+    /(?:cari|carikan|cek)\s+(?:di|dalam)\s+(?:pustaka|katalog)(?:\s+film)?\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+)$/i
+  ];
+  for(const re of patterns){
+    const hit=m.match(re);
+    if(hit?.[1]){
+      const q=hit[1].replace(/\s+(?:dong|bro|ya|please)$/i,'').trim();
+      if(q.length>=2) return {query:q};
+    }
+  }
+  return null;
+}
+
 function extractTMDBSearch(message){
   const m=String(message||'').trim();
   const patterns=[
@@ -172,8 +188,6 @@ export default async function handler(req,res){
   const expected=process.env.NOVA_ADMIN_KEY || process.env.KUNCI_ADMIN_NOVA;
   if(!expected) return res.status(503).json({error:'NOVA_ADMIN_KEY belum disetel di Vercel'});
   if(req.headers['x-nova-key']!==expected) return res.status(401).json({error:'Admin key salah'});
-  const openaiApiKey=process.env.OPENAI_API_KEY || process.env.KUNCI_API_OPENAI;
-  if(!openaiApiKey) return res.status(503).json({error:'OPENAI_API_KEY/KUNCI_API_OPENAI belum disetel di Vercel'});
   const clientId=getClientId(req);
   const rate=checkNovaRate(clientId);
   if(!rate.ok){
@@ -188,13 +202,42 @@ export default async function handler(req,res){
     let catalog;
     try{ catalog=await loadCatalog(); }
     catch(e){ catalog={total:0,playable:0,unplayable:0,items:[],error:e.message}; }
+    const normalizeTitle=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+
+    const catalogSearch=extractCatalogSearch(message);
+    if(catalogSearch){
+      const q=normalizeTitle(catalogSearch.query);
+      const matches=(catalog.items||[]).filter(x=>normalizeTitle(x.judul).includes(q)).slice(0,12);
+      if(matches.length){
+        const lines=matches.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe||'Judul'} — ${x.bisaDiputar?'bisa diputar':'belum ada player'}`);
+        return res.status(200).json({ok:true,source:'catalog',reply:`🔎 Aku menemukan ${matches.length} judul di pustaka:\n\n${lines.join('\\n')}`});
+      }
+      return res.status(200).json({ok:true,source:'catalog',reply:`🔎 Aku tidak menemukan “${catalogSearch.query}” di pustaka film.`});
+    }
+
+    const tmdbSearch=extractTMDBSearch(message);
+    if(tmdbSearch){
+      try{
+        const tmdbResult=await searchTMDB(tmdbSearch.query,tmdbSearch.type);
+        if(!tmdbResult.available) return res.status(503).json({error:tmdbResult.error||'TMDB tidak tersedia'});
+        if(!tmdbResult.items.length) return res.status(200).json({ok:true,source:'tmdb',reply:`🔎 Tidak ada hasil TMDB untuk “${tmdbSearch.query}”.`});
+        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe}${x.rating?' — ⭐ '+x.rating:''} — TMDB ID ${x.tmdbId}`);
+        return res.status(200).json({ok:true,source:'tmdb',query:tmdbSearch.query,items:tmdbResult.items,reply:`🔎 Hasil TMDB untuk “${tmdbSearch.query}”:\n\n${lines.join('\\n')}\n\nData ini berasal langsung dari TMDB, bukan status pustaka/player.`});
+      }catch(e){
+        console.error('[NOVA_TMDB_SEARCH_ERROR]',e);
+        return res.status(502).json({error:'Pencarian TMDB gagal: '+(e.message||'unknown error')});
+      }
+    }
+
+    const openaiApiKey=process.env.OPENAI_API_KEY || process.env.KUNCI_API_OPENAI;
+    if(!openaiApiKey) return res.status(503).json({error:'OPENAI_API_KEY/KUNCI_API_OPENAI belum disetel di Vercel'});
+
     const selectedCatalogItems=selectCatalogItems(catalog,message);
     const catalogForPrompt=catalog.error ? catalog : {...catalog,items:selectedCatalogItems};
     const catalogBlock=catalog.error
       ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
       : JSON.stringify(catalogForPrompt);
     let tmdb={available:false,source:'TMDB',items:[]};
-    const tmdbSearch=extractTMDBSearch(message);
     const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
     if(wantsTMDB){
       try{ tmdb=await loadTMDBDiscovery(); }
