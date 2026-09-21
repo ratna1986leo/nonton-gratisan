@@ -40,6 +40,25 @@ function catalogContext(text){
   return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
 }
 
+function selectCatalogItems(catalog, message){
+  const items=Array.isArray(catalog?.items)?catalog.items:[];
+  const m=String(message||'').toLowerCase();
+  const countOnly=/\\b(berapa|jumlah|total|ada berapa|berapa banyak)\\b/.test(m) && !/\\b(cari|tampilkan|sebutkan|daftar|list|judul)\\b/.test(m);
+  if(countOnly) return [];
+  const tokens=m.normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').match(/[a-z0-9]{3,}/g)||[];
+  const stop=new Set(['yang','dan','atau','untuk','dari','dengan','film','films','movie','movies','series','serial','tolong','dong','please','bisa','bisa','ada','pustaka','katalog','tmdb','cari','carikan','coba','saya','ingin','mau','mana','apa','ini','itu','the']);
+  const terms=tokens.filter(t=>!stop.has(t));
+  const scored=items.map((item,index)=>{
+    const hay=[item.judul,item.tipe,item.tahun].join(' ').toLowerCase();
+    let score=0;
+    for(const t of terms){ if(hay.includes(t)) score += hay.startsWith(t)||String(item.judul||'').toLowerCase().includes(t)?3:1; }
+    return {item,index,score};
+  });
+  const hasMatch=scored.some(x=>x.score>0);
+  if(hasMatch) return scored.sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,16).map(x=>x.item);
+  return items.slice(0,16);
+}
+
 const NOVA_MIN_INTERVAL_MS = Number(process.env.NOVA_MIN_INTERVAL_MS || 10000);
 const NOVA_MAX_REQUESTS_PER_WINDOW = Number(process.env.NOVA_MAX_REQUESTS_PER_WINDOW || 18);
 const NOVA_RATE_WINDOW_MS = Number(process.env.NOVA_RATE_WINDOW_MS || 10*60*1000);
@@ -169,9 +188,11 @@ export default async function handler(req,res){
     let catalog;
     try{ catalog=await loadCatalog(); }
     catch(e){ catalog={total:0,playable:0,unplayable:0,items:[],error:e.message}; }
+    const selectedCatalogItems=selectCatalogItems(catalog,message);
+    const catalogForPrompt=catalog.error ? catalog : {...catalog,items:selectedCatalogItems};
     const catalogBlock=catalog.error
       ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
-      : JSON.stringify(catalog);
+      : JSON.stringify(catalogForPrompt);
     let tmdb={available:false,source:'TMDB',items:[]};
     const tmdbSearch=extractTMDBSearch(message);
     const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
@@ -249,6 +270,7 @@ export default async function handler(req,res){
       model:MODEL,
       requestBodyChars:JSON.stringify({model:MODEL,store:false,instructions,input:message,max_output_tokens:600}).length,
       catalogItems:Array.isArray(catalog?.items)?catalog.items.length:0,
+      catalogPromptItems:selectedCatalogItems.length,
       tmdbItems:Array.isArray(tmdb?.items)?tmdb.items.length:0,
       usage:data?.usage||null,
       rateLimit:{
