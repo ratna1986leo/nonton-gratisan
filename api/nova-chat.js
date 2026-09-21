@@ -223,7 +223,11 @@ export default async function handler(req,res){
       tmdbBlock
     ].join('\n\n');
 
-    const r=await fetch('https://api.openai.com/v1/responses',{
+    const openaiController=new AbortController();
+    const openaiTimer=setTimeout(()=>openaiController.abort(),20000);
+    let r;
+    try{
+      r=await fetch('https://api.openai.com/v1/responses',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+process.env.OPENAI_API_KEY},
       body:JSON.stringify({
@@ -232,19 +236,27 @@ export default async function handler(req,res){
         instructions,
         input:message,
         max_output_tokens:600
-      })
-    });
+      ,signal:openaiController.signal})
+      });
+    } finally {
+      clearTimeout(openaiTimer);
+    }
     const data=await r.json();
     if(!r.ok){
       const msg=data?.error?.message||'OpenAI request gagal';
       const status=r.status===429?429:r.status;
+      const openaiType=String(data?.error?.type||'');
+      const openaiCode=String(data?.error?.code||'');
+      const openaiRequestId=String(r.headers.get('x-request-id')||'');
+      console.error('[NOVA_OPENAI_ERROR]',JSON.stringify({status,type:openaiType,code:openaiCode,requestId:openaiRequestId,model:MODEL}));
       if(status===429){
         const retryHeader=r.headers.get('retry-after')||r.headers.get('x-ratelimit-reset-requests')||r.headers.get('x-ratelimit-reset-tokens');
         const retryAfterSec=Math.max(5,secondsFromRateHeader(retryHeader)||20);
         res.setHeader('Retry-After',String(retryAfterSec));
         return res.status(429).json({
           error:'NOVA terkena batas API sementara. Tunggu '+retryAfterSec+' detik sebelum mencoba lagi.',
-          retryAfterSec
+          retryAfterSec,
+          diagnostic:{type:openaiType||undefined,code:openaiCode||undefined,requestId:openaiRequestId||undefined}
         });
       }
       return res.status(status).json({error:msg});
@@ -253,6 +265,8 @@ export default async function handler(req,res){
     if(!reply) return res.status(502).json({error:'OpenAI berhasil merespons, tetapi teks jawaban NOVA tidak ditemukan.'});
     return res.status(200).json({ok:true,reply});
   }catch(e){
+    if(e?.name==='AbortError') return res.status(504).json({error:'NOVA timeout saat menghubungi layanan AI. Coba lagi sebentar lagi.'});
+    console.error('[NOVA_HANDLER_ERROR]',e);
     return res.status(500).json({error:'NOVA error: '+(e.message||'unknown error')});
   }
 }
