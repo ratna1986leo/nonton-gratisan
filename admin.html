@@ -602,11 +602,10 @@ async function loadHighlights(){
  if(!key){box.textContent='Isi Admin Key terlebih dahulu.';return}
  box.textContent='Memuat highlight komentar...';
  try{
-  const r=await fetch('/api/comments?action=recent&limit=40',{cache:'no-store'});
+  const r=await fetch('/api/nova-comments',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'recent',limit:40})});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Komentar gagal dimuat');
-  if(d.degraded)throw new Error(d.error||'Sumber komentar sedang tidak tersedia');
-  const comments=Array.isArray(d.comments)?d.comments:(Array.isArray(d.items)?d.items:Array.isArray(d)?d:[]);
-  if(!comments.length){box.textContent='Belum ada komentar atau sumber komentar belum mengembalikan data.';return}
+  const comments=Array.isArray(d.comments)?d.comments:[];
+  if(!comments.length){box.textContent='Belum ada komentar.';return}
   box.innerHTML=comments.map(x=>{
    const replied=String(x.reply||'').trim();
    return '<div class="comment"><div><b>'+esc(x.name||'Anonim')+'</b><span class="badge">'+(replied?'Sudah dibalas':'Menunggu balasan')+'</span></div><div class="muted" style="margin-top:4px">'+esc(x.title||'')+' • '+esc(x.date||'')+'</div><div style="margin-top:8px;white-space:pre-wrap">'+esc(x.text||'')+'</div>'+(replied?'<div class="reply"><b>🤖 NOVA</b><div style="margin-top:5px;white-space:pre-wrap">'+esc(replied)+'</div></div>':'')+'</div>';
@@ -614,7 +613,6 @@ async function loadHighlights(){
  }catch(e){box.textContent='Error: '+e.message}
 }
 $('refreshComments').onclick=loadHighlights;
-document.querySelector('.novaSideBtn[data-view="comments"]')?.addEventListener('click',()=>setTimeout(loadHighlights,0));
 
 // Android-style app navigation
 (function(){
