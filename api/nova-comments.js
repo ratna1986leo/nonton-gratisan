@@ -9,7 +9,10 @@ function auth(req){
 async function listFromSheet(params={}){
  const buildUrl=(withAction=true)=>{
   const u=new URL(COMMENTS_API_URL);
-  Object.entries(params).forEach(([k,v])=>{if(v!==undefined&&v!==null&&String(v)!=='')u.searchParams.set(k,String(v));});
+  Object.entries(params).forEach(([k,v])=>{
+    if(k==='action'&&!withAction)return;
+    if(v!==undefined&&v!==null&&String(v)!=='')u.searchParams.set(k,String(v));
+  });
   if(withAction && !u.searchParams.has('action'))u.searchParams.set('action','recent');
   u.searchParams.set('_',Date.now());
   return u;
