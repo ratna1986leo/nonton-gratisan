@@ -530,7 +530,9 @@ async function sendNova(message){
  const now=Date.now();
  const wait=Math.max(novaCooldownUntil-now,novaNextAllowedAt-now);
  if(wait>0){startNovaCooldown(wait);return}
- novaBusy=true;setState('Thinking');$('status').textContent='NOVA sedang berpikir...';$('stageSend').disabled=true;
+ novaBusy=true;setState('Thinking');$('status').textContent='NOVA sedang memproses...';$('stageSend').disabled=true;
+ renderNovaMessage('user',message);
+ setNovaSearching(true,/\b(cari|carikan|cek|temukan|search)\b/i.test(message)?'Mencari data...':'Memproses permintaan...');
  try{
   const r=await fetch('/api/nova-chat',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({message})});
   const data=await r.json().catch(()=>({}));
@@ -551,7 +553,6 @@ async function sendNova(message){
  finally{novaBusy=false;$('stageSend').disabled=false}
 }
 
-$('stageSend').onclick=()=>sendNova($('stageMessage').value.trim());
 $('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('stageMessage').value=m;sendNova(m)};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const m=b.dataset.prompt;$('stageMessage').value=m;sendNova(m)});
 
