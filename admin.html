@@ -202,6 +202,13 @@ button.action{background:#202123;color:#fff;border-color:#202123}
 .novaHero .quick button:hover{border-color:#c7c1f5!important;background:#faf9ff!important;transform:translateY(-1px)}
 .bubble{box-shadow:0 1px 2px rgba(0,0,0,.025)}
 @media(max-width:700px){.novaHeader{position:sticky!important}.novaVisual{border-radius:14px!important}.novaHero .chatInput{box-shadow:0 8px 28px rgba(0,0,0,.13)!important}}
+
+/* NOVA conversation feed v2 */
+.novaHero .chatBody{display:flex;flex-direction:column;gap:18px;max-width:900px;margin:0 auto;padding:20px 0 150px!important;overflow:visible!important}
+.novaMessage{max-width:820px;animation:novaMsgIn .18s ease-out}.novaMessage.user{align-self:flex-end;text-align:right;margin-left:auto}.novaMessage.ai{align-self:flex-start;text-align:left;margin-right:auto}
+.novaMessageLabel{font-size:10px;font-weight:700;color:#8a8a90;margin:0 0 5px 4px;letter-spacing:.04em}.novaMessage.user .novaMessageLabel{margin-right:4px}
+.novaMessageText{white-space:pre-wrap;font-size:14px;line-height:1.65;color:#202123}.novaMessage.user .novaMessageText{display:inline-block;background:#f1f1f3;border:1px solid #e3e3e6;border-radius:16px 16px 4px 16px;padding:11px 14px;max-width:760px}.novaMessage.ai .novaMessageText{padding:2px 4px}
+.novaMessageMeta{font-size:10px;color:#8a8a90;margin-top:7px;padding-left:4px}.novaSearching{display:flex;align-items:center;gap:4px;color:#777;font-size:12px;padding:8px 4px}.novaSearching span{width:5px;height:5px;border-radius:50%;background:#6d5dfc;animation:novaDot 1s infinite ease-in-out}.novaSearching span:nth-child(2){animation-delay:.15s}.novaSearching span:nth-child(3){animation-delay:.3s}.novaSearching b{font-weight:500;margin-left:4px}@keyframes novaDot{50%{transform:translateY(-3px);opacity:.45}}@keyframes novaMsgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
 </style>
 <style id="nova-chatgpt-style">
 :root{--nova-bg:#212121;--nova-side:#171717;--nova-panel:#2f2f2f;--nova-hover:#2a2a2a;--nova-border:#424242;--nova-text:#ececec;--nova-muted:#a0a0a0;--nova-accent:#8b7cff}
@@ -495,6 +502,25 @@ function startNovaCooldown(ms){
  novaCooldownTimer=setInterval(tick,500);
 }
 
+
+function renderNovaMessage(role,text,meta=''){
+ const body=document.querySelector('#novaChat .chatBody');if(!body)return;
+ const empty=body.querySelector('.novaEmptyState');if(empty)empty.remove();
+ const wrap=document.createElement('div');wrap.className='novaMessage '+role;
+ const label=role==='user'?'Kamu':'NOVA';
+ wrap.innerHTML='<div class="novaMessageLabel">'+label+'</div><div class="novaMessageText"></div>'+(meta?'<div class="novaMessageMeta">'+meta+'</div>':'');
+ wrap.querySelector('.novaMessageText').textContent=String(text||'');
+ body.appendChild(wrap);body.scrollTop=body.scrollHeight;
+ return wrap;
+}
+function setNovaSearching(active,label='Mencari...'){
+ const old=document.getElementById('novaSearching');if(old)old.remove();
+ if(!active)return;
+ const body=document.querySelector('#novaChat .chatBody');if(!body)return;
+ const el=document.createElement('div');el.id='novaSearching';el.className='novaSearching';el.innerHTML='<span></span><span></span><span></span><b>'+label+'</b>';
+ body.appendChild(el);body.scrollTop=body.scrollHeight;
+}
+
 async function sendNova(message){
  const key=$('key').value.trim();
  if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
@@ -514,10 +540,14 @@ async function sendNova(message){
     throw new Error(data.error||'NOVA sedang terkena rate limit API. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
+  setNovaSearching(false);
   novaNextAllowedAt=Date.now()+NOVA_CLIENT_MIN_INTERVAL_MS;
-  setState('Speaking');$('status').textContent=data.reply||JSON.stringify(data,null,2);
+  setState('Speaking');
+  const sourceLabel=data.source==='tmdb'?'TMDB':data.source==='catalog'?'Pustaka':'NOVA AI';
+  renderNovaMessage('ai',data.reply||JSON.stringify(data,null,2),sourceLabel);
+  $('status').textContent='Sumber: '+sourceLabel;
   setTimeout(()=>setState('Happy'),900);
- }catch(e){setState('Error');$('status').textContent='Error: '+e.message}
+  }catch(e){setNovaSearching(false);setState('Error');renderNovaMessage('ai','Terjadi kesalahan: '+e.message,'Error');$('status').textContent='Error: '+e.message}
  finally{novaBusy=false;$('stageSend').disabled=false}
 }
 
