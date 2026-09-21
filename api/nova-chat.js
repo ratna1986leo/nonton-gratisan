@@ -39,10 +39,14 @@ function catalogContext(text){
   })).filter(x=>x.judul);
   const playableItems=allItems.filter(x=>x.bisaDiputar);
   const unplayableItems=allItems.filter(x=>!x.bisaDiputar);
+  const movieItems=allItems.filter(x=>/\b(?:film|movie|bioskop)\b/i.test(x.tipe||''));
+  const seriesItems=allItems.filter(x=>/\b(?:series|serial|tv)\b/i.test(x.tipe||''));
   return {
     total:allItems.length,
     playable:playableItems.length,
     unplayable:unplayableItems.length,
+    movieCount:movieItems.length,
+    seriesCount:seriesItems.length,
     items:allItems.slice(0,40),
     playableItems:playableItems.slice(0,40),
     unplayableItems:unplayableItems.slice(0,40)
@@ -319,8 +323,8 @@ export default async function handler(req,res){
 
     if(isCatalogInspectionIntent(message)){
       if(catalog.error) return res.status(502).json({error:'Pustaka film gagal dimuat: '+catalog.error});
-      const movieCount=(catalog.items||[]).filter(x=>/\b(?:film|movie|bioskop)\b/i.test(x.tipe||'')).length;
-      const seriesCount=(catalog.items||[]).filter(x=>/\b(?:series|serial|tv)\b/i.test(x.tipe||'')).length;
+      const movieCount=Number(catalog.movieCount||0);
+      const seriesCount=Number(catalog.seriesCount||0);
       return res.status(200).json({ok:true,source:'catalog-inspection',reply:'📚 Inspeksi pustaka\n\n• Total judul: '+catalog.total+'\n• Film bioskop: '+movieCount+'\n• Film series: '+seriesCount+'\n• Sudah punya player: '+catalog.playable+'\n• Belum punya player: '+catalog.unplayable+'\n\nDaftar judul tidak ditampilkan agar ruang chat tetap fokus pada informasi penting.'});
     }
 
