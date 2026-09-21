@@ -41,7 +41,7 @@ export default async function handler(req,res){
       }
       // Komentar adalah fitur pelengkap: jangan biarkan kegagalan Google Apps Script
       // membuat endpoint publik terus-menerus mengembalikan 4xx dan mengganggu halaman.
-      return res.status(200).json(data?.ok === false ? {ok:true, comments:[], degraded:true} : data);
+      return res.status(200).json(data?.ok === false ? {ok:false, comments:[], degraded:true, error:data.error||'Sumber komentar sedang tidak tersedia'} : data);
     }
     if(req.method==='POST'){
       const body=req.body&&typeof req.body==='object'?req.body:{};
