@@ -147,7 +147,14 @@ function isTMDBOverviewIntent(message){
   const m=normalizeIntentText(message);
   return /^(?:cek|lihat|tampilkan|daftar|list|jelaskan)?\s*(?:film\s+)?(?:di\s+)?tmdb\s*$/i.test(m)
     || /^(?:cek|lihat|tampilkan|daftar|list)\s+(?:film\s+)?di\s+tmdb$/i.test(m)
-    || /^(?:cek|lihat|tampilkan)\s+tmdb$/i.test(m);
+    || /^(?:cek|lihat|tampilkan)\s+tmdb$/i.test(m)
+    || /^inspeksi\s+data\s+tmdb$/i.test(m)
+    || /^data\s+film\s+di\s+tmdb$/i.test(m);
+}
+function isTMDBPlayableIntersectionIntent(message){
+  const m=normalizeIntentText(message);
+  return /\btmdb\b.*\b(?:punya|memiliki|ada|dengan)\b.*\bplayer\b/i.test(m)
+    || /\bfilm\b.*\bdi\s+tmdb\b.*\bplayer\b/i.test(m);
 }
 function extractCatalogSearch(message){
   const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
@@ -252,6 +259,28 @@ export default async function handler(req,res){
         ok:true,source:'catalog',
         reply:`🎬 Status player: ${catalog.playable} dari ${catalog.total} judul memiliki player tercatat.\n\n${lines.length?lines.join('\\n'):'Belum ada judul dengan player tercatat.'}`
       });
+    }
+
+    if(isTMDBPlayableIntersectionIntent(message)){
+      if(catalog.error) return res.status(502).json({error:'Data player gagal dimuat: '+catalog.error});
+      try{
+        const tmdbResult=await loadTMDBDiscovery();
+        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
+        const playableTitles=new Set((catalog.playableItems||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
+        const matches=(tmdbResult.items||[]).filter(x=>x.tipe==='Film'&&playableTitles.has(normalizeTitle(x.judul))).slice(0,20);
+        const lines=matches.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — TMDB ID ${x.tmdbId}`);
+        return res.status(200).json({
+          ok:true,
+          source:'tmdb-catalog',
+          items:matches,
+          reply:matches.length
+            ? `🎬 Film TMDB yang juga punya player di pustaka (berdasarkan judul):\\n\\n${lines.join('\\n')}`
+            : '🎬 Belum ada film TMDB hasil discovery ini yang cocok dengan judul di pustaka dan berstatus memiliki player.'
+        });
+      }catch(e){
+        console.error('[NOVA_TMDB_PLAYER_MATCH_ERROR]',e);
+        return res.status(502).json({error:'Pencocokan TMDB dan player gagal: '+(e.message||'unknown error')});
+      }
     }
 
     if(isTMDBOverviewIntent(message)){
