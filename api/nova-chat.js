@@ -236,7 +236,8 @@ export default async function handler(req,res){
         instructions,
         input:message,
         max_output_tokens:600
-      ,signal:openaiController.signal})
+      }),
+      signal:openaiController.signal
       });
     } finally {
       clearTimeout(openaiTimer);
