@@ -21,13 +21,13 @@ function parseCSV(text){
 
 function catalogContext(text){
   const rows=parseCSV(text);
-  if(!rows.length) return {total:0,playable:0,unplayable:0,items:[]};
+  if(!rows.length) return {total:0,playable:0,unplayable:0,items:[],playableItems:[],unplayableItems:[]};
   const columns=rows[0].map(x=>String(x||'').trim());
   const data=rows.slice(1).filter(r=>r.some(v=>String(v||'').trim()));
   const objects=data.map(r=>Object.fromEntries(columns.map((c,i)=>[c,String(r[i]??'').trim()])));
   const find=(...names)=>{const wanted=names.map(x=>x.toLowerCase());return columns.find(c=>wanted.includes(c.toLowerCase()))};
   const titleKey=find('title','judul','name')||columns[0];
-  const linkKey=find('link','url','video','embed','source');
+  const linkKey=find('link','url','video','embed','embed_url','source','player','play','play_url');
   const yearKey=find('year','tahun');
   const typeKey=find('type','tipe','kategori');
   const allItems=objects.map(o=>({
@@ -36,8 +36,16 @@ function catalogContext(text){
     tipe:typeKey?o[typeKey]||'':'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
-  const items=allItems.slice(0,40);
-  return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
+  const playableItems=allItems.filter(x=>x.bisaDiputar);
+  const unplayableItems=allItems.filter(x=>!x.bisaDiputar);
+  return {
+    total:allItems.length,
+    playable:playableItems.length,
+    unplayable:unplayableItems.length,
+    items:allItems.slice(0,40),
+    playableItems:playableItems.slice(0,40),
+    unplayableItems:unplayableItems.slice(0,40)
+  };
 }
 
 function selectCatalogItems(catalog, message){
@@ -120,8 +128,29 @@ async function searchTMDB(query, type='all'){
   return {available:true,source:'TMDB',query:clean,type,totalResults:Number(data.total_results||items.length),items};
 }
 
+function normalizeIntentText(message){
+  return String(message||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
+}
+function isCatalogOverviewIntent(message){
+  const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
+  return /(?:cek|lihat|tampilkan|daftar|list|sebutkan|apa saja|film apa|ada apa|isi)\b.*\b(?:pustaka|katalog)\b/i.test(m)
+    || /\b(?:pustaka|katalog)\s+(?:film|series|serial)\b/i.test(m);
+}
+function isPlayableIntent(message){
+  const m=normalizeIntentText(message);
+  return /\b(?:film|series|serial|judul)\b.*\b(?:bisa|dapat)\s+(?:diputar|ditonton)\b/i.test(m)
+    || /\b(?:bisa|dapat)\s+(?:diputar|ditonton)\b/i.test(m)
+    || /\bstatus\s+player\b/i.test(m)
+    || /\bplayer\b.*\bstatus\b/i.test(m);
+}
+function isTMDBOverviewIntent(message){
+  const m=normalizeIntentText(message);
+  return /^(?:cek|lihat|tampilkan|daftar|list|jelaskan)?\s*(?:film\s+)?(?:di\s+)?tmdb\s*$/i.test(m)
+    || /^(?:cek|lihat|tampilkan|daftar|list)\s+(?:film\s+)?di\s+tmdb$/i.test(m)
+    || /^(?:cek|lihat|tampilkan)\s+tmdb$/i.test(m);
+}
 function extractCatalogSearch(message){
-  const m=String(message||'').trim();
+  const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
   const patterns=[
     /(?:cari|carikan|cek|temukan|apakah ada)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)\s+(?:di|dalam)\s+(?:pustaka|katalog)(?:\s+film)?$/i,
     /(?:cari|carikan|cek)\s+(?:di|dalam)\s+(?:pustaka|katalog)(?:\s+film)?\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+)$/i
@@ -130,7 +159,7 @@ function extractCatalogSearch(message){
     const hit=m.match(re);
     if(hit?.[1]){
       const q=hit[1].replace(/\s+(?:dong|bro|ya|please)$/i,'').trim();
-      if(q.length>=2) return {query:q};
+      if(q.length>=2 && !/^(?:film|movie|series|serial|tv)$/i.test(q)) return {query:q};
     }
   }
   return null;
@@ -202,8 +231,40 @@ export default async function handler(req,res){
   try{
     let catalog;
     try{ catalog=await loadCatalog(); }
-    catch(e){ catalog={total:0,playable:0,unplayable:0,items:[],error:e.message}; }
+    catch(e){ catalog={total:0,playable:0,unplayable:0,items:[],playableItems:[],unplayableItems:[],error:e.message}; }
     const normalizeTitle=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+
+    if(isCatalogOverviewIntent(message)){
+      if(catalog.error) return res.status(502).json({error:'Pustaka film gagal dimuat: '+catalog.error});
+      const items=Array.isArray(catalog.items)?catalog.items.slice(0,20):[];
+      const lines=items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe||'Judul'} — ${x.bisaDiputar?'bisa diputar':'belum ada player'}`);
+      return res.status(200).json({
+        ok:true,source:'catalog',
+        reply:`📚 Pustaka film: ${catalog.total} judul. Bisa diputar: ${catalog.playable}. Belum ada player: ${catalog.unplayable}.\n\n${lines.join('\\n')}`
+      });
+    }
+
+    if(isPlayableIntent(message)){
+      if(catalog.error) return res.status(502).json({error:'Data player gagal dimuat: '+catalog.error});
+      const items=Array.isArray(catalog.playableItems)?catalog.playableItems.slice(0,20):[];
+      const lines=items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe||'Judul'}`);
+      return res.status(200).json({
+        ok:true,source:'catalog',
+        reply:`🎬 Status player: ${catalog.playable} dari ${catalog.total} judul memiliki player tercatat.\n\n${lines.length?lines.join('\\n'):'Belum ada judul dengan player tercatat.'}`
+      });
+    }
+
+    if(isTMDBOverviewIntent(message)){
+      try{
+        const tmdbResult=await loadTMDBDiscovery();
+        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
+        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe}`);
+        return res.status(200).json({ok:true,source:'tmdb',items:tmdbResult.items,reply:`🔎 Film/series TMDB terbaru/populer:\n\n${lines.join('\\n')}`});
+      }catch(e){
+        console.error('[NOVA_TMDB_DISCOVERY_ERROR]',e);
+        return res.status(502).json({error:'Data TMDB gagal dimuat: '+(e.message||'unknown error')});
+      }
+    }
 
     const catalogSearch=extractCatalogSearch(message);
     if(catalogSearch){
