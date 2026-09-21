@@ -1,4 +1,5 @@
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
+const NOVA_AGENT_ENABLED=String(process.env.NOVA_AGENT_ENABLED??'true').toLowerCase()!=='false';
 const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
 const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.KUNCI_API_TMDB || '';
 
@@ -131,6 +132,14 @@ async function searchTMDB(query, type='all'){
 function normalizeIntentText(message){
   return String(message||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
 }
+function shouldUseNovaAgent(message){
+  const m=normalizeIntentText(message);
+  return /\\b(rekomendasi|rekomendasikan|sarankan|saran|cocok|pilihkan|pilih yang|menurut kamu|menurutmu|analisis|analisa|bandingkan|perbandingan|jelaskan kenapa|kenapa|mengapa|apa pendapat|pendapat|ceritakan|ngobrol|bicara|bantu aku memilih|bantu saya memilih|ide|masukan)\\b/i.test(m)
+    || /^halo\\b/i.test(m)
+    || /\\bterima kasih\\b/i.test(m)
+    || /\\bselamat (pagi|siang|sore|malam)\\b/i.test(m);
+}
+
 function isCatalogOverviewIntent(message){
   const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
   return /(?:cek|lihat|tampilkan|daftar|list|sebutkan|apa saja|film apa|ada apa|isi)\b.*\b(?:pustaka|katalog)\b/i.test(m)
@@ -317,6 +326,38 @@ export default async function handler(req,res){
       }catch(e){
         console.error('[NOVA_TMDB_SEARCH_ERROR]',e);
         return res.status(502).json({error:'Pencarian TMDB gagal: '+(e.message||'unknown error')});
+      }
+    }
+
+    const useAgent=NOVA_AGENT_ENABLED && shouldUseNovaAgent(message);
+    if(useAgent){
+      try{
+        const {runNovaAgent}=await import('./nova-agent.js');
+        const selectedCatalogItems=selectCatalogItems(catalog,message);
+        let tmdbForAgent={available:false,source:'TMDB',items:[]};
+        const wantsTMDB=/\\btmdb\\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message);
+        if(wantsTMDB){
+          try{tmdbForAgent=await loadTMDBDiscovery();}
+          catch(e){tmdbForAgent={available:false,source:'TMDB',items:[],error:e.message};}
+        }
+        const catalogBlock=catalog.error
+          ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
+          : JSON.stringify({...catalog,items:selectedCatalogItems});
+        const tmdbBlock=tmdbForAgent.available
+          ? JSON.stringify(tmdbForAgent)
+          : 'DATA TMDB TIDAK DIMUAT UNTUK PERTANYAAN INI. Jangan mengarang data TMDB.';
+        const context=[
+          'KONTEKS READ-ONLY NOVA:',
+          'PUSTAKA FILM:',
+          catalogBlock,
+          'DATA TMDB:',
+          tmdbBlock
+        ].join('\\n\\n');
+        const result=await runNovaAgent({message,context});
+        return res.status(200).json({ok:true,source:'agent',reply:result.reply,agent:result.lastAgent});
+      }catch(e){
+        console.error('[NOVA_AGENT_ERROR]',e);
+        return res.status(502).json({error:'NOVA Agent gagal memproses permintaan: '+(e.message||'unknown error')});
       }
     }
 
