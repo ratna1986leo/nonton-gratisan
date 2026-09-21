@@ -343,6 +343,25 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
  .novaHero .bubble{font-size:13px;padding:12px 13px}.novaHero .chatInput{left:10px;right:10px;bottom:10px;width:auto;max-width:none}.novaHero .quick button{font-size:10px;padding:7px 9px}
  #view-film,#view-comments{padding:16px 10px}.novaFeatureCard{padding:16px;border-radius:10px}
 }
+
+/* NOVA direct feature cards */
+#view-film .novaFeatureCard{
+  background:linear-gradient(135deg,#ecfdf5 0%,#dff8ec 52%,#f0fdf4 100%);
+  border-color:#b7e8cf;
+  box-shadow:0 8px 28px rgba(16,163,127,.12);
+}
+#view-film .novaFeatureCard h2{color:#087f5b}
+#view-film .novaFeatureCard .muted{color:#3f6f5b}
+#view-film .novaFeatureCard label{color:#245c48}
+#view-film .novaFeatureCard input{border-color:#b9dccb;background:#fff}
+#view-film .novaFeatureCard .action{background:#10a37f;border-color:#10a37f;color:#fff;box-shadow:0 6px 16px rgba(16,163,127,.2)}
+.novaSideBtn[data-view="film"]{background:linear-gradient(135deg,#10a37f,#0b8f6d);color:#fff;border-color:#10a37f;box-shadow:0 6px 18px rgba(16,163,127,.18)}
+.novaSideBtn[data-view="film"]:hover{background:linear-gradient(135deg,#0f9a76,#087f5b);color:#fff}
+.novaSideBtn[data-view="film"].active{background:linear-gradient(135deg,#087f5b,#066c4d);color:#fff}
+#view-comments .novaFeatureCard{background:#fff;border-color:#dfe3e1}
+#commentsHighlight{display:grid;gap:10px}
+#commentsHighlight .comment{padding:12px 14px;border-radius:12px;background:#fafcfb;border:1px solid #e4ebe7}
+@media(max-width:700px){#view-film .novaFeatureCard{box-shadow:0 3px 14px rgba(16,163,127,.1)}}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
