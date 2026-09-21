@@ -139,7 +139,8 @@ function extractCatalogSearch(message){
 function extractTMDBSearch(message){
   const m=String(message||'').trim();
   const patterns=[
-    /(?:cari|carikan|search|temukan|tolong cari)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)(?:\s+di\s+tmdb|\s+di\s+the movie database)?$/i,
+    /(?:cari|carikan|search|temukan|tolong cari|cek)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)(?:\s+di\s+tmdb|\s+di\s+the movie database)$/i,
+    /(?:cari|carikan|search|temukan|tolong cari|cek)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+)$/i,
     /(?:film|series|serial|tv)\s+(.+?)\s+(?:di\s+tmdb|di\s+the movie database)$/i
   ];
   for(const re of patterns){const hit=m.match(re);if(hit?.[1]){
