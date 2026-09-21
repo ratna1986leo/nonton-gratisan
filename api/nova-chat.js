@@ -30,16 +30,18 @@ function catalogContext(text){
   const titleKey=find('title','judul','name')||columns[0];
   const linkKey=find('link','url','video','embed','embed_url','source','player','play','play_url');
   const yearKey=find('year','tahun');
-  const typeKey=find('type','tipe','kategori');
+  const typeKey=find('type','tipe','kategori','jenis','format','media_type','media type');
   const allItems=objects.map(o=>({
     judul:o[titleKey]||'',
     tahun:yearKey?o[yearKey]||'':'',
-    tipe:typeKey?o[typeKey]||'':'',
+    tipe:typeKey?String(o[typeKey]||'').trim():'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
   const playableItems=allItems.filter(x=>x.bisaDiputar);
   const unplayableItems=allItems.filter(x=>!x.bisaDiputar);
-  const movieItems=allItems.filter(x=>/\b(?:film|movie|bioskop)\b/i.test(x.tipe||''));
+  const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(String(x.tipe||''))?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(String(x.tipe||''))?'movie':'unknown';
+  const movieItems=allItems.filter(x=>canonicalType(x)==='movie');
+  const seriesItems=allItems.filter(x=>canonicalType(x)==='series');
   const seriesItems=allItems.filter(x=>/\b(?:series|serial|tv)\b/i.test(x.tipe||''));
   return {
     total:allItems.length,
@@ -182,15 +184,15 @@ function isTMDBTrendingWeekIntent(message){
 function isCatalogTypeIntent(message,type){
   const m=normalizeIntentText(message);
   if(!/\b(?:pustaka|katalog)\b/i.test(m)) return false;
-  if(type==='series') return /\b(?:series|serial|tv)\b/i.test(m);
-  if(type==='movie') return /\b(?:bioskop|film|movie)\b/i.test(m) && !/\b(?:series|serial|tv)\b/i.test(m);
+  if(type==='series') return /\b(?:series|serial|tv|seri)\b/i.test(m) && !/\b(?:seluruh|semua)\b/i.test(m);
+  if(type==='movie') return /\b(?:bioskop|film|movie)\b/i.test(m) && !/\b(?:series|serial|tv|seri)\b/i.test(m) && /\b(?:data|daftar|tampilkan|lihat|list)\b/i.test(m) && !/\b(?:player|trending|terpopuler|populer|ditonton|dilihat|tonton)\b/i.test(m);
   return /\bseluruh\b|\bsemua\b|\bfilm\s+bioskop\s*\/\s*series\b/i.test(m);
 }
 function isTMDBTypeIntent(message,type){
   const m=normalizeIntentText(message);
   if(!/\btmdb\b/i.test(m)) return false;
-  if(type==='series') return /\b(?:series|serial|tv)\b/i.test(m);
-  if(type==='movie') return /\b(?:bioskop|film|movie)\b/i.test(m) && !/\b(?:series|serial|tv)\b/i.test(m);
+  if(type==='series') return /\b(?:series|serial|tv|seri)\b/i.test(m) && !/\b(?:seluruh|semua)\b/i.test(m) && /\b(?:data|daftar|tampilkan|lihat|list)\b/i.test(m) && !/\b(?:player|trending|terpopuler|populer)\b/i.test(m);
+  if(type==='movie') return /\b(?:bioskop|film|movie)\b/i.test(m) && !/\b(?:series|serial|tv|seri)\b/i.test(m) && /\b(?:data|daftar|tampilkan|lihat|list)\b/i.test(m) && !/\b(?:player|trending|terpopuler|populer|ditonton|dilihat|tonton)\b/i.test(m);
   return /\bseluruh\b|\bsemua\b|\bfilm\s+bioskop\s*\/\s*series\b/i.test(m);
 }
 function isCatalogInspectionIntent(message){
@@ -340,10 +342,39 @@ export default async function handler(req,res){
       }catch(e){console.error('[NOVA_TMDB_INSPECTION_ERROR]',e);return res.status(502).json({error:'Inspeksi data TMDB gagal: '+(e.message||'unknown error')});}
     }
 
-    for(const type of ['series','movie','all']){
+    if(isTMDBPopularIntent(message)){
+      try{
+        const tmdbResult=await loadTMDBRanked('popular');
+        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
+        const lines=tmdbResult.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+(x.rating?' — ⭐ '+x.rating:'')+(x.popularity!==''?' — popularity '+x.popularity:'')+' — TMDB ID '+x.tmdbId);
+        return res.status(200).json({ok:true,source:'tmdb',items:tmdbResult.items,reply:'🔥 Film paling populer di TMDB saat ini (10 teratas):\n\n'+lines.join('\n')+'\n\nCatatan: TMDB tidak menyediakan daftar berdasarkan jumlah penonton mentah. Daftar Popular diurutkan berdasarkan metrik popularity yang dipengaruhi antara lain oleh views, votes, favorit, watchlist, tanggal rilis, dan faktor lainnya.'});
+      }catch(e){console.error('[NOVA_TMDB_POPULAR_ERROR]',e);return res.status(502).json({error:'Data film populer TMDB gagal dimuat: '+(e.message||'unknown error')});}
+    }
+    if(isTMDBTrendingWeekIntent(message)){
+      try{
+        const tmdbResult=await loadTMDBRanked('trending-week');
+        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
+        const lines=tmdbResult.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+(x.rating?' — ⭐ '+x.rating:'')+' — TMDB ID '+x.tmdbId);
+        return res.status(200).json({ok:true,source:'tmdb',items:tmdbResult.items,reply:'📈 Film yang sedang trending minggu ini di TMDB (10 teratas):\n\n'+lines.join('\n')});
+      }catch(e){console.error('[NOVA_TMDB_TRENDING_WEEK_ERROR]',e);return res.status(502).json({error:'Data trending TMDB gagal dimuat: '+(e.message||'unknown error')});}
+    }
+    if(isTMDBPlayableIntersectionIntent(message)){
+      if(catalog.error) return res.status(502).json({error:'Data player gagal dimuat: '+catalog.error});
+      try{
+        const tmdbResult=await loadTMDBDiscovery();
+        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
+        const playableTitles=new Set((catalog.playableItems||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
+        const matches=(tmdbResult.items||[]).filter(x=>x.tipe==='movie'&&playableTitles.has(normalizeTitle(x.judul))).slice(0,20);
+        const lines=matches.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — TMDB ID '+x.tmdbId);
+        return res.status(200).json({ok:true,source:'tmdb-catalog',items:matches,reply:matches.length?'🎬 Film di TMDB yang juga punya player di pustaka (berdasarkan kecocokan judul):\n\n'+lines.join('\n'):'🎬 Belum ada film TMDB yang cocok dengan judul di pustaka dan berstatus memiliki player.'});
+      }catch(e){console.error('[NOVA_TMDB_PLAYER_MATCH_ERROR]',e);return res.status(502).json({error:'Pencocokan TMDB dan player gagal: '+(e.message||'unknown error')});}
+    }
+
+    for(const type of ['all','series','movie']){
       if(isCatalogTypeIntent(message,type)){
         if(catalog.error) return res.status(502).json({error:'Pustaka film gagal dimuat: '+catalog.error});
-        const items=type==='series'?(catalog.items||[]).filter(x=>/\b(?:series|serial|tv)\b/i.test(x.tipe||'')):type==='movie'?(catalog.items||[]).filter(x=>/\b(?:film|movie|bioskop)\b/i.test(x.tipe||'')):(catalog.items||[]);
+        const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(String(x.tipe||''))?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(String(x.tipe||''))?'movie':'unknown';
+        const items=type==='series'?(catalog.items||[]).filter(x=>canonicalType(x)==='series'):type==='movie'?(catalog.items||[]).filter(x=>canonicalType(x)==='movie'):(catalog.items||[]);
         const label=type==='series'?'film series':type==='movie'?'film bioskop':'seluruh film bioskop/series';
         const lines=items.slice(0,30).map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.bisaDiputar?'punya player':'belum punya player'));
         return res.status(200).json({ok:true,source:'catalog',items,reply:'📚 '+label+' di pustaka: '+items.length+' judul.\n\n'+(lines.length?lines.join('\n'):'Belum ada data yang cocok.')});
