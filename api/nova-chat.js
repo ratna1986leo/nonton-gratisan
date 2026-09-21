@@ -37,11 +37,13 @@ function catalogContext(text){
   const titleKey=find('title','judul','name')||columns[0];
   const linkKey=find('link','url','video','embed','embed_url','source','player','play','play_url');
   const yearKey=find('year','tahun');
+  const episodeKey=find('episode','episodes','episode_count','jumlah episode','jumlah_episodes','jml episode','eps');
   const typeKey=find('type','tipe','kategori','category','jenis','format','media_type','media type','media');
   const allItems=objects.map(o=>({
     judul:o[titleKey]||'',
     tahun:yearKey?o[yearKey]||'':'',
     tipe:typeKey?String(o[typeKey]||'').trim():'',
+    episode:episodeKey?String(o[episodeKey]||'').trim():'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
   const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)?'movie':'unknown';
@@ -246,11 +248,9 @@ export default async function handler(req,res){
 
     if(isCatalogOverviewIntent(message)){
       await ensureCatalog();
-      const items=catalog.items.slice(0,30);
-      const lines=items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Judul')+' — '+(x.bisaDiputar?'bisa diputar':'belum ada player'));
       return res.status(200).json({
         ok:true,source:'catalog',
-        reply:'📚 Pustaka: '+catalog.total+' judul. Bisa diputar: '+catalog.playable+'. Belum ada player: '+catalog.unplayable+'.\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data.')
+        reply:'📚 Ringkasan Pustaka\\n\\n🎬 Film bioskop: '+catalog.movieCount+' judul\\n📺 Series: '+catalog.seriesCount+' judul\\n▶️ Sudah ada player: '+catalog.playable+'\\n⏳ Belum ada player: '+catalog.unplayable
       });
     }
 
@@ -264,13 +264,33 @@ export default async function handler(req,res){
       });
     }
 
-    for(const type of ['series','movie','all']){
+    // "Cek series" adalah permintaan detail: jumlah + judul + jumlah episode.
+    if(/\bcek\s+(?:data\s+)?series\b/i.test(normalizeText(message))){
+      await ensureCatalog();
+      const items=catalog.items.filter(x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe));
+      const lines=items.map((x,i)=>{
+        const ep=x.episode || '-';
+        return (i+1)+'. '+x.judul+' — '+ep+' episode';
+      });
+      return res.status(200).json({
+        ok:true,source:'catalog',items,
+        reply:'📺 Data Series di Pustaka: '+items.length+' judul\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data series.')
+      });
+    }
+
+    for(const type of ['movie','all']){
       if(isCatalogTypeIntent(message,type)){
         await ensureCatalog();
-        const items=type==='series'?catalog.items.filter(x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)):type==='movie'?catalog.items.filter(x=>/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)):catalog.items;
-        const label=type==='series'?'series':type==='movie'?'film':'seluruh film/series';
-        const lines=items.slice(0,30).map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.bisaDiputar?'bisa diputar':'belum ada player'));
-        return res.status(200).json({ok:true,source:'catalog',items,reply:'📚 Data '+label+' di pustaka: '+items.length+' judul.\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data.')});
+        const items=type==='movie'
+          ? catalog.items.filter(x=>/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe))
+          : catalog.items;
+        const label=type==='movie'?'film bioskop':'seluruh film/series';
+        const playerText='▶️ Ada player: '+items.filter(x=>x.bisaDiputar).length+' | ⏳ Belum ada player: '+items.filter(x=>!x.bisaDiputar).length;
+        return res.status(200).json({
+          ok:true,source:'catalog',items,
+          reply:'📚 '+label+' di pustaka: '+items.length+' judul\\n'+playerText+'\\n\\n'+
+            (type==='movie'?'Judul film tidak ditampilkan. Gunakan permintaan judul film tertentu bila ingin mencari judul di pustaka.':'Data seluruh pustaka hanya menampilkan jumlah, tanpa judul.')
+        });
       }
     }
 
