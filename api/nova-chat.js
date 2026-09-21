@@ -244,6 +244,22 @@ export default async function handler(req,res){
       clearTimeout(openaiTimer);
     }
     const data=await r.json();
+    console.log('[NOVA_OPENAI_USAGE]',JSON.stringify({
+      status:r.status,
+      model:MODEL,
+      requestBodyChars:JSON.stringify({model:MODEL,store:false,instructions,input:message,max_output_tokens:600}).length,
+      catalogItems:Array.isArray(catalog?.items)?catalog.items.length:0,
+      tmdbItems:Array.isArray(tmdb?.items)?tmdb.items.length:0,
+      usage:data?.usage||null,
+      rateLimit:{
+        limitTokens:r.headers.get('x-ratelimit-limit-tokens')||'',
+        remainingTokens:r.headers.get('x-ratelimit-remaining-tokens')||'',
+        resetTokens:r.headers.get('x-ratelimit-reset-tokens')||'',
+        limitRequests:r.headers.get('x-ratelimit-limit-requests')||'',
+        remainingRequests:r.headers.get('x-ratelimit-remaining-requests')||'',
+        resetRequests:r.headers.get('x-ratelimit-reset-requests')||''
+      }
+    }));
     if(!r.ok){
       const msg=data?.error?.message||'OpenAI request gagal';
       const status=r.status===429?429:r.status;
