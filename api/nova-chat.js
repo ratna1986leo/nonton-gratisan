@@ -165,6 +165,37 @@ function isTMDBPlayableIntersectionIntent(message){
   return /\btmdb\b.*\b(?:punya|memiliki|ada|dengan)\b.*\bplayer\b/i.test(m)
     || /\bfilm\b.*\bdi\s+tmdb\b.*\bplayer\b/i.test(m);
 }
+
+function isTMDBPopularIntent(message){
+  const m=normalizeIntentText(message);
+  return /(?:paling\s+banyak\s+(?:ditonton|dilihat)|paling\s+populer|terpopuler|film\s+populer).*(?:\\btmdb\\b)|(?:\\btmdb\\b).*(?:paling\s+banyak\s+(?:ditonton|dilihat)|paling\s+populer|terpopuler|film\s+populer)/i.test(m);
+}
+function isTMDBTrendingWeekIntent(message){
+  const m=normalizeIntentText(message);
+  return /(?:\\btrending\\b|\\btren\\b).*(?:minggu\s+ini|mingguan|week)|(?:minggu\s+ini|mingguan).*(?:\\btrending\\b|\\btren\\b)/i.test(m);
+}
+async function loadTMDBRanked(kind='popular'){
+  if(!TMDB_API_KEY) return {available:false,source:'TMDB',items:[],kind,error:'TMDB_API_KEY belum disetel'};
+  const endpoint=kind==='trending-week'
+    ? 'https://api.themoviedb.org/3/trending/movie/week'
+    : 'https://api.themoviedb.org/3/movie/popular';
+  const url=endpoint+'?language=id-ID&page=1&api_key='+encodeURIComponent(TMDB_API_KEY);
+  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
+  if(!r.ok) throw new Error('TMDB ranked HTTP '+r.status);
+  const data=await r.json();
+  const items=(Array.isArray(data?.results)?data.results:[]).slice(0,10).map(x=>({
+    tmdbId:x.id,
+    tipe:'Film',
+    judul:x.title||'',
+    tahun:String(x.release_date||'').slice(0,4),
+    rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
+    popularity:typeof x.popularity==='number'?x.popularity:'',
+    poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
+    deskripsi:x.overview||''
+  })).filter(x=>x.judul);
+  return {available:true,source:'TMDB',items,kind};
+}
+
 function extractCatalogSearch(message){
   const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
   const patterns=[
@@ -301,6 +332,37 @@ export default async function handler(req,res){
       }catch(e){
         console.error('[NOVA_TMDB_DISCOVERY_ERROR]',e);
         return res.status(502).json({error:'Data TMDB gagal dimuat: '+(e.message||'unknown error')});
+      }
+    }
+
+
+    if(isTMDBPopularIntent(message)){
+      try{
+        const tmdbResult=await loadTMDBRanked('popular');
+        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
+        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''}${x.rating?' — ⭐ '+x.rating:''}${x.popularity!==''?' — popularity '+x.popularity:''} — TMDB ID ${x.tmdbId}`);
+        return res.status(200).json({
+          ok:true,source:'tmdb',items:tmdbResult.items,
+          reply:`🔥 Film paling populer di TMDB saat ini (10 teratas):\\n\\n${lines.join('\\n')}\\n\\nCatatan: TMDB tidak menyediakan daftar berdasarkan jumlah penonton mentah. Daftar “Popular” diurutkan berdasarkan metrik popularity, yang dipengaruhi antara lain oleh views, votes, favorit, watchlist, dan faktor lainnya.`
+        });
+      }catch(e){
+        console.error('[NOVA_TMDB_POPULAR_ERROR]',e);
+        return res.status(502).json({error:'Data film populer TMDB gagal dimuat: '+(e.message||'unknown error')});
+      }
+    }
+
+    if(isTMDBTrendingWeekIntent(message)){
+      try{
+        const tmdbResult=await loadTMDBRanked('trending-week');
+        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
+        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''}${x.rating?' — ⭐ '+x.rating:''} — TMDB ID ${x.tmdbId}`);
+        return res.status(200).json({
+          ok:true,source:'tmdb',items:tmdbResult.items,
+          reply:`📈 Film yang sedang trending minggu ini di TMDB (10 teratas):\\n\\n${lines.join('\\n')}`
+        });
+      }catch(e){
+        console.error('[NOVA_TMDB_TRENDING_WEEK_ERROR]',e);
+        return res.status(502).json({error:'Data trending TMDB gagal dimuat: '+(e.message||'unknown error')});
       }
     }
 
