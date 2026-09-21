@@ -1,6 +1,7 @@
 {
   "private": true,
   "dependencies": {
-    "@vercel/oidc": "3.8.8"
+    "@vercel/oidc": "3.8.8",
+    "@openai/agents": "latest"
   }
 }
