@@ -1,4 +1,4 @@
-const MODEL = process.env.OPENAI_MODEL || 'gpt-5.6-luna';
+const MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
 const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
 const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.KUNCI_API_TMDB || '';
 
