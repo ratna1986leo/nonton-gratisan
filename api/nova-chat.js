@@ -30,7 +30,7 @@ function catalogContext(text){
   const titleKey=find('title','judul','name')||columns[0];
   const linkKey=find('link','url','video','embed','embed_url','source','player','play','play_url');
   const yearKey=find('year','tahun');
-  const typeKey=find('type','tipe','kategori','jenis','format','media_type','media type');
+  const typeKey=find('type','tipe','kategori','category','jenis','format','media_type','media type','media');
   const allItems=objects.map(o=>({
     judul:o[titleKey]||'',
     tahun:yearKey?o[yearKey]||'':'',
