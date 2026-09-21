@@ -46,7 +46,7 @@ function catalogContext(text){
     episode:episodeKey?String(o[episodeKey]||'').trim():'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
-  const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)?'movie':'unknown';
+  const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)||Boolean(x.episode)?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)?'movie':'movie';
   return {
     total:allItems.length,
     playable:allItems.filter(x=>x.bisaDiputar).length,
@@ -101,8 +101,9 @@ function normalizeTitle(value){
 
 function isCatalogOverviewIntent(message){
   const m=normalizeText(message);
-  return /\b(?:cek|lihat|tampilkan|daftar|list|sebutkan|apa saja|isi|data)\b.*\b(?:pustaka|katalog)\b/i.test(m)
-    || /\b(?:pustaka|katalog)\s+(?:film|series|serial)\b/i.test(m);
+  if(/\b(?:series|serial|tv|seri|film|movie|bioskop|player)\b/i.test(m)) return false;
+  return /^(?:cek|lihat|tampilkan|ringkasan|summary)\s+(?:data\s+)?(?:pustaka|katalog)$/i.test(m)
+    || /^(?:pustaka|katalog)$/i.test(m);
 }
 
 function isPlayableIntent(message){
@@ -248,21 +249,11 @@ export default async function handler(req,res){
     const ensureCatalog=async()=>{ if(!catalog) catalog=await loadCatalog(); return catalog; };
     const catalogSearch=extractCatalogSearch(message);
 
-    if(isCatalogOverviewIntent(message)){
-      await ensureCatalog();
-      return res.status(200).json({
-        ok:true,source:'catalog',
-        reply:'📚 Ringkasan Pustaka\\n\\n🎬 Film bioskop: '+catalog.movieCount+' judul\\n📺 Series: '+catalog.seriesCount+' judul\\n▶️ Sudah ada player: '+catalog.playable+'\\n⏳ Belum ada player: '+catalog.unplayable
-      });
-    }
-
     if(isPlayableIntent(message)){
       await ensureCatalog();
-      const items=catalog.playableItems.slice(0,30);
-      const lines=items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Judul'));
       return res.status(200).json({
         ok:true,source:'catalog',
-        reply:'🎬 Status player: '+catalog.playable+' dari '+catalog.total+' judul memiliki player tercatat.\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada judul dengan player tercatat.')
+        reply:'▶️ Status Player Pustaka\\n\\nAda player: '+catalog.playable+' judul\\nBelum ada player: '+catalog.unplayable+' judul'
       });
     }
 
@@ -277,6 +268,14 @@ export default async function handler(req,res){
       return res.status(200).json({
         ok:true,source:'catalog',items,
         reply:'📺 Data Series di Pustaka: '+items.length+' judul\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data series.')
+      });
+    }
+
+    if(isCatalogOverviewIntent(message)){
+      await ensureCatalog();
+      return res.status(200).json({
+        ok:true,source:'catalog',
+        reply:'📚 Ringkasan Pustaka\\n\\n🎬 Film bioskop: '+catalog.movieCount+' judul\\n📺 Series: '+catalog.seriesCount+' judul\\n▶️ Sudah ada player: '+catalog.playable+'\\n⏳ Belum ada player: '+catalog.unplayable
       });
     }
 
