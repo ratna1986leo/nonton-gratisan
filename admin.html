@@ -724,7 +724,7 @@ async function sendNova(message){
   setNovaSearching(false);
   novaNextAllowedAt=Date.now()+NOVA_CLIENT_MIN_INTERVAL_MS;
   setState('Speaking');
-  const sourceLabel=data.source==='tmdb'?'TMDB':data.source==='catalog'?'Pustaka':'NOVA AI';
+  const sourceLabel=data.source==='tmdb'?'TMDB':data.source==='catalog'?'Pustaka':data.source==='agent'?'NOVA Agent':'NOVA AI';
   renderNovaMessage('ai',data.reply||JSON.stringify(data,null,2),sourceLabel);
   $('status').textContent='Sumber: '+sourceLabel;
   setTimeout(()=>setState('Happy'),900);
