@@ -42,7 +42,6 @@ function catalogContext(text){
   const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(String(x.tipe||''))?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(String(x.tipe||''))?'movie':'unknown';
   const movieItems=allItems.filter(x=>canonicalType(x)==='movie');
   const seriesItems=allItems.filter(x=>canonicalType(x)==='series');
-  const seriesItems=allItems.filter(x=>/\b(?:series|serial|tv)\b/i.test(x.tipe||''));
   return {
     total:allItems.length,
     playable:playableItems.length,
