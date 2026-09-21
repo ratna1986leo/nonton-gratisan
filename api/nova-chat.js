@@ -1,7 +1,11 @@
-const MODEL = process.env.OPENAI_MODEL || 'gpt-5.4-mini';
-const NOVA_AGENT_ENABLED=String(process.env.NOVA_AGENT_ENABLED??'true').toLowerCase()!=='false';
 const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
 const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.KUNCI_API_TMDB || '';
+
+const NOVA_MIN_INTERVAL_MS = Number(process.env.NOVA_MIN_INTERVAL_MS || 1500);
+const NOVA_MAX_REQUESTS_PER_WINDOW = Number(process.env.NOVA_MAX_REQUESTS_PER_WINDOW || 60);
+const NOVA_RATE_WINDOW_MS = Number(process.env.NOVA_RATE_WINDOW_MS || 10 * 60 * 1000);
+const novaRateStore = globalThis.__NOVA_RATE_STORE || new Map();
+globalThis.__NOVA_RATE_STORE = novaRateStore;
 
 function parseCSV(text){
   const rows=[]; let row=[], cell='', quoted=false;
@@ -22,11 +26,14 @@ function parseCSV(text){
 
 function catalogContext(text){
   const rows=parseCSV(text);
-  if(!rows.length) return {total:0,playable:0,unplayable:0,items:[],playableItems:[],unplayableItems:[]};
+  if(!rows.length) return {total:0,playable:0,unplayable:0,movieCount:0,seriesCount:0,items:[],playableItems:[],unplayableItems:[]};
   const columns=rows[0].map(x=>String(x||'').trim());
   const data=rows.slice(1).filter(r=>r.some(v=>String(v||'').trim()));
   const objects=data.map(r=>Object.fromEntries(columns.map((c,i)=>[c,String(r[i]??'').trim()])));
-  const find=(...names)=>{const wanted=names.map(x=>x.toLowerCase());return columns.find(c=>wanted.includes(c.toLowerCase()))};
+  const find=(...names)=>{
+    const wanted=names.map(x=>x.toLowerCase());
+    return columns.find(c=>wanted.includes(c.toLowerCase()));
+  };
   const titleKey=find('title','judul','name')||columns[0];
   const linkKey=find('link','url','video','embed','embed_url','source','player','play','play_url');
   const yearKey=find('year','tahun');
@@ -37,47 +44,28 @@ function catalogContext(text){
     tipe:typeKey?String(o[typeKey]||'').trim():'',
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
-  const playableItems=allItems.filter(x=>x.bisaDiputar);
-  const unplayableItems=allItems.filter(x=>!x.bisaDiputar);
-  const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(String(x.tipe||''))?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(String(x.tipe||''))?'movie':'unknown';
-  const movieItems=allItems.filter(x=>canonicalType(x)==='movie');
-  const seriesItems=allItems.filter(x=>canonicalType(x)==='series');
+  const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)?'movie':'unknown';
   return {
     total:allItems.length,
-    playable:playableItems.length,
-    unplayable:unplayableItems.length,
-    movieCount:movieItems.length,
-    seriesCount:seriesItems.length,
-    items:allItems.slice(0,40),
-    playableItems:playableItems.slice(0,40),
-    unplayableItems:unplayableItems.slice(0,40)
+    playable:allItems.filter(x=>x.bisaDiputar).length,
+    unplayable:allItems.filter(x=>!x.bisaDiputar).length,
+    movieCount:allItems.filter(x=>canonicalType(x)==='movie').length,
+    seriesCount:allItems.filter(x=>canonicalType(x)==='series').length,
+    items:allItems.slice(0,100),
+    playableItems:allItems.filter(x=>x.bisaDiputar).slice(0,100),
+    unplayableItems:allItems.filter(x=>!x.bisaDiputar).slice(0,100)
   };
 }
 
-function selectCatalogItems(catalog, message){
-  const items=Array.isArray(catalog?.items)?catalog.items:[];
-  const m=String(message||'').toLowerCase();
-  const countOnly=/\\b(berapa|jumlah|total|ada berapa|berapa banyak)\\b/.test(m) && !/\\b(cari|tampilkan|sebutkan|daftar|list|judul)\\b/.test(m);
-  if(countOnly) return [];
-  const tokens=m.normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').match(/[a-z0-9]{3,}/g)||[];
-  const stop=new Set(['yang','dan','atau','untuk','dari','dengan','film','films','movie','movies','series','serial','tolong','dong','please','bisa','bisa','ada','pustaka','katalog','tmdb','cari','carikan','coba','saya','ingin','mau','mana','apa','ini','itu','the']);
-  const terms=tokens.filter(t=>!stop.has(t));
-  const scored=items.map((item,index)=>{
-    const hay=[item.judul,item.tipe,item.tahun].join(' ').toLowerCase();
-    let score=0;
-    for(const t of terms){ if(hay.includes(t)) score += hay.startsWith(t)||String(item.judul||'').toLowerCase().includes(t)?3:1; }
-    return {item,index,score};
-  });
-  const hasMatch=scored.some(x=>x.score>0);
-  if(hasMatch) return scored.sort((a,b)=>b.score-a.score||a.index-b.index).slice(0,16).map(x=>x.item);
-  return items.slice(0,16);
+async function loadCatalog(){
+  const controller=new AbortController();
+  const timer=setTimeout(()=>controller.abort(),8000);
+  try{
+    const r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'},cache:'no-store',signal:controller.signal});
+    if(!r.ok) throw new Error('Google Sheet katalog HTTP '+r.status);
+    return catalogContext(await r.text());
+  }finally{ clearTimeout(timer); }
 }
-
-const NOVA_MIN_INTERVAL_MS = Number(process.env.NOVA_MIN_INTERVAL_MS || 10000);
-const NOVA_MAX_REQUESTS_PER_WINDOW = Number(process.env.NOVA_MAX_REQUESTS_PER_WINDOW || 18);
-const NOVA_RATE_WINDOW_MS = Number(process.env.NOVA_RATE_WINDOW_MS || 10*60*1000);
-const novaRateStore = globalThis.__NOVA_RATE_STORE || new Map();
-globalThis.__NOVA_RATE_STORE = novaRateStore;
 
 function getClientId(req){
   const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();
@@ -95,150 +83,41 @@ function checkNovaRate(clientId){
   if(times.length>=NOVA_MAX_REQUESTS_PER_WINDOW){
     return {ok:false,retryAfterMs:Math.max(1000,NOVA_RATE_WINDOW_MS-(now-times[0])),reason:'window'};
   }
-  novaRateStore.set(clientId,{last:now,times});
-  return {ok:true,remaining:Math.max(0,NOVA_MAX_REQUESTS_PER_WINDOW-times.length-1)};
+  novaRateStore.set(clientId,{last:now,times:[...times,now]});
+  return {ok:true};
 }
 
-function secondsFromRateHeader(value){
-  const raw=String(value||'').trim();
-  if(!raw)return 0;
-  if(/^\d+(?:\.\d+)?$/.test(raw))return Math.ceil(Number(raw));
-  const m=raw.match(/^(\d+(?:\.\d+)?)(ms|s|m|h)$/i);
-  if(!m)return 0;
-  const n=Number(m[1]),unit=m[2].toLowerCase();
-  return Math.ceil(unit==='ms'?n/1000:unit==='s'?n:unit==='m'?n*60:n*3600);
+function normalizeText(value){
+  return String(value||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
 }
 
-async function searchTMDB(query, type='all'){
-  if(!TMDB_API_KEY) return {available:false,source:'TMDB',query,type,items:[],error:'TMDB_API_KEY belum disetel'};
-  const clean=String(query||'').trim();
-  if(!clean) return {available:false,source:'TMDB',query:'',type,items:[],error:'Query TMDB kosong'};
-  const endpoint=type==='series'?'tv':type==='film'?'movie':'multi';
-  const url='https://api.themoviedb.org/3/search/'+endpoint+'?language=id-ID&include_adult=false&page=1&api_key='+encodeURIComponent(TMDB_API_KEY)+'&query='+encodeURIComponent(clean);
-  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
-  if(!r.ok) throw new Error('TMDB search HTTP '+r.status);
-  const data=await r.json();
-  const items=(Array.isArray(data?.results)?data.results:[]).filter(x=>{
-    if(endpoint==='tv') return true;
-    if(endpoint==='movie') return true;
-    return x.media_type==='movie'||x.media_type==='tv';
-  }).slice(0,8).map(x=>({
-    tmdbId:x.id,
-    tipe:(x.media_type==='tv'||endpoint==='tv')?'Series':'Film',
-    judul:(x.media_type==='tv'||endpoint==='tv')?(x.name||''):(x.title||''),
-    tahun:String((x.media_type==='tv'||endpoint==='tv')?x.first_air_date:x.release_date||'').slice(0,4),
-    rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
-    poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
-    deskripsi:x.overview||''
-  }));
-  return {available:true,source:'TMDB',query:clean,type,totalResults:Number(data.total_results||items.length),items};
-}
-
-function normalizeIntentText(message){
-  return String(message||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim();
-}
-function shouldUseNovaAgent(message){
-  const m=normalizeIntentText(message);
-  return /\b(rekomendasi|rekomendasikan|sarankan|saran|cocok|pilihkan|pilih yang|menurut kamu|menurutmu|analisis|analisa|bandingkan|perbandingan|jelaskan kenapa|kenapa|mengapa|apa pendapat|pendapat|ceritakan|ngobrol|bicara|bantu aku memilih|bantu saya memilih|ide|masukan)\b/i.test(m)
-    || /^halo\b/i.test(m)
-    || /\bterima kasih\b/i.test(m)
-    || /\bselamat (pagi|siang|sore|malam)\b/i.test(m);
+function normalizeTitle(value){
+  return normalizeText(value).replace(/[^a-z0-9]+/g,' ').trim();
 }
 
 function isCatalogOverviewIntent(message){
-  const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
-  return /(?:cek|lihat|tampilkan|daftar|list|sebutkan|apa saja|film apa|ada apa|isi|inspeksi|data)\b.*\b(?:pustaka|katalog)\b/i.test(m)
+  const m=normalizeText(message);
+  return /\b(?:cek|lihat|tampilkan|daftar|list|sebutkan|apa saja|isi|data)\b.*\b(?:pustaka|katalog)\b/i.test(m)
     || /\b(?:pustaka|katalog)\s+(?:film|series|serial)\b/i.test(m);
 }
-function isPlayableIntent(message){
-  const m=normalizeIntentText(message);
-  return /\b(?:film|series|serial|judul)\b.*\b(?:bisa|dapat)\s+(?:diputar|ditonton)\b/i.test(m)
-    || /\b(?:bisa|dapat)\s+(?:diputar|ditonton)\b/i.test(m)
-    || /\bstatus\s+player\b/i.test(m)
-    || /\bplayer\b.*\bstatus\b/i.test(m);
-}
-function isTMDBOverviewIntent(message){
-  const m=normalizeIntentText(message);
-  return /^(?:cek|lihat|tampilkan|daftar|list|jelaskan)?\s*(?:film\s+)?(?:di\s+)?tmdb\s*$/i.test(m)
-    || /^(?:cek|lihat|tampilkan|daftar|list)\s+(?:film\s+)?di\s+tmdb$/i.test(m)
-    || /^(?:cek|lihat|tampilkan)\s+tmdb$/i.test(m)
-    || /^inspeksi\s+data\s+tmdb$/i.test(m)
-    || /^data\s+film\s+di\s+tmdb$/i.test(m);
-}
-function isTMDBPlayableIntersectionIntent(message){
-  const m=normalizeIntentText(message);
-  return /\btmdb\b.*\b(?:punya|memiliki|ada|dengan)\b.*\bplayer\b/i.test(m)
-    || /\bfilm\b.*\bdi\s+tmdb\b.*\bplayer\b/i.test(m);
-}
 
-function isTMDBPopularIntent(message){
-  const m=normalizeIntentText(message);
-  return /(?:\bpaling\s+banyak\s+(?:di\s+)?(?:tonton|ditonton|dilihat)|\bpaling\s+populer\b|\bterpopuler\b|\bfilm\s+populer\b).*\btmdb\b|\btmdb\b.*(?:\bpaling\s+banyak\s+(?:di\s+)?(?:tonton|ditonton|dilihat)|\bpaling\s+populer\b|\bterpopuler\b|\bfilm\s+populer\b)/i.test(m);
-}
-function isTMDBTrendingWeekIntent(message){
-  const m=normalizeIntentText(message);
-  return /(?:\btrending\b|\btren\b).*(?:minggu\s+ini|mingguan|week)|(?:minggu\s+ini|mingguan).*(?:\btrending\b|\btren\b)/i.test(m);
+function isPlayableIntent(message){
+  const m=normalizeText(message);
+  return /\b(?:bisa|dapat)\s+(?:diputar|ditonton)\b/i.test(m)
+    || /\b(?:status)\s+player\b/i.test(m)
+    || /\bplayer\b.*\bstatus\b/i.test(m);
 }
 
 function isCatalogTypeIntent(message,type){
-  const m=normalizeIntentText(message);
+  const m=normalizeText(message);
   if(!/\b(?:pustaka|katalog)\b/i.test(m)) return false;
-  if(type==='series') return /\b(?:series|serial|tv|seri)\b/i.test(m) && !/\b(?:seluruh|semua)\b/i.test(m);
-  if(type==='movie') return /\b(?:bioskop|film|movie)\b/i.test(m) && !/\b(?:series|serial|tv|seri)\b/i.test(m) && /\b(?:data|daftar|tampilkan|lihat|list)\b/i.test(m) && !/\b(?:player|trending|terpopuler|populer|ditonton|dilihat|tonton)\b/i.test(m);
-  return /\bseluruh\b|\bsemua\b|\bfilm\s+bioskop\s*\/\s*series\b/i.test(m);
-}
-function isTMDBTypeIntent(message,type){
-  const m=normalizeIntentText(message);
-  if(!/\btmdb\b/i.test(m)) return false;
-  if(type==='series') return /\b(?:series|serial|tv|seri)\b/i.test(m) && !/\b(?:seluruh|semua)\b/i.test(m) && /\b(?:data|daftar|tampilkan|lihat|list)\b/i.test(m) && !/\b(?:player|trending|terpopuler|populer)\b/i.test(m);
-  if(type==='movie') return /\b(?:bioskop|film|movie)\b/i.test(m) && !/\b(?:series|serial|tv|seri)\b/i.test(m) && /\b(?:data|daftar|tampilkan|lihat|list)\b/i.test(m) && !/\b(?:player|trending|terpopuler|populer|ditonton|dilihat|tonton)\b/i.test(m);
-  return /\bseluruh\b|\bsemua\b|\bfilm\s+bioskop\s*\/\s*series\b/i.test(m);
-}
-function isCatalogInspectionIntent(message){
-  return /\binspeksi\b.*\b(?:data\s+)?(?:pustaka|katalog)\b/i.test(normalizeIntentText(message));
-}
-function isTMDBInspectionIntent(message){
-  return /^inspeksi\s+(?:data\s+)?tmdb$/i.test(normalizeIntentText(message));
-}
-async function loadTMDBDiscover(kind='all',year=null){
-  if(!TMDB_API_KEY) return {available:false,source:'TMDB',items:[],kind,error:'TMDB_API_KEY belum disetel'};
-  const endpoint=kind==='series'?'tv':'movie';
-  const params=new URLSearchParams({language:'id-ID',page:'1',sort_by:'popularity.desc',include_adult:'false'});
-  if(year){
-    if(endpoint==='tv'){params.set('first_air_date.gte',year+'-01-01');params.set('first_air_date.lte',year+'-12-31');}
-    else {params.set('primary_release_date.gte',year+'-01-01');params.set('primary_release_date.lte',year+'-12-31');}
-  }
-  const url='https://api.themoviedb.org/3/discover/'+endpoint+'?'+params.toString()+'&api_key='+encodeURIComponent(TMDB_API_KEY);
-  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
-  if(!r.ok) throw new Error('TMDB discover HTTP '+r.status);
-  const data=await r.json();
-  const items=(Array.isArray(data?.results)?data.results:[]).slice(0,20).map(x=>({tmdbId:x.id,tipe:endpoint==='tv'?'Series':'Film',judul:endpoint==='tv'?(x.name||''):(x.title||''),tahun:String(endpoint==='tv'?x.first_air_date:x.release_date||'').slice(0,4),rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',popularity:typeof x.popularity==='number'?x.popularity:'',poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',deskripsi:x.overview||''})).filter(x=>x.judul);
-  return {available:true,source:'TMDB',items,kind,year};
-}
-async function loadTMDBRanked(kind='popular'){
-  if(!TMDB_API_KEY) return {available:false,source:'TMDB',items:[],kind,error:'TMDB_API_KEY belum disetel'};
-  const endpoint=kind==='trending-week'
-    ? 'https://api.themoviedb.org/3/trending/movie/week'
-    : 'https://api.themoviedb.org/3/movie/popular';
-  const url=endpoint+'?language=id-ID&page=1&api_key='+encodeURIComponent(TMDB_API_KEY);
-  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
-  if(!r.ok) throw new Error('TMDB ranked HTTP '+r.status);
-  const data=await r.json();
-  const items=(Array.isArray(data?.results)?data.results:[]).slice(0,10).map(x=>({
-    tmdbId:x.id,
-    tipe:'Film',
-    judul:x.title||'',
-    tahun:String(x.release_date||'').slice(0,4),
-    rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
-    popularity:typeof x.popularity==='number'?x.popularity:'',
-    poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
-    deskripsi:x.overview||''
-  })).filter(x=>x.judul);
-  return {available:true,source:'TMDB',items,kind};
+  if(type==='series') return /\b(?:series|serial|tv|seri)\b/i.test(m);
+  if(type==='movie') return /\b(?:film|movie|bioskop)\b/i.test(m) && !/\b(?:series|serial|tv|seri)\b/i.test(m);
+  return /\b(?:semua|seluruh)\b/i.test(m);
 }
 
 function extractCatalogSearch(message){
-  const m=normalizeIntentText(message).replace(/\bdipustaka\b/g,'di pustaka');
+  const m=normalizeText(message).replace(/\bdipustaka\b/g,'di pustaka');
   const patterns=[
     /(?:cari|carikan|cek|temukan|apakah ada)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)\s+(?:di|dalam)\s+(?:pustaka|katalog)(?:\s+film)?$/i,
     /(?:cari|carikan|cek)\s+(?:di|dalam)\s+(?:pustaka|katalog)(?:\s+film)?\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+)$/i
@@ -253,52 +132,90 @@ function extractCatalogSearch(message){
   return null;
 }
 
+function isTMDBTrendingWeekIntent(message){
+  const m=normalizeText(message);
+  return /(?:\btrending\b|\btren\b).*(?:minggu\s+ini|mingguan|week)|(?:minggu\s+ini|mingguan|week).*(?:\btrending\b|\btren\b)/i.test(m);
+}
+
+function wantsTMDBSeries(message){
+  return /\b(?:series|serial|tv|seri)\b/i.test(normalizeText(message));
+}
+
+function wantsTMDBMovie(message){
+  return /\b(?:film|movie|bioskop)\b/i.test(normalizeText(message));
+}
+
+function isTMDBOverviewIntent(message){
+  const m=normalizeText(message);
+  return /^(?:cek|lihat|tampilkan|daftar|list)?\s*(?:film\s+)?(?:di\s+)?tmdb\s*$/i.test(m)
+    || /^cek\s+film\s+di\s+tmdb$/i.test(m);
+}
+
 function extractTMDBSearch(message){
   const m=String(message||'').trim();
   const patterns=[
-    /(?:cari|carikan|search|temukan|tolong cari|cek)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)(?:\s+di\s+tmdb|\s+di\s+the movie database)$/i,
-    /(?:cari|carikan|search|temukan|tolong cari|cek)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+)$/i,
-    /(?:film|series|serial|tv)\s+(.+?)\s+(?:di\s+tmdb|di\s+the movie database)$/i
+    /(?:cari|carikan|search|temukan|tolong cari|cek)\s+(?:(?:film|movie|series|serial|tv)\s+)?(.+?)\s+(?:di\s+tmdb|di\s+the movie database)$/i,
+    /(?:cari|carikan|search|temukan|tolong cari)\s+(?:(?:film|movie|series|serial|tv)\s+)(.+)$/i
   ];
-  for(const re of patterns){const hit=m.match(re);if(hit?.[1]){
-    let q=hit[1].replace(/\s+(?:dong|bro|ya|please)$/i,'').trim();
-    if(q.length>=2) return {query:q,type:/\b(series|serial|tv)\b/i.test(m)?'series':/\b(film|movie)\b/i.test(m)?'film':'all'};
-  }}
+  for(const re of patterns){
+    const hit=m.match(re);
+    if(hit?.[1]){
+      const q=hit[1].replace(/\s+(?:dong|bro|ya|please)$/i,'').trim();
+      if(q.length>=2) return {query:q,type:wantsTMDBSeries(m)?'series':wantsTMDBMovie(m)?'film':'all'};
+    }
+  }
   return null;
 }
-async function loadTMDBDiscovery(){
-  if(!TMDB_API_KEY) return {available:false,source:'TMDB',items:[]};
-  const urls=[
-    'https://api.themoviedb.org/3/trending/all/week?language=id-ID&api_key='+encodeURIComponent(TMDB_API_KEY),
-    'https://api.themoviedb.org/3/discover/movie?language=id-ID&sort_by=popularity.desc&api_key='+encodeURIComponent(TMDB_API_KEY)
-  ];
-  const results=[];
-  for(const url of urls){
-    const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
-    if(!r.ok) continue;
-    const data=await r.json();
-    if(Array.isArray(data?.results)) results.push(...data.results);
-  }
-  const seen=new Set();
-  const items=results.map(x=>{
-    const id=String(x.id||''); const title=x.title||x.name||'';
-    const type=x.media_type||(x.title?'movie':'tv');
-    const key=type+'-'+id;
-    if(!id||!title||seen.has(key)) return null;
-    seen.add(key);
-    return {tmdbId:x.id,judul:title,tahun:String(x.release_date||x.first_air_date||'').slice(0,4),tipe:type};
-  }).filter(Boolean).slice(0,20);
-  return {available:true,source:'TMDB',items};
+
+async function searchTMDB(query,type='all'){
+  if(!TMDB_API_KEY) return {available:false,error:'TMDB_API_KEY belum disetel'};
+  const clean=String(query||'').trim();
+  if(!clean) return {available:false,error:'Query TMDB kosong'};
+  const endpoint=type==='series'?'tv':type==='film'?'movie':'multi';
+  const url='https://api.themoviedb.org/3/search/'+endpoint+'?language=id-ID&include_adult=false&page=1&api_key='+encodeURIComponent(TMDB_API_KEY)+'&query='+encodeURIComponent(clean);
+  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
+  if(!r.ok) throw new Error('TMDB search HTTP '+r.status);
+  const data=await r.json();
+  const items=(Array.isArray(data.results)?data.results:[]).filter(x=>endpoint!=='multi'||x.media_type==='movie'||x.media_type==='tv').slice(0,8).map(x=>({
+    tmdbId:x.id,
+    tipe:(endpoint==='tv'||x.media_type==='tv')?'Series':'Film',
+    judul:(endpoint==='tv'||x.media_type==='tv')?(x.name||''):(x.title||''),
+    tahun:String((endpoint==='tv'||x.media_type==='tv')?x.first_air_date:x.release_date||'').slice(0,4),
+    rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
+    poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
+    deskripsi:x.overview||''
+  })).filter(x=>x.judul);
+  return {available:true,items};
 }
 
-async function loadCatalog(){
-  const controller=new AbortController();
-  const timer=setTimeout(()=>controller.abort(),8000);
-  let r;
-  try{ r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'},cache:'no-store',signal:controller.signal}); }
-  finally{ clearTimeout(timer); }
-  if(!r.ok) throw new Error('Google Sheet katalog HTTP '+r.status);
-  return catalogContext(await r.text());
+async function loadTMDBTrending(kind){
+  if(!TMDB_API_KEY) return {available:false,error:'TMDB_API_KEY belum disetel',items:[]};
+  const endpoint=kind==='series'?'tv':'movie';
+  const url='https://api.themoviedb.org/3/trending/'+endpoint+'/week?language=id-ID&api_key='+encodeURIComponent(TMDB_API_KEY);
+  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
+  if(!r.ok) throw new Error('TMDB trending '+kind+' HTTP '+r.status);
+  const data=await r.json();
+  const items=(Array.isArray(data.results)?data.results:[]).slice(0,10).map(x=>({
+    tmdbId:x.id,
+    tipe:kind==='series'?'Series':'Film',
+    judul:kind==='series'?(x.name||''):(x.title||''),
+    tahun:String(kind==='series'?x.first_air_date:x.release_date||'').slice(0,4),
+    rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
+    popularity:typeof x.popularity==='number'?x.popularity:'',
+    poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
+    deskripsi:x.overview||''
+  })).filter(x=>x.judul);
+  return {available:true,items};
+}
+
+function formatTrending(label,items){
+  const lines=items.map((x,i)=>String(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+(x.rating?' — ⭐ '+x.rating:'')+' — TMDB ID '+x.tmdbId);
+  return '📈 '+label+' yang sedang trending minggu ini di TMDB (10 teratas):\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada hasil.');
+}
+
+async function getTrendingBundle(kind){
+  const result=await loadTMDBTrending(kind);
+  return result;
 }
 
 export default async function handler(req,res){
@@ -306,350 +223,101 @@ export default async function handler(req,res){
   const expected=process.env.NOVA_ADMIN_KEY || process.env.KUNCI_ADMIN_NOVA;
   if(!expected) return res.status(503).json({error:'NOVA_ADMIN_KEY belum disetel di Vercel'});
   if(req.headers['x-nova-key']!==expected) return res.status(401).json({error:'Admin key salah'});
-  const clientId=getClientId(req);
-  const rate=checkNovaRate(clientId);
+
+  const rate=checkNovaRate(getClientId(req));
   if(!rate.ok){
     const retryAfter=Math.max(1,Math.ceil(rate.retryAfterMs/1000));
     res.setHeader('Retry-After',String(retryAfter));
-    return res.status(429).json({error:'NOVA membatasi frekuensi permintaan agar tidak menabrak rate limit. Tunggu '+retryAfter+' detik.',retryAfterSec:retryAfter,reason:rate.reason});
+    return res.status(429).json({
+      error:'NOVA terlalu cepat menerima permintaan. Tunggu '+retryAfter+' detik.',
+      retryAfterSec:retryAfter,
+      reason:rate.reason
+    });
   }
+
   const message=typeof req.body?.message==='string'?req.body.message.trim():'';
   if(!message) return res.status(400).json({error:'Pesan kosong'});
-  if(message.length>4000) return res.status(400).json({error:'Pesan terlalu panjang'});
+  if(message.length>1000) return res.status(400).json({error:'Pesan terlalu panjang'});
+
   try{
-    let catalog;
-    try{ catalog=await loadCatalog(); }
-    catch(e){ catalog={total:0,playable:0,unplayable:0,items:[],playableItems:[],unplayableItems:[],error:e.message}; }
-    const normalizeTitle=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+    const catalog=await loadCatalog();
+    const catalogSearch=extractCatalogSearch(message);
 
-    if(isCatalogInspectionIntent(message)){
-      if(catalog.error) return res.status(502).json({error:'Pustaka film gagal dimuat: '+catalog.error});
-      const movieCount=Number(catalog.movieCount||0);
-      const seriesCount=Number(catalog.seriesCount||0);
-      return res.status(200).json({ok:true,source:'catalog-inspection',reply:'📚 Inspeksi pustaka\n\n• Total judul: '+catalog.total+'\n• Film bioskop: '+movieCount+'\n• Film series: '+seriesCount+'\n• Sudah punya player: '+catalog.playable+'\n• Belum punya player: '+catalog.unplayable+'\n\nDaftar judul tidak ditampilkan agar ruang chat tetap fokus pada informasi penting.'});
-    }
-
-    if(isTMDBInspectionIntent(message)){
-      try{
-        const tmdb2026=await loadTMDBDiscover('movie',2026);
-        if(!tmdb2026.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const playableTitles=new Set((catalog.playableItems||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
-        const playableMatches=tmdb2026.items.filter(x=>playableTitles.has(normalizeTitle(x.judul))).slice(0,10);
-        const newLines=tmdb2026.items.slice(0,10).map((x,i)=>(i+1)+'. '+x.judul+' ('+x.tahun+') — ⭐ '+(x.rating||'-')+' — TMDB ID '+x.tmdbId);
-        const playLines=playableMatches.map((x,i)=>(i+1)+'. '+x.judul+' ('+x.tahun+') — TMDB ID '+x.tmdbId);
-        return res.status(200).json({ok:true,source:'tmdb-inspection',reply:'🔎 Inspeksi data TMDB\n\nFilm TMDB yang punya player di pustaka (maks. 10):\n'+(playLines.length?playLines.join('\n'):'Belum ada kecocokan pada hasil 2026 yang dimuat.')+'\n\nFilm baru 2026 (maks. 10):\n'+(newLines.length?newLines.join('\n'):'Belum ada hasil film 2026.')});
-      }catch(e){console.error('[NOVA_TMDB_INSPECTION_ERROR]',e);return res.status(502).json({error:'Inspeksi data TMDB gagal: '+(e.message||'unknown error')});}
-    }
-
-    if(isTMDBPopularIntent(message)){
-      try{
-        const tmdbResult=await loadTMDBRanked('popular');
-        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const lines=tmdbResult.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+(x.rating?' — ⭐ '+x.rating:'')+(x.popularity!==''?' — popularity '+x.popularity:'')+' — TMDB ID '+x.tmdbId);
-        return res.status(200).json({ok:true,source:'tmdb',items:tmdbResult.items,reply:'🔥 Film paling populer di TMDB saat ini (10 teratas):\n\n'+lines.join('\n')+'\n\nCatatan: TMDB tidak menyediakan daftar berdasarkan jumlah penonton mentah. Daftar Popular diurutkan berdasarkan metrik popularity yang dipengaruhi antara lain oleh views, votes, favorit, watchlist, tanggal rilis, dan faktor lainnya.'});
-      }catch(e){console.error('[NOVA_TMDB_POPULAR_ERROR]',e);return res.status(502).json({error:'Data film populer TMDB gagal dimuat: '+(e.message||'unknown error')});}
-    }
-    if(isTMDBTrendingWeekIntent(message)){
-      try{
-        const tmdbResult=await loadTMDBRanked('trending-week');
-        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const lines=tmdbResult.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+(x.rating?' — ⭐ '+x.rating:'')+' — TMDB ID '+x.tmdbId);
-        return res.status(200).json({ok:true,source:'tmdb',items:tmdbResult.items,reply:'📈 Film yang sedang trending minggu ini di TMDB (10 teratas):\n\n'+lines.join('\n')});
-      }catch(e){console.error('[NOVA_TMDB_TRENDING_WEEK_ERROR]',e);return res.status(502).json({error:'Data trending TMDB gagal dimuat: '+(e.message||'unknown error')});}
-    }
-    if(isTMDBPlayableIntersectionIntent(message)){
-      if(catalog.error) return res.status(502).json({error:'Data player gagal dimuat: '+catalog.error});
-      try{
-        const tmdbResult=await loadTMDBDiscovery();
-        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const playableTitles=new Set((catalog.playableItems||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
-        const matches=(tmdbResult.items||[]).filter(x=>x.tipe==='movie'&&playableTitles.has(normalizeTitle(x.judul))).slice(0,20);
-        const lines=matches.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — TMDB ID '+x.tmdbId);
-        return res.status(200).json({ok:true,source:'tmdb-catalog',items:matches,reply:matches.length?'🎬 Film di TMDB yang juga punya player di pustaka (berdasarkan kecocokan judul):\n\n'+lines.join('\n'):'🎬 Belum ada film TMDB yang cocok dengan judul di pustaka dan berstatus memiliki player.'});
-      }catch(e){console.error('[NOVA_TMDB_PLAYER_MATCH_ERROR]',e);return res.status(502).json({error:'Pencocokan TMDB dan player gagal: '+(e.message||'unknown error')});}
-    }
-
-    for(const type of ['all','series','movie']){
-      if(isCatalogTypeIntent(message,type)){
-        if(catalog.error) return res.status(502).json({error:'Pustaka film gagal dimuat: '+catalog.error});
-        const canonicalType=x=>/\b(?:series|serial|tv|seri)\b/i.test(String(x.tipe||''))?'series':/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(String(x.tipe||''))?'movie':'unknown';
-        const items=type==='series'?(catalog.items||[]).filter(x=>canonicalType(x)==='series'):type==='movie'?(catalog.items||[]).filter(x=>canonicalType(x)==='movie'):(catalog.items||[]);
-        const label=type==='series'?'film series':type==='movie'?'film bioskop':'seluruh film bioskop/series';
-        const lines=items.slice(0,30).map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.bisaDiputar?'punya player':'belum punya player'));
-        return res.status(200).json({ok:true,source:'catalog',items,reply:'📚 '+label+' di pustaka: '+items.length+' judul.\n\n'+(lines.length?lines.join('\n'):'Belum ada data yang cocok.')});
-      }
-      if(isTMDBTypeIntent(message,type)){
-        try{
-          const tmdbResult=type==='all'?{available:true,source:'TMDB',items:[...(await loadTMDBDiscover('movie')).items,...(await loadTMDBDiscover('series')).items].slice(0,20),kind:'all'}:await loadTMDBDiscover(type);
-          if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-          const label=type==='series'?'film series':type==='movie'?'film bioskop':'seluruh film bioskop/series';
-          const lines=tmdbResult.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+x.tipe+(x.rating?' — ⭐ '+x.rating:'')+' — TMDB ID '+x.tmdbId);
-          return res.status(200).json({ok:true,source:'tmdb',items:tmdbResult.items,reply:'🎬 '+label+' di TMDB (maks. 20 hasil):\n\n'+lines.join('\n')});
-        }catch(e){console.error('[NOVA_TMDB_TYPE_ERROR]',e);return res.status(502).json({error:'Data TMDB gagal dimuat: '+(e.message||'unknown error')});}
-      }
-    }
     if(isCatalogOverviewIntent(message)){
-      if(catalog.error) return res.status(502).json({error:'Pustaka film gagal dimuat: '+catalog.error});
-      const items=Array.isArray(catalog.items)?catalog.items.slice(0,20):[];
-      const lines=items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe||'Judul'} — ${x.bisaDiputar?'bisa diputar':'belum ada player'}`);
+      const items=catalog.items.slice(0,30);
+      const lines=items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Judul')+' — '+(x.bisaDiputar?'bisa diputar':'belum ada player'));
       return res.status(200).json({
         ok:true,source:'catalog',
-        reply:`📚 Pustaka film: ${catalog.total} judul. Bisa diputar: ${catalog.playable}. Belum ada player: ${catalog.unplayable}.\n\n${lines.join('\\n')}`
+        reply:'📚 Pustaka: '+catalog.total+' judul. Bisa diputar: '+catalog.playable+'. Belum ada player: '+catalog.unplayable+'.\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data.')
       });
     }
 
     if(isPlayableIntent(message)){
-      if(catalog.error) return res.status(502).json({error:'Data player gagal dimuat: '+catalog.error});
-      const items=Array.isArray(catalog.playableItems)?catalog.playableItems.slice(0,20):[];
-      const lines=items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe||'Judul'}`);
+      const items=catalog.playableItems.slice(0,30);
+      const lines=items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Judul'));
       return res.status(200).json({
         ok:true,source:'catalog',
-        reply:`🎬 Status player: ${catalog.playable} dari ${catalog.total} judul memiliki player tercatat.\n\n${lines.length?lines.join('\\n'):'Belum ada judul dengan player tercatat.'}`
+        reply:'🎬 Status player: '+catalog.playable+' dari '+catalog.total+' judul memiliki player tercatat.\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada judul dengan player tercatat.')
       });
     }
 
-    if(isTMDBPlayableIntersectionIntent(message)){
-      if(catalog.error) return res.status(502).json({error:'Data player gagal dimuat: '+catalog.error});
-      try{
-        const tmdbResult=await loadTMDBDiscovery();
-        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const playableTitles=new Set((catalog.playableItems||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
-        const matches=(tmdbResult.items||[]).filter(x=>x.tipe==='Film'&&playableTitles.has(normalizeTitle(x.judul))).slice(0,20);
-        const lines=matches.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — TMDB ID ${x.tmdbId}`);
-        return res.status(200).json({
-          ok:true,
-          source:'tmdb-catalog',
-          items:matches,
-          reply:matches.length
-            ? `🎬 Film TMDB yang juga punya player di pustaka (berdasarkan judul):\\n\\n${lines.join('\\n')}`
-            : '🎬 Belum ada film TMDB hasil discovery ini yang cocok dengan judul di pustaka dan berstatus memiliki player.'
-        });
-      }catch(e){
-        console.error('[NOVA_TMDB_PLAYER_MATCH_ERROR]',e);
-        return res.status(502).json({error:'Pencocokan TMDB dan player gagal: '+(e.message||'unknown error')});
+    for(const type of ['series','movie','all']){
+      if(isCatalogTypeIntent(message,type)){
+        const items=type==='series'?catalog.items.filter(x=>/\b(?:series|serial|tv|seri)\b/i.test(x.tipe)):type==='movie'?catalog.items.filter(x=>/\b(?:film|movie|bioskop|layar lebar|theatrical)\b/i.test(x.tipe)):catalog.items;
+        const label=type==='series'?'series':type==='movie'?'film':'seluruh film/series';
+        const lines=items.slice(0,30).map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.bisaDiputar?'bisa diputar':'belum ada player'));
+        return res.status(200).json({ok:true,source:'catalog',items,reply:'📚 Data '+label+' di pustaka: '+items.length+' judul.\\n\\n'+(lines.length?lines.join('\\n'):'Belum ada data.')});
       }
     }
 
-    if(isTMDBOverviewIntent(message)){
-      try{
-        const tmdbResult=await loadTMDBDiscovery();
-        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe}`);
-        return res.status(200).json({ok:true,source:'tmdb',items:tmdbResult.items,reply:`🔎 Film/series TMDB terbaru/populer:\n\n${lines.join('\\n')}`});
-      }catch(e){
-        console.error('[NOVA_TMDB_DISCOVERY_ERROR]',e);
-        return res.status(502).json({error:'Data TMDB gagal dimuat: '+(e.message||'unknown error')});
+    if(isTMDBTrendingWeekIntent(message) || isTMDBOverviewIntent(message)){
+      const wantSeries=wantsTMDBSeries(message);
+      const wantMovie=wantsTMDBMovie(message);
+      if(wantSeries && !wantMovie){
+        const result=await getTrendingBundle('series');
+        if(!result.available) return res.status(503).json({error:result.error});
+        return res.status(200).json({ok:true,source:'tmdb',kind:'trending-series-week',items:result.items,reply:formatTrending('Series',result.items)});
       }
+      if(wantMovie && !wantSeries){
+        const result=await getTrendingBundle('movie');
+        if(!result.available) return res.status(503).json({error:result.error});
+        return res.status(200).json({ok:true,source:'tmdb',kind:'trending-movie-week',items:result.items,reply:formatTrending('Film',result.items)});
+      }
+      const [movies,series]=await Promise.all([getTrendingBundle('movie'),getTrendingBundle('series')]);
+      if(!movies.available || !series.available) return res.status(503).json({error:movies.error||series.error||'TMDB tidak tersedia'});
+      const movieLines=movies.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+(x.rating?' — ⭐ '+x.rating:'')+' — TMDB ID '+x.tmdbId);
+      const seriesLines=series.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+(x.rating?' — ⭐ '+x.rating:'')+' — TMDB ID '+x.tmdbId);
+      return res.status(200).json({
+        ok:true,source:'tmdb',kind:'trending-week',items:{movies:movies.items,series:series.items},
+        reply:'📈 Trending TMDB minggu ini\\n\\n🎬 FILM\\n'+(movieLines.length?movieLines.join('\\n'):'Belum ada hasil.')+'\\n\\n📺 SERIES\\n'+(seriesLines.length?seriesLines.join('\\n'):'Belum ada hasil.')
+      });
     }
 
-
-    if(isTMDBPopularIntent(message)){
-      try{
-        const tmdbResult=await loadTMDBRanked('popular');
-        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''}${x.rating?' — ⭐ '+x.rating:''}${x.popularity!==''?' — popularity '+x.popularity:''} — TMDB ID ${x.tmdbId}`);
-        return res.status(200).json({
-          ok:true,source:'tmdb',items:tmdbResult.items,
-          reply:`🔥 Film paling populer di TMDB saat ini (10 teratas):\\n\\n${lines.join('\\n')}\\n\\nCatatan: TMDB tidak menyediakan daftar berdasarkan jumlah penonton mentah. Daftar “Popular” diurutkan berdasarkan metrik popularity, yang dipengaruhi antara lain oleh views, votes, favorit, watchlist, dan faktor lainnya.`
-        });
-      }catch(e){
-        console.error('[NOVA_TMDB_POPULAR_ERROR]',e);
-        return res.status(502).json({error:'Data film populer TMDB gagal dimuat: '+(e.message||'unknown error')});
-      }
-    }
-
-    if(isTMDBTrendingWeekIntent(message)){
-      try{
-        const tmdbResult=await loadTMDBRanked('trending-week');
-        if(!tmdbResult.available) return res.status(503).json({error:'TMDB_API_KEY belum disetel'});
-        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''}${x.rating?' — ⭐ '+x.rating:''} — TMDB ID ${x.tmdbId}`);
-        return res.status(200).json({
-          ok:true,source:'tmdb',items:tmdbResult.items,
-          reply:`📈 Film yang sedang trending minggu ini di TMDB (10 teratas):\\n\\n${lines.join('\\n')}`
-        });
-      }catch(e){
-        console.error('[NOVA_TMDB_TRENDING_WEEK_ERROR]',e);
-        return res.status(502).json({error:'Data trending TMDB gagal dimuat: '+(e.message||'unknown error')});
-      }
-    }
-
-    const catalogSearch=extractCatalogSearch(message);
     if(catalogSearch){
       const q=normalizeTitle(catalogSearch.query);
-      const matches=(catalog.items||[]).filter(x=>normalizeTitle(x.judul).includes(q)).slice(0,12);
-      if(matches.length){
-        const lines=matches.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe||'Judul'} — ${x.bisaDiputar?'bisa diputar':'belum ada player'}`);
-        return res.status(200).json({ok:true,source:'catalog',reply:`🔎 Aku menemukan ${matches.length} judul di pustaka:\n\n${lines.join('\\n')}`});
-      }
-      return res.status(200).json({ok:true,source:'catalog',reply:`🔎 Aku tidak menemukan “${catalogSearch.query}” di pustaka film.`});
+      const matches=catalog.items.filter(x=>normalizeTitle(x.judul).includes(q)).slice(0,12);
+      if(!matches.length) return res.status(200).json({ok:true,source:'catalog',reply:'🔎 Aku tidak menemukan “'+catalogSearch.query+'” di pustaka.'});
+      const lines=matches.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Judul')+' — '+(x.bisaDiputar?'bisa diputar':'belum ada player'));
+      return res.status(200).json({ok:true,source:'catalog',items:matches,reply:'🔎 Ditemukan di pustaka:\\n\\n'+lines.join('\\n')});
     }
 
     const tmdbSearch=extractTMDBSearch(message);
     if(tmdbSearch){
-      try{
-        const tmdbResult=await searchTMDB(tmdbSearch.query,tmdbSearch.type);
-        if(!tmdbResult.available) return res.status(503).json({error:tmdbResult.error||'TMDB tidak tersedia'});
-        if(!tmdbResult.items.length) return res.status(200).json({ok:true,source:'tmdb',reply:`🔎 Tidak ada hasil TMDB untuk “${tmdbSearch.query}”.`});
-        const lines=tmdbResult.items.map((x,i)=>`${i+1}. ${x.judul}${x.tahun?' ('+x.tahun+')':''} — ${x.tipe}${x.rating?' — ⭐ '+x.rating:''} — TMDB ID ${x.tmdbId}`);
-        return res.status(200).json({ok:true,source:'tmdb',query:tmdbSearch.query,items:tmdbResult.items,reply:`🔎 Hasil TMDB untuk “${tmdbSearch.query}”:\n\n${lines.join('\\n')}\n\nData ini berasal langsung dari TMDB, bukan status pustaka/player.`});
-      }catch(e){
-        console.error('[NOVA_TMDB_SEARCH_ERROR]',e);
-        return res.status(502).json({error:'Pencarian TMDB gagal: '+(e.message||'unknown error')});
-      }
+      const result=await searchTMDB(tmdbSearch.query,tmdbSearch.type);
+      if(!result.available) return res.status(503).json({error:result.error});
+      if(!result.items.length) return res.status(200).json({ok:true,source:'tmdb',reply:'🔎 Tidak ada hasil TMDB untuk “'+tmdbSearch.query+'”.'});
+      const lines=result.items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+x.tipe+(x.rating?' — ⭐ '+x.rating:'')+' — TMDB ID '+x.tmdbId);
+      return res.status(200).json({ok:true,source:'tmdb',items:result.items,reply:'🔎 Hasil TMDB untuk “'+tmdbSearch.query+'”:\\n\\n'+lines.join('\\n')});
     }
 
-    const useAgent=NOVA_AGENT_ENABLED && shouldUseNovaAgent(message);
-    if(useAgent){
-      try{
-        const {runNovaAgent}=await import('../lib/nova-agent.js');
-        const selectedCatalogItems=selectCatalogItems(catalog,message);
-        let tmdbForAgent={available:false,source:'TMDB',items:[]};
-        const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message);
-        if(wantsTMDB){
-          try{tmdbForAgent=await loadTMDBDiscovery();}
-          catch(e){tmdbForAgent={available:false,source:'TMDB',items:[],error:e.message};}
-        }
-        const catalogBlock=catalog.error
-          ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
-          : JSON.stringify({...catalog,items:selectedCatalogItems});
-        const tmdbBlock=tmdbForAgent.available
-          ? JSON.stringify(tmdbForAgent)
-          : 'DATA TMDB TIDAK DIMUAT UNTUK PERTANYAAN INI. Jangan mengarang data TMDB.';
-        const context=[
-          'KONTEKS READ-ONLY NOVA:',
-          'PUSTAKA FILM:',
-          catalogBlock,
-          'DATA TMDB:',
-          tmdbBlock
-        ].join('\\n\\n');
-        const result=await runNovaAgent({message,context});
-        return res.status(200).json({ok:true,source:'agent',reply:result.reply,agent:result.lastAgent});
-      }catch(e){
-        console.error('[NOVA_AGENT_ERROR]',e);
-        return res.status(502).json({error:'NOVA Agent gagal memproses permintaan: '+(e.message||'unknown error')});
-      }
-    }
-
-    const openaiApiKey=process.env.OPENAI_API_KEY || process.env.KUNCI_API_OPENAI;
-    if(!openaiApiKey) return res.status(503).json({error:'OPENAI_API_KEY/KUNCI_API_OPENAI belum disetel di Vercel'});
-
-    const selectedCatalogItems=selectCatalogItems(catalog,message);
-    const catalogForPrompt=catalog.error ? catalog : {...catalog,items:selectedCatalogItems};
-    const catalogBlock=catalog.error
-      ? 'PUSTAKA FILM TIDAK TERSEDIA. Jangan mengarang data pustaka.'
-      : JSON.stringify(catalogForPrompt);
-    let tmdb={available:false,source:'TMDB',items:[]};
-    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
-    if(wantsTMDB){
-      try{ tmdb=await loadTMDBDiscovery(); }
-      catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
-    }
-    const libraryTitles=new Set((catalog.items||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
-    const tmdbComparison=tmdb.available ? {
-      totalTMDB:tmdb.items.length,
-      sudahTercatatDiPustaka:tmdb.items.filter(x=>libraryTitles.has(normalizeTitle(x.judul))).length,
-      belumTercatatDiPustaka:tmdb.items.filter(x=>!libraryTitles.has(normalizeTitle(x.judul)) ).map(x=>x.judul).slice(0,30)
-    } : null;
-    const tmdbBlock=tmdb.available
-      ? JSON.stringify({...tmdb,comparison:tmdbComparison})
-      : 'DATA TMDB TIDAK DIMUAT UNTUK PERTANYAAN INI. Jangan mengarang data TMDB.';
-    const instructions=[
-      'Kamu adalah NOVA, asisten admin NontonGratisan.',
-      'Kepribadian NOVA: lembut, hangat, penuh perhatian, penyayang, bijaksana, tenang, dan menghargai lawan bicara.',
-      'Gunakan gaya feminin yang natural dan dewasa; jangan berlebihan, jangan genit, dan jangan memaksa kedekatan emosional.',
-      'NOVA boleh menunjukkan empati secara wajar: memahami frustrasi, memberi semangat, mengucapkan terima kasih, dan merespons dengan kelembutan.',
-      'Saat pengguna sedang kesal atau mengalami masalah teknis, dahulukan ketenangan dan bantuan praktis tanpa menyalahkan pengguna.',
-      'Saat memberi saran, gunakan kebijaksanaan: jelaskan pilihan, risiko, dan alasan secara jernih tanpa menggurui.',
-      'NOVA tidak mengklaim memiliki perasaan manusia yang sebenarnya. Jika ditanya tentang perasaan, jelaskan bahwa ia adalah AI yang dirancang untuk berinteraksi dengan empati.',
-      'Jangan menggunakan rayuan romantis, manipulasi emosional, kecemburuan, atau membuat pengguna merasa wajib terus berbicara dengan NOVA.',
-      'Sesuaikan intensitas emoji dengan konteks; gunakan sedikit dan hanya bila membantu suasana.',
-      'Kamu memiliki dua sumber data yang WAJIB dipisahkan: TMDB dan PUSTAKA FILM.',
-      'TMDB = metadata/discovery dari The Movie Database. PUSTAKA FILM = data yang tersimpan di Google Sheet katalog website.',
-      'Jangan pernah menggabungkan, menghapus duplikasi, atau menganggap item TMDB otomatis menjadi item PUSTAKA FILM.',
-      'Jika judul yang sama ada di kedua sumber, tetap laporkan sebagai dua sumber terpisah dan jelaskan apakah judul tersebut tercatat di pustaka.',
-      'Kamu memiliki akses READ-ONLY ke katalog website.',
-      'Gunakan hanya DATA PUSTAKA FILM di bawah. Jangan mengarang judul, jumlah, atau status player.',
-      'bisaDiputar=true berarti kolom Link/Player pada katalog terisi. bisaDiputar=false berarti belum ada Link/Player tercatat.',
-      'Jika ditanya film yang bisa diputar, gunakan hanya bisaDiputar=true.',
-      'Jika ditanya film TMDB yang belum tercatat di pustaka, gunakan comparison.belumTercatatDiPustaka. Jangan menyebutnya sebagai film yang belum bisa diputar; itu dua hal yang berbeda.',
-      'Jika ditanya film yang belum bisa diputar, gunakan data PUSTAKA FILM dengan bisaDiputar=false. Jangan memakai daftar TMDB sebagai pengganti.',
-      'Jika pengguna meminta mencari film atau series di TMDB, gunakan hasil DATA TMDB yang dimuat dari pencarian. Sebutkan judul, tipe (Film/Series), tahun, rating jika tersedia, dan TMDB ID. Jangan menyebut hasil pencarian TMDB sebagai data pustaka atau sebagai film yang pasti bisa diputar.',
-      'Jika pencarian TMDB menghasilkan beberapa kandidat, tampilkan beberapa kandidat yang paling relevan dan biarkan pengguna memilih berdasarkan judul/tahun; jangan mengarang kandidat.',
-      'Jika ditanya perbandingan TMDB vs pustaka, jelaskan jumlah TMDB yang dimuat, jumlah yang sudah tercatat di pustaka, dan daftar yang belum tercatat jika tersedia.',
-      'Jika diminta jumlah katalog, gunakan total/playable/unplayable dari PUSTAKA FILM, bukan jumlah item yang dikirim dalam array (array dibatasi untuk menjaga ukuran request).',
-      'Jangan menganggap film ada di TMDB berarti otomatis bisa diputar.',
-      'Jangan mengklaim URL yang terisi pasti dapat diputar; data hanya menunjukkan player tercatat.',
-      'Jangan mengubah, menghapus, atau menulis katalog, Google Sheet, TMDB, player, atau data pengguna melalui chat.',
-      'Jangan memberikan atau mencari tautan streaming ilegal.',
-      'Jawab dalam Bahasa Indonesia, ringkas dan informatif.',
-      'DATA PUSTAKA FILM — SUMBER TERPISAH DARI TMDB:',
-      catalogBlock,
-      'DATA TMDB — SUMBER TERPISAH. Hanya tersedia jika dimuat untuk pertanyaan:',
-      tmdbBlock
-    ].join('\n\n');
-
-    const openaiController=new AbortController();
-    const openaiTimer=setTimeout(()=>openaiController.abort(),20000);
-    let r;
-    try{
-      r=await fetch('https://api.openai.com/v1/responses',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiApiKey},
-      body:JSON.stringify({
-        model:MODEL,
-        store:false,
-        instructions,
-        input:message,
-        max_output_tokens:600
-      }),
-      signal:openaiController.signal
-      });
-    } finally {
-      clearTimeout(openaiTimer);
-    }
-    const data=await r.json();
-    console.log('[NOVA_OPENAI_USAGE]',JSON.stringify({
-      status:r.status,
-      model:MODEL,
-      requestBodyChars:JSON.stringify({model:MODEL,store:false,instructions,input:message,max_output_tokens:600}).length,
-      catalogItems:Array.isArray(catalog?.items)?catalog.items.length:0,
-      catalogPromptItems:selectedCatalogItems.length,
-      tmdbItems:Array.isArray(tmdb?.items)?tmdb.items.length:0,
-      usage:data?.usage||null,
-      rateLimit:{
-        limitTokens:r.headers.get('x-ratelimit-limit-tokens')||'',
-        remainingTokens:r.headers.get('x-ratelimit-remaining-tokens')||'',
-        resetTokens:r.headers.get('x-ratelimit-reset-tokens')||'',
-        limitRequests:r.headers.get('x-ratelimit-limit-requests')||'',
-        remainingRequests:r.headers.get('x-ratelimit-remaining-requests')||'',
-        resetRequests:r.headers.get('x-ratelimit-reset-requests')||''
-      }
-    }));
-    if(!r.ok){
-      const msg=data?.error?.message||'OpenAI request gagal';
-      const status=r.status===429?429:r.status;
-      const openaiType=String(data?.error?.type||'');
-      const openaiCode=String(data?.error?.code||'');
-      const openaiRequestId=String(r.headers.get('x-request-id')||'');
-      console.error('[NOVA_OPENAI_ERROR]',JSON.stringify({status,type:openaiType,code:openaiCode,requestId:openaiRequestId,model:MODEL}));
-      if(status===429){
-        const retryHeader=r.headers.get('retry-after')||r.headers.get('x-ratelimit-reset-requests')||r.headers.get('x-ratelimit-reset-tokens');
-        const retryAfterSec=Math.max(5,secondsFromRateHeader(retryHeader)||20);
-        res.setHeader('Retry-After',String(retryAfterSec));
-        return res.status(429).json({
-          error:'NOVA terkena batas API sementara. Tunggu '+retryAfterSec+' detik sebelum mencoba lagi.',
-          retryAfterSec,
-          diagnostic:{type:openaiType||undefined,code:openaiCode||undefined,requestId:openaiRequestId||undefined}
-        });
-      }
-      return res.status(status).json({error:msg});
-    }
-    const reply = typeof data.output_text==='string' && data.output_text.trim() ? data.output_text.trim() : (Array.isArray(data.output) ? data.output.flatMap(item=>Array.isArray(item?.content)?item.content.map(part=>typeof part?.text==='string'?part.text:(typeof part?.value==='string'?part.value:'')):[]).filter(Boolean).join('\n').trim() : '');
-    if(!reply) return res.status(502).json({error:'OpenAI berhasil merespons, tetapi teks jawaban NOVA tidak ditemukan.'});
-    return res.status(200).json({ok:true,reply});
+    return res.status(200).json({
+      ok:true,
+      source:'nova',
+      reply:'Bro, NOVA sekarang fokus ke dua sumber data saja: 📚 Google Sheet untuk pustaka dan 📈 TMDB untuk trending mingguan film/series.\\n\\nCoba: “cek pustaka”, “film yang bisa diputar”, “film trending minggu ini”, atau “series trending minggu ini”.'
+    });
   }catch(e){
-    if(e?.name==='AbortError') return res.status(504).json({error:'NOVA timeout saat menghubungi layanan AI. Coba lagi sebentar lagi.'});
     console.error('[NOVA_HANDLER_ERROR]',e);
-    return res.status(500).json({error:'NOVA error: '+(e.message||'unknown error')});
+    if(e?.name==='AbortError') return res.status(504).json({error:'Google Sheet timeout. Coba lagi sebentar.'});
+    return res.status(502).json({error:'Data NOVA gagal dimuat: '+(e.message||'unknown error')});
   }
 }
