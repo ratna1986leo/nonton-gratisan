@@ -168,11 +168,11 @@ function isTMDBPlayableIntersectionIntent(message){
 
 function isTMDBPopularIntent(message){
   const m=normalizeIntentText(message);
-  return /(?:paling\s+banyak\s+(?:ditonton|dilihat)|paling\s+populer|terpopuler|film\s+populer).*(?:\\btmdb\\b)|(?:\\btmdb\\b).*(?:paling\s+banyak\s+(?:ditonton|dilihat)|paling\s+populer|terpopuler|film\s+populer)/i.test(m);
+  return /(?:paling\s+banyak\s+(?:ditonton|dilihat)|paling\s+populer|terpopuler|film\s+populer).*(?:\btmdb\b)|(?:\btmdb\b).*(?:paling\s+banyak\s+(?:ditonton|dilihat)|paling\s+populer|terpopuler|film\s+populer)/i.test(m);
 }
 function isTMDBTrendingWeekIntent(message){
   const m=normalizeIntentText(message);
-  return /(?:\\btrending\\b|\\btren\\b).*(?:minggu\s+ini|mingguan|week)|(?:minggu\s+ini|mingguan).*(?:\\btrending\\b|\\btren\\b)/i.test(m);
+  return /(?:\btrending\b|\btren\b).*(?:minggu\s+ini|mingguan|week)|(?:minggu\s+ini|mingguan).*(?:\btrending\b|\btren\b)/i.test(m);
 }
 async function loadTMDBRanked(kind='popular'){
   if(!TMDB_API_KEY) return {available:false,source:'TMDB',items:[],kind,error:'TMDB_API_KEY belum disetel'};
