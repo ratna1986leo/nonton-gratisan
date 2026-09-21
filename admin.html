@@ -832,9 +832,9 @@ body.novaApp{
       <button class="novaFeature" data-prompt="Data film series di pustaka"><span>01</span>Data film series di pustaka</button>
       <button class="novaFeature" data-prompt="Data film bioskop di pustaka"><span>02</span>Data film bioskop di pustaka</button>
       <button class="novaFeature" data-prompt="Data seluruh film bioskop series di pustaka"><span>03</span>Data seluruh film bioskop/series di pustaka</button>
-      <button class="novaFeature" data-prompt="Data film series di TMDB"><span>04</span>Data film series di TMDB</button>
-      <button class="novaFeature" data-prompt="Data film bioskop di TMDB"><span>05</span>Data film bioskop di TMDB</button>
-      <button class="novaFeature" data-prompt="Data seluruh film bioskop series di TMDB"><span>06</span>Data seluruh film bioskop/series di TMDB</button>
+      <button class="novaFeature" data-prompt="Series trending minggu ini"><span>04</span>Data film series di TMDB</button>
+      <button class="novaFeature" data-prompt="Film trending minggu ini"><span>05</span>Data film bioskop di TMDB</button>
+      <button class="novaFeature" data-prompt="Trending film dan series minggu ini"><span>06</span>Data seluruh film bioskop/series di TMDB</button>
       <button class="novaFeature" data-prompt="Inspeksi data pustaka"><span>07</span>Inspeksi data pustaka</button>
       <button class="novaFeature" data-prompt="Inspeksi data TMDB"><span>08</span>Inspeksi data TMDB</button>
       <button class="novaFeature" data-prompt="Film di TMDB yang punya player"><span>09</span>Film di TMDB yang punya player</button>
@@ -872,8 +872,8 @@ body.novaApp{
         </div>
         <div class="novaDashActions">
           <button class="novaDashAction" data-view-target="film">＋ Tambah Film</button>
-          <button class="novaDashAction" data-prompt="Cek film di TMDB">🔎 Cek TMDB</button>
-          <button class="novaDashAction" data-prompt="Cek pustaka film">📚 Cek Pustaka</button>
+          <button class="novaDashAction" data-prompt="Film trending minggu ini">🔎 Cek TMDB</button>
+          <button class="novaDashAction" data-prompt="Cek pustaka">📚 Cek Pustaka</button>
           <button class="novaDashAction" data-view-target="comments">💬 Komentar</button>
         </div>
       </div>
@@ -906,8 +906,8 @@ body.novaApp{
             <div class="bubble ai">Halo bro! 💜<br>Saya NOVA, siap membantu kamu di NontonGratisan. Ada yang ingin kamu tanyakan?</div>
             <div class="quick">
               <button data-prompt="Film apa saja yang bisa diputar?">Film yang bisa diputar</button>
-              <button data-prompt="Cek film di TMDB">Cek TMDB</button>
-              <button data-prompt="Cek pustaka film">Cek pustaka</button>
+              <button data-prompt="Film trending minggu ini">Cek TMDB</button>
+              <button data-prompt="Cek pustaka">Cek pustaka</button>
               <button data-prompt="Lihat status player">Status player</button>
             </div>
           </div>
@@ -965,7 +965,7 @@ window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stat
 let novaBusy=false;
 let novaCooldownUntil=0;
 let novaNextAllowedAt=0;
-const NOVA_CLIENT_MIN_INTERVAL_MS=10000;
+const NOVA_CLIENT_MIN_INTERVAL_MS=1500;
 let novaCooldownTimer=null;
 
 function startNovaCooldown(ms){
