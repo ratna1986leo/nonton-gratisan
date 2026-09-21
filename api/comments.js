@@ -12,6 +12,18 @@ async function forward(url, options={}){
   }
   return data;
 }
+async function forwardRecent(){
+  const base=new URL(COMMENTS_API_URL);
+  base.searchParams.set('action','recent');
+  base.searchParams.set('limit','60');
+  base.searchParams.set('_',Date.now());
+  const first=await forward(base.toString());
+  if(!first?.upstreamError || !/action tidak (dikenal|dikenali)|unknown action|invalid action/i.test(String(first.error||''))) return first;
+  const fallback=new URL(COMMENTS_API_URL);
+  fallback.searchParams.set('limit','60');
+  fallback.searchParams.set('_',Date.now());
+  return forward(fallback.toString());
+}
 
 export default async function handler(req,res){
   try{
@@ -20,7 +32,7 @@ export default async function handler(req,res){
       for(const [k,v] of Object.entries(req.query||{})){
         if(v!==undefined&&v!==null&&String(v)!=='')u.searchParams.set(k,String(v));
       }
-      const data = await forward(u.toString());
+      const data = (String(u.searchParams.get('action')||'').toLowerCase()==='recent') ? await forwardRecent() : await forward(u.toString());
       const callback = String(u.searchParams.get('callback') || '');
       if (callback && /^[A-Za-z_$][0-9A-Za-z_$]*$/.test(callback)) {
         res.setHeader('content-type','application/javascript; charset=utf-8');
