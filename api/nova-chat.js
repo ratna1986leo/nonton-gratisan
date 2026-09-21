@@ -53,9 +53,11 @@ function catalogContext(text){
     unplayable:allItems.filter(x=>!x.bisaDiputar).length,
     movieCount:allItems.filter(x=>canonicalType(x)==='movie').length,
     seriesCount:allItems.filter(x=>canonicalType(x)==='series').length,
-    items:allItems.slice(0,100),
-    playableItems:allItems.filter(x=>x.bisaDiputar).slice(0,100),
-    unplayableItems:allItems.filter(x=>!x.bisaDiputar).slice(0,100)
+    // Simpan seluruh katalog untuk pencarian internal. Judul tetap tidak dikeluarkan
+    // kecuali user meminta judul tertentu secara eksplisit.
+    items:allItems,
+    playableItems:allItems.filter(x=>x.bisaDiputar),
+    unplayableItems:allItems.filter(x=>!x.bisaDiputar)
   };
 }
 
