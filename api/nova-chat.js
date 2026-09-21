@@ -1,6 +1,6 @@
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.6-luna';
 const SHEET_CSV_URL = process.env.GOOGLE_SHEETS_CSV_URL || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
-const TMDB_API_KEY = process.env.TMDB_API_KEY || '';
+const TMDB_API_KEY = process.env.TMDB_API_KEY || process.env.KUNCI_API_TMDB || '';
 
 function parseCSV(text){
   const rows=[]; let row=[], cell='', quoted=false;
@@ -150,10 +150,11 @@ async function loadCatalog(){
 
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
-  const expected=process.env.NOVA_ADMIN_KEY;
+  const expected=process.env.NOVA_ADMIN_KEY || process.env.KUNCI_ADMIN_NOVA;
   if(!expected) return res.status(503).json({error:'NOVA_ADMIN_KEY belum disetel di Vercel'});
   if(req.headers['x-nova-key']!==expected) return res.status(401).json({error:'Admin key salah'});
-  if(!process.env.OPENAI_API_KEY) return res.status(503).json({error:'OPENAI_API_KEY belum disetel di Vercel'});
+  const openaiApiKey=process.env.OPENAI_API_KEY || process.env.KUNCI_API_OPENAI;
+  if(!openaiApiKey) return res.status(503).json({error:'OPENAI_API_KEY/KUNCI_API_OPENAI belum disetel di Vercel'});
   const clientId=getClientId(req);
   const rate=checkNovaRate(clientId);
   if(!rate.ok){
@@ -229,7 +230,7 @@ export default async function handler(req,res){
     try{
       r=await fetch('https://api.openai.com/v1/responses',{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+process.env.OPENAI_API_KEY},
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+openaiApiKey},
       body:JSON.stringify({
         model:MODEL,
         store:false,
