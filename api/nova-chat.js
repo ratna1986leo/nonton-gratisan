@@ -245,6 +245,7 @@ export default async function handler(req,res){
     const catalogSearch=extractCatalogSearch(message);
 
     if(isCatalogOverviewIntent(message)){
+      await ensureCatalog();
       const items=catalog.items.slice(0,30);
       const lines=items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Judul')+' — '+(x.bisaDiputar?'bisa diputar':'belum ada player'));
       return res.status(200).json({
@@ -254,6 +255,7 @@ export default async function handler(req,res){
     }
 
     if(isPlayableIntent(message)){
+      await ensureCatalog();
       const items=catalog.playableItems.slice(0,30);
       const lines=items.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Judul'));
       return res.status(200).json({
