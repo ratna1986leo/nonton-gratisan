@@ -2,6 +2,7 @@
   "private": true,
   "dependencies": {
     "@vercel/oidc": "3.8.8",
-    "@openai/agents": "latest"
+    "@openai/agents": "latest",
+    "zod": "^4.0.0"
   }
 }
