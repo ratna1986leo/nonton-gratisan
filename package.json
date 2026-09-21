@@ -3,7 +3,8 @@
   "dependencies": {
     "@vercel/oidc": "3.8.8",
     "@openai/agents": "0.18.0",
-    "zod": "^4.5.4"
+    "zod": "^4.5.4",
+    "google-auth-library": "11.1.0"
   },
   "engines": {
     "node": "22.x"
