@@ -332,7 +332,7 @@ export default async function handler(req,res){
     const useAgent=NOVA_AGENT_ENABLED && shouldUseNovaAgent(message);
     if(useAgent){
       try{
-        const {runNovaAgent}=await import('./nova-agent.js');
+        const {runNovaAgent}=await import('../lib/nova-agent.js');
         const selectedCatalogItems=selectCatalogItems(catalog,message);
         let tmdbForAgent={available:false,source:'TMDB',items:[]};
         const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message);
