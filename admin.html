@@ -1138,6 +1138,7 @@ $('refreshComments').onclick=loadHighlights;
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.view===name));
    if(title)title.textContent=name==='dashboard'?'Dashboard':name==='chat'?'Chat NOVA':name==='film'?'Tambah Film':'Komentar';
    document.getElementById('novaSidebar')?.classList.remove('open');
+    if(name==='comments') loadHighlights();
  }
  buttons.forEach(b=>b.addEventListener('click',()=>view(b.dataset.view)));
  document.querySelectorAll('[data-view-target]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.viewTarget)));
@@ -1145,7 +1146,14 @@ $('refreshComments').onclick=loadHighlights;
  document.getElementById('novaMobileMenu')?.addEventListener('click',()=>document.getElementById('novaSidebar')?.classList.toggle('open'));
  document.getElementById('novaCollapse')?.addEventListener('click',()=>document.getElementById('novaSidebar')?.classList.remove('open'));
  document.getElementById('novaNewChat')?.addEventListener('click',()=>{view('chat');const body=document.querySelector('#view-chat .chatBody');if(body)body.scrollTop=0;});
- document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{view('chat');const input=document.getElementById('stageMessage');if(input){input.value=b.dataset.prompt;input.focus();}}));
+ document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{
+   view('chat');
+   const input=document.getElementById('stageMessage');
+   const prompt=String(b.dataset.prompt||'').trim();
+   if(!prompt)return;
+   if(input)input.value=prompt;
+   sendNova(prompt);
+ }));
 })();
 </script>
 </body>
