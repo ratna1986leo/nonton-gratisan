@@ -863,6 +863,37 @@ body.novaApp{
       <div class="novaHeaderStatus"><i></i> Online</div>
     </header>
 
+    <section class="novaSupportArea" aria-label="Dukungan Saweria">
+      <div class="novaSupportBanner">
+        <div class="novaSupportTitle">
+          <span class="novaSupportIcon">💜</span>
+          <div>
+            <strong>Dukung NOVA</strong>
+            <small>Terima kasih sudah mendukung NontonGratisan</small>
+          </div>
+        </div>
+        <div class="novaSupportMilestone">
+          <iframe
+            src="https://saweria.co/widgets/milestone?streamKey=a37eeea944ee57f64b34ea25c08d6832"
+            title="Saweria Milestone"
+            loading="lazy"
+            frameborder="0"
+            scrolling="no"></iframe>
+        </div>
+      </div>
+      <div class="novaRecentBanner">
+        <span class="novaRecentLabel">💜 Dukungan terbaru</span>
+        <div class="novaRecentWidget">
+          <iframe
+            src="https://saweria.co/widgets/recent?streamKey=a37eeea944ee57f64b34ea25c08d6832"
+            title="Saweria Recent Support"
+            loading="lazy"
+            frameborder="0"
+            scrolling="no"></iframe>
+        </div>
+      </div>
+    </section>
+
     <section class="novaView active" id="view-dashboard">
       <div class="novaDashboard">
         <div class="novaDashHero">
@@ -989,6 +1020,14 @@ function startNovaCooldown(ms){
 }
 
 
+function scrollNovaChatToBottom(force=false){
+ const body=document.querySelector('#novaChat .chatBody');
+ if(!body)return;
+ const distance=body.scrollHeight-body.scrollTop-body.clientHeight;
+ if(force || distance<180){
+   requestAnimationFrame(()=>{body.scrollTo({top:body.scrollHeight,behavior:'smooth'});});
+ }
+}
 function renderNovaMessage(role,text,meta=''){
  const body=document.querySelector('#novaChat .chatBody');if(!body)return;
  const empty=body.querySelector('.novaEmptyState');if(empty)empty.remove();
@@ -996,7 +1035,8 @@ function renderNovaMessage(role,text,meta=''){
  const label=role==='user'?'Kamu':'NOVA';
  wrap.innerHTML='<div class="novaMessageLabel">'+label+'</div><div class="novaMessageText"></div>'+(meta?'<div class="novaMessageMeta">'+meta+'</div>':'');
  wrap.querySelector('.novaMessageText').textContent=String(text||'');
- body.appendChild(wrap);body.scrollTop=body.scrollHeight;
+ body.appendChild(wrap);
+ scrollNovaChatToBottom(role==='user');
  return wrap;
 }
 function setNovaSearching(active,label='Mencari...'){
@@ -1004,7 +1044,8 @@ function setNovaSearching(active,label='Mencari...'){
  if(!active)return;
  const body=document.querySelector('#novaChat .chatBody');if(!body)return;
  const el=document.createElement('div');el.id='novaSearching';el.className='novaSearching';el.innerHTML='<span></span><span></span><span></span><b>'+label+'</b>';
- body.appendChild(el);body.scrollTop=body.scrollHeight;
+ body.appendChild(el);
+ scrollNovaChatToBottom(true);
 }
 
 async function sendNova(message){
@@ -1025,7 +1066,7 @@ async function sendNova(message){
   if(r.status===429){
     const retryMs=Math.max(5000,(Number(data.retryAfterSec)||20)*1000);
     startNovaCooldown(retryMs);
-    throw new Error(data.error||'NOVA sedang terkena rate limit API. Tunggu sebentar sebelum mencoba lagi.');
+    throw new Error(data.error||'NOVA sedang menerima terlalu banyak permintaan. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
   setNovaSearching(false);
@@ -1039,7 +1080,7 @@ async function sendNova(message){
  finally{novaBusy=false;$('stageSend').disabled=false}
 }
 
-$('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('stageMessage').value=m;sendNova(m)};
+$('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('stageMessage').value='';sendNova(m);};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const m=b.dataset.prompt;$('stageMessage').value=m;sendNova(m)});
 
 $('filmLookup').onclick=async()=>{
@@ -1149,7 +1190,11 @@ $('refreshComments').onclick=loadHighlights;
  document.querySelectorAll('.novaDashAction[data-prompt]').forEach(b=>b.addEventListener('click',()=>{view('chat');const m=b.dataset.prompt;$('stageMessage').value=m;sendNova(m)}));
  document.getElementById('novaMobileMenu')?.addEventListener('click',()=>document.getElementById('novaSidebar')?.classList.toggle('open'));
  document.getElementById('novaCollapse')?.addEventListener('click',()=>document.getElementById('novaSidebar')?.classList.remove('open'));
- document.getElementById('novaNewChat')?.addEventListener('click',()=>{view('chat');const body=document.querySelector('#view-chat .chatBody');if(body)body.scrollTop=0;});
+ document.getElementById('novaNewChat')?.addEventListener('click',()=>{
+   view('chat');
+   const body=document.querySelector('#view-chat .chatBody');
+   if(body)requestAnimationFrame(()=>body.scrollTo({top:0,behavior:'smooth'}));
+ });
  document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{
    view('chat');
    const input=document.getElementById('stageMessage');
@@ -1195,6 +1240,135 @@ $('refreshComments').onclick=loadHighlights;
 @media(max-width:700px){
   .novaSidebar{width:240px!important;min-width:240px!important;flex-basis:240px!important}
   .novaFeatureList{max-height:240px!important}
+}
+</style>
+<style id="nova-saweria-chat-polish">
+.novaSupportArea{
+  position:relative;
+  z-index:2;
+  width:100%;
+  padding:8px 18px 10px;
+  background:rgba(250,250,251,.88);
+  border-bottom:1px solid rgba(0,0,0,.07);
+  backdrop-filter:blur(14px);
+}
+.novaSupportBanner{
+  width:min(1040px,100%);
+  min-height:56px;
+  margin:0 auto 7px;
+  padding:8px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  border:1px solid #e8e4ff;
+  border-radius:13px;
+  background:linear-gradient(135deg,#fbfaff,#fff);
+  box-shadow:0 4px 18px rgba(0,0,0,.045);
+}
+.novaSupportTitle{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.novaSupportIcon{
+  width:31px;
+  height:31px;
+  flex:0 0 31px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:#f0edff;
+}
+.novaSupportTitle strong{
+  display:block;
+  color:#202123;
+  font-size:12px;
+  line-height:1.2;
+}
+.novaSupportTitle small{
+  display:block;
+  margin-top:2px;
+  color:#77777d;
+  font-size:10px;
+}
+.novaSupportMilestone{
+  width:300px;
+  height:40px;
+  flex:0 0 300px;
+  overflow:hidden;
+  border-radius:9px;
+}
+.novaSupportMilestone iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+}
+.novaRecentBanner{
+  width:min(1040px,100%);
+  min-height:34px;
+  margin:0 auto;
+  padding:4px 9px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:1px solid #ececef;
+  border-radius:9px;
+  background:#fff;
+  overflow:hidden;
+}
+.novaRecentLabel{
+  flex:0 0 auto;
+  color:#6d5dfc;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.novaRecentWidget{
+  min-width:0;
+  flex:1 1 auto;
+  height:27px;
+  overflow:hidden;
+}
+.novaRecentWidget iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+}
+.novaHero .chatBody{
+  max-height:calc(100vh - 275px)!important;
+  min-height:360px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  scroll-behavior:smooth;
+  scrollbar-width:thin;
+}
+.novaHero .chatBody::-webkit-scrollbar{width:7px}
+.novaHero .chatBody::-webkit-scrollbar-thumb{background:#d4d4d8;border-radius:99px}
+.novaHero .chatInput{z-index:8!important}
+@media(max-width:700px){
+  .novaSupportArea{padding:7px 9px 8px}
+  .novaSupportBanner{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:7px;
+    padding:9px;
+  }
+  .novaSupportMilestone{
+    width:100%;
+    flex-basis:auto;
+  }
+  .novaRecentBanner{padding:4px 7px}
+  .novaRecentLabel{font-size:9px}
+  .novaRecentWidget{height:25px}
+  .novaHero .chatBody{
+    max-height:calc(100vh - 270px)!important;
+    min-height:350px!important;
+  }
 }
 </style></body>
 </html>
