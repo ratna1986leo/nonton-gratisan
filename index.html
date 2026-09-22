@@ -891,20 +891,20 @@
         </nav>
 
         <article id="hero-section" class="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-zinc-900 min-h-[280px] sm:min-h-[420px] lg:min-h-[460px] border border-zinc-800/80 shadow-2xl flex items-end">
-            <div id="hero-backdrop" class="absolute inset-0 bg-cover bg-center transition-all duration-700 filter brightness-90" style="background-image: url('https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg')"></div>
+            <div id="hero-backdrop" class="absolute inset-0 bg-cover bg-center transition-all duration-700 filter brightness-90" style="background-image: none"></div>
             <div class="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/60 to-transparent"></div>
             
             <div class="relative z-10 p-4 sm:p-8 lg:p-10 max-w-3xl space-y-2 sm:space-y-4">
                 <div id="hero-badges" class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <span class="bg-brand-500 text-white font-extrabold text-[9px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md tracking-wider uppercase">HIGHLIGHT</span>
-                    <span id="hero-rating" class="bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[10px] sm:text-xs px-2 py-0.5 rounded">★ 8.8</span>
-                    <span id="hero-year" class="bg-zinc-800/80 text-zinc-300 text-[10px] sm:text-xs px-2 py-0.5 rounded">2026</span>
-                    <span id="hero-type" class="bg-zinc-800/80 text-zinc-300 text-[10px] sm:text-xs px-2 py-0.5 rounded capitalize">Movie</span>
+                    <span id="hero-rating" class="bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold text-[10px] sm:text-xs px-2 py-0.5 rounded"></span>
+                    <span id="hero-year" class="bg-zinc-800/80 text-zinc-300 text-[10px] sm:text-xs px-2 py-0.5 rounded"></span>
+                    <span id="hero-type" class="bg-zinc-800/80 text-zinc-300 text-[10px] sm:text-xs px-2 py-0.5 rounded capitalize"></span>
                 </div>
-                <h2 id="hero-title" class="text-xl sm:text-3xl lg:text-5xl font-extrabold text-white leading-tight drop-shadow-md line-clamp-2">Avatar: Fire and Ash</h2>
-                <p id="hero-overview" class="text-[11px] sm:text-sm text-zinc-300 line-clamp-2 sm:line-clamp-3 leading-relaxed max-w-2xl">Lanjutan epik petualangan di Pandora dengan visual memukau dan pertempuran klan baru.</p>
+                <h2 id="hero-title" class="text-xl sm:text-3xl lg:text-5xl font-extrabold text-white leading-tight drop-shadow-md line-clamp-2">Memuat katalog...</h2>
+                <p id="hero-overview" class="text-[11px] sm:text-sm text-zinc-300 line-clamp-2 sm:line-clamp-3 leading-relaxed max-w-2xl">Mengambil data terbaru dari sumber katalog.</p>
                 <div class="pt-1 sm:pt-2 flex flex-wrap items-center gap-2 sm:gap-3">
-                    <button id="hero-play-btn" onclick="openHeroPlayer()" class="focusable bg-brand-500 hover:bg-brand-600 text-white font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl shadow-lg shadow-brand-500/30 flex items-center gap-1.5 sm:gap-2 hover:scale-105 transition-all text-xs sm:text-sm touch-target">
+                    <button id="hero-play-btn" disabled onclick="openHeroPlayer()" class="focusable bg-brand-500 hover:bg-brand-600 text-white font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl shadow-lg shadow-brand-500/30 flex items-center gap-1.5 sm:gap-2 hover:scale-105 transition-all text-xs sm:text-sm touch-target">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                         <span>Tonton Sekarang</span>
                     </button>
@@ -1219,21 +1219,8 @@
             { name: 'Server 3', movie: () => PUSTAKA_SERVER_3, tv: () => PUSTAKA_SERVER_3 }
         ];
 
-        const FALLBACK_MOVIES = [
-            { id: 939243, title: "Avatar: Fire and Ash", type: "movie", rating: "8.9", year: "2026", genre: "Sci-Fi, Adventure", overview: "Lanjutan epik petualangan di Pandora dengan visual memukau dan pertempuran klan baru.", poster_path: "https://image.tmdb.org/t/p/w500/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg" },
-            { id: 533535, title: "Deadpool & Wolverine", type: "movie", rating: "8.1", year: "2024", genre: "Action, Comedy", overview: "Duet kocak dan brutal antara Wade Wilson dan Logan menyelamatkan multiverse.", poster_path: "https://image.tmdb.org/t/p/w500/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/8cdWjvZQUExUUTzyp4t6EDMubfO.jpg" },
-            { id: 693134, title: "Dune: Part Two", type: "movie", rating: "8.6", year: "2024", genre: "Sci-Fi, Adventure", overview: "Paul Atreides bersatu dengan Chani dan Suku Fremen dalam misi balas dendam.", poster_path: "https://image.tmdb.org/t/p/w500/1pdfifyNQrYMH7QCKV4T58I2Aky.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/1pdfifyNQrYMH7QCKV4T58I2Aky.jpg" },
-            { id: 1022789, title: "Inside Out 2", type: "movie", rating: "8.5", year: "2024", genre: "Animation, Comedy", overview: "Emosi baru muncul di benak Riley yang beranjak remaja: Kecemasan, Kebosanan, dan Iri.", poster_path: "https://image.tmdb.org/t/p/w500/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/vpnVM9B6NMmQpWeZvzLvDESb2QY.jpg" },
-            { id: 823464, title: "Godzilla x Kong: The New Empire", type: "movie", rating: "7.8", year: "2024", genre: "Action, Sci-Fi", overview: "Dua raksasa legendaris kembali bersatu menghadapi ancaman kolosal bawah tanah.", poster_path: "https://image.tmdb.org/t/p/w500/tMefBSflR6PGQLv7WvFPpKLZkyk.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/gmSwxymcDVGEcqn36H6tF2GkPvc.jpg" },
-            { id: 76341, title: "Mad Max: Fury Road", type: "movie", rating: "8.3", year: "2015", genre: "Action, Thriller", overview: "Aksi kejar-kejaran tanpa henti melintasi gurun pasca-apokaliptik.", poster_path: "https://image.tmdb.org/t/p/w500/hA2ple9q4qnwxp3hKVNhroipsir.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/hA2ple9q4qnwxp3hKVNhroipsir.jpg" }
-        ];
-
-        const FALLBACK_SERIES = [
-            { id: 94605, title: "Arcane", type: "tv", rating: "9.0", year: "2024", genre: "Animation, Sci-Fi", overview: "Kisah konflik dua saudari di kota kembar Piltover dan Zaun.", poster_path: "https://image.tmdb.org/t/p/w500/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/fqldf2t8ztc9aiwn3k6mlX3tvRT.jpg" },
-            { id: 1396, title: "Breaking Bad", type: "tv", rating: "9.2", year: "2008", genre: "Crime, Drama", overview: "Guru kimia SMA beralih menjadi produsen metamfetamin demi keluarganya.", poster_path: "https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/ggFHVNu6YYI5L9pCfOacjizRGt.jpg" },
-            { id: 66732, title: "Stranger Things", type: "tv", rating: "8.7", year: "2022", genre: "Sci-Fi, Horror", overview: "Sekelompok anak-anak menghadapi misteri supranatural di Hawkins.", poster_path: "https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/49WJfeN0moxb9IPfGn8AIqMGskD.jpg" },
-            { id: 119051, title: "Wednesday", type: "tv", rating: "8.4", year: "2022", genre: "Fantasy, Mystery", overview: "Petualangan Wednesday Addams di Nevermore Academy mengungkap kasus misterius.", poster_path: "https://image.tmdb.org/t/p/w500/9PFonBhy4cQy7Jz20NpMygczOkv.jpg", backdrop_path: "https://image.tmdb.org/t/p/w1280/9PFonBhy4cQy7Jz20NpMygczOkv.jpg" }
-        ];
+        const FALLBACK_MOVIES = [];
+        const FALLBACK_SERIES = [];
 
         const mediaCache = new Map();
         [...FALLBACK_MOVIES, ...FALLBACK_SERIES].forEach(item => mediaCache.set(`${item.type}-${item.id}`, item));
@@ -1601,19 +1588,19 @@
             return genreIds.slice(0, 3).map(id => genreMap[id] || 'Bioskop').join(', ');
         }
 
+        const tmdbMemoryCache = new Map();
         function cacheTMDBData(key, data) {
-            safeStorageSet(`tmdb_cache_${key}`, JSON.stringify({ timestamp: Date.now(), data }));
+            tmdbMemoryCache.set(key, { timestamp: Date.now(), data });
         }
 
-        function loadTMDBFromCache(key, maxAge = 30 * 60 * 1000) {
-            try {
-                const cached = safeStorageGet(`tmdb_cache_${key}`);
-                if (cached) {
-                    const cacheData = JSON.parse(cached);
-                    if (Date.now() - cacheData.timestamp < maxAge) return cacheData.data;
-                }
-            } catch(e) {}
-            return null;
+        function loadTMDBFromCache(key, maxAge = 2 * 60 * 1000) {
+            const cached = tmdbMemoryCache.get(key);
+            if (!cached) return null;
+            if (Date.now() - cached.timestamp >= maxAge) {
+                tmdbMemoryCache.delete(key);
+                return null;
+            }
+            return cached.data;
         }
 
         async function refreshLibraryAndTMDB() {
@@ -2076,10 +2063,6 @@
                 const qLower = query.toLowerCase();
                 tmdbMatches.push(...mergeTMDBWithLibrary([], state.libraryData, 'all').filter(item => item.title.toLowerCase().includes(qLower) || (item.overview && item.overview.toLowerCase().includes(qLower))));
             }
-            if (tmdbMatches.length === 0) {
-                const qLower = query.toLowerCase();
-                tmdbMatches = [...FALLBACK_MOVIES, ...FALLBACK_SERIES].filter(item => item.title.toLowerCase().includes(qLower) || item.overview.toLowerCase().includes(qLower));
-            }
             store.setState({ searchAllResults: tmdbMatches });
             renderSearchPage();
             document.getElementById('search-section').classList.remove('hidden');
@@ -2115,7 +2098,12 @@
         function updateHeroDisplay() {
             const state = store.getState();
             const item = state.heroItems[state.currentHeroIndex];
-            if (!item) return;
+            const playBtn = document.getElementById('hero-play-btn');
+            if (!item) {
+                if (playBtn) playBtn.disabled = true;
+                return;
+            }
+            if (playBtn) playBtn.disabled = false;
             document.getElementById('hero-backdrop').style.backgroundImage = `url('${getOptimizedImage(item.backdrop_path, 1280)}')`;
             document.getElementById('hero-title').textContent = item.title;
             document.getElementById('hero-overview').textContent = item.overview;
