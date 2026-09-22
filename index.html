@@ -145,11 +145,11 @@
         ::-webkit-scrollbar-thumb:hover { background: #2563eb; }
 
         .tv-focused {
-            outline: 3px solid #2563eb !important;
-            outline-offset: 3px !important;
-            transform: scale(1.03) !important;
+            outline: 2px solid #52525b !important;
+            outline-offset: 2px !important;
+            transform: scale(1.01) !important;
             z-index: 30 !important;
-            box-shadow: 0 0 20px rgba(37, 99, 235, 0.7) !important;
+            box-shadow: none !important;
             transition: all 0.15s ease-in-out !important;
         }
 
@@ -161,8 +161,8 @@
 
         @media (hover: hover) and (pointer: fine) {
             .poster-card:hover {
-                transform: translateY(-4px) scale(1.02);
-                box-shadow: 0 12px 24px -8px rgba(37, 99, 235, 0.35);
+                transform: translateY(-3px) scale(1.01);
+                box-shadow: 0 8px 18px -8px rgba(0,0,0,.45);
             }
             
             .play-overlay {
@@ -599,69 +599,28 @@
             z-index: 10;
         }
 
-        /* ================= NONTON GRATISAN VISUAL SYSTEM ================= */
-        :root {
-            --ng-blue: #2563eb;
-            --ng-cyan: #22d3ee;
-            --ng-purple: #7c3aed;
-            --ng-bg: #050816;
-        }
-        body {
-            background:
-                radial-gradient(circle at 15% 0%, rgba(37,99,235,.13), transparent 28%),
-                radial-gradient(circle at 85% 12%, rgba(124,58,237,.10), transparent 30%),
-                var(--ng-bg) !important;
-        }
-        .ng-logo-mark {
-            background: linear-gradient(135deg, #2563eb 0%, #06b6d4 55%, #7c3aed 100%);
-            border: 1px solid rgba(255,255,255,.14);
-        }
-        header {
-            background: rgba(5,8,22,.86) !important;
-            border-bottom-color: rgba(96,165,250,.16) !important;
-            box-shadow: 0 8px 30px rgba(0,0,0,.18);
-        }
-        .poster-card {
-            border-color: rgba(96,165,250,.14) !important;
-            background: linear-gradient(180deg, rgba(17,24,39,.98), rgba(7,11,24,.98)) !important;
-        }
-        .poster-card img {
-            filter: saturate(1.05) contrast(1.02);
-        }
-        .poster-card:hover {
-            box-shadow: 0 18px 38px -12px rgba(37,99,235,.42), 0 0 0 1px rgba(34,211,238,.12);
-        }
-        .play-overlay {
-            background: linear-gradient(135deg, rgba(37,99,235,.60), rgba(124,58,237,.48)) !important;
-        }
-        .breadcrumb a:hover, .dropdown-menu button:hover, .dropdown-menu button:focus {
-            color: #60a5fa !important;
-        }
-        .episode-nav-overlay {
-            border-color: #2563eb !important;
-        }
-        .episode-nav-overlay:hover {
-            background: #2563eb !important;
-            box-shadow: 0 0 20px rgba(37,99,235,.5) !important;
-        }
-        #hero-section {
-            border-color: rgba(96,165,250,.18) !important;
-            box-shadow: 0 25px 60px rgba(0,0,0,.38), 0 0 50px rgba(37,99,235,.08) !important;
-        }
-        #hero-backdrop {
-            transform: scale(1.01);
-        }
-        #hero-section > .absolute.inset-0:nth-child(2) {
-            background: linear-gradient(90deg, rgba(5,8,22,.96) 0%, rgba(5,8,22,.72) 42%, rgba(5,8,22,.12) 78%), linear-gradient(0deg, rgba(5,8,22,.92), transparent 62%) !important;
-        }
+        /* ================= NONTON GRATISAN NATURAL VISUAL ================= */
+        :root { --ng-bg: #09090b; }
+        body { background: #09090b !important; }
+        .ng-logo-mark { background: #2563eb; border: 1px solid #27272a; }
+        header { background: rgba(9,9,11,.96) !important; border-bottom-color: #27272a !important; box-shadow: none; }
+        .poster-card { border-color: #27272a !important; background: #121217 !important; }
+        .poster-card img { filter: none; }
+        .poster-card:hover { box-shadow: 0 8px 18px rgba(0,0,0,.28); }
+        .play-overlay { background: rgba(37,99,235,.35) !important; }
+        .breadcrumb a:hover, .dropdown-menu button:hover, .dropdown-menu button:focus { color: #60a5fa !important; }
+        .episode-nav-overlay { border-color: #2563eb !important; }
+        .episode-nav-overlay:hover { background: #2563eb !important; box-shadow: none !important; }
+        #hero-section { border-color: #27272a !important; box-shadow: 0 18px 40px rgba(0,0,0,.30) !important; }
+        #hero-backdrop { transform: none; }
+        #hero-section > .absolute.inset-0:nth-child(2) { background: linear-gradient(90deg, rgba(9,9,11,.96) 0%, rgba(9,9,11,.72) 42%, rgba(9,9,11,.16) 78%), linear-gradient(0deg, rgba(9,9,11,.90), transparent 62%) !important; }
         #trending-section > div:first-child h2,
         #movies-section > div:first-child h2,
         #series-section > div:first-child h2,
         #thriller-section > div:first-child h2,
-        #watchlist-section > div:first-child h2 {
-            letter-spacing: -.02em;
-        }
+        #watchlist-section > div:first-child h2 { letter-spacing: -.02em; }
         @media (max-width: 640px) {
+            .poster-card img { filter: none; }
             main { padding-top: .55rem !important; }
             #hero-section { min-height: 340px !important; border-radius: 1.25rem !important; }
             #hero-section .relative.z-10 { padding: 1rem !important; padding-bottom: 1.15rem !important; }
@@ -671,21 +630,12 @@
             .poster-card { width: 7.2rem !important; border-radius: .8rem !important; }
             .poster-card .p-2 { padding: .55rem !important; }
             .poster-card h3 { font-size: .68rem !important; }
-            .poster-card .play-overlay { backdrop-filter: blur(1px); }
+            .poster-card .play-overlay { backdrop-filter: none; }
             nav[aria-label="Navigasi Seluler"] { padding-bottom: max(.25rem, env(safe-area-inset-bottom)) !important; }
         }
-        @media (min-width: 641px) and (max-width: 1023px) {
-            #hero-section { min-height: 390px !important; }
-            .poster-card { width: 8.8rem !important; }
-        }
-        @media (min-width: 1024px) {
-            .poster-card { width: 10.5rem !important; }
-        }
-        @media (pointer: coarse) {
-            .poster-card:hover { transform: none; }
-            .poster-card:active { transform: scale(.975) !important; }
-        }
-
+        @media (min-width: 641px) and (max-width: 1023px) { #hero-section { min-height: 390px !important; } .poster-card { width: 8.8rem !important; } }
+        @media (min-width: 1024px) { .poster-card { width: 10.5rem !important; } }
+        @media (pointer: coarse) { .poster-card:hover { transform: none; } .poster-card:active { transform: scale(.975) !important; } }
 
 </style>
 
@@ -694,6 +644,27 @@
 #nova-push-btn .p-dot{width:8px;height:8px;border-radius:50%;background:#2563eb;box-shadow:0 0 10px rgba(37,99,235,.8)}
 #nova-push-btn.enabled .p-dot{background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,.8)}
 @media(max-width:640px){#nova-push-btn{right:12px;bottom:78px;padding:9px 11px;font-size:10px}body:has(#phase5-bottom-nav) #nova-push-btn{bottom:calc(76px + env(safe-area-inset-bottom))}}
+        /* Final natural poster pass: no neon/glow on recommendation/movie cards */
+        .poster-card,
+        .poster-card:hover,
+        .poster-card:focus,
+        .poster-card:active {
+            box-shadow: none !important;
+            text-shadow: none !important;
+            filter: none !important;
+        }
+        .poster-card .play-overlay,
+        .poster-card .play-overlay:hover {
+            box-shadow: none !important;
+            filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .poster-card .shadow,
+        .poster-card .shadow-lg,
+        .poster-card .shadow-xl {
+            box-shadow: none !important;
+        }
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-16 lg:pb-0">
@@ -1040,7 +1011,7 @@
                     <p class="text-xs sm:text-sm font-bold text-white">❤️ Dukung NontonGratisan</p>
                     <p class="text-[10px] sm:text-xs text-zinc-400 mt-1">Kalau situs ini membantu kamu, dukunganmu membantu pengembangan fitur dan server.</p>
                 </div>
-                <a href="https://saweria.co/Riviewfilm21" target="_blank" rel="noopener noreferrer"
+                <a href="/dukung.html"
                    class="shrink-0 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg sm:rounded-xl transition-colors">
                     Dukung via Saweria
                 </a>
@@ -2925,7 +2896,7 @@
                     const name = escapeHtml(comment.name || 'Anonim');
                     const text = escapeHtml(comment.text || '');
                     const date = escapeHtml(comment.date || '');
-                    const reply = escapeHtml(comment.reply || '');
+                    const reply = escapeHtml(comment.reply || comment.balasan || comment.adminReply || comment.response || comment.novaReply || '');
                     const replyLinked = reply.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-cyan-300 underline break-all">$1</a>');
                     const initial = escapeHtml((comment.name || 'A').charAt(0).toUpperCase());
                     const replyHtml = reply ? `<div class="mt-2 ml-1 p-2 rounded-lg border border-zinc-700 bg-zinc-900/70"><div class="text-[10px] font-bold text-brand-400">🤖 NOVA</div><p class="text-xs sm:text-sm text-zinc-300 break-words mt-1">${replyLinked}</p></div>` : '';
@@ -3096,7 +3067,7 @@
             titleInput.value = ''; if (noteInput) noteInput.value = '';
             closeRequestModal();
         }
-        const SUPPORT_AD_URL = 'https://thrillingdeepcutlery.com/f3deengg?key=1acdf64065adc72ae8103d33ede9a49a';
+        const SUPPORT_AD_URL = '';
         let popupAdInitialized = false;
 
         function initPopupAds() {
@@ -3124,20 +3095,6 @@
             popup.setAttribute('aria-hidden', 'false');
         }
 
-        const SMART_LINK_URL = SUPPORT_AD_URL;
-
-        function openSmartLinkFirst(event) {
-            if (!event.isTrusted) return;
-            try {
-                window.open(SMART_LINK_URL, '_blank', 'noopener,noreferrer');
-            } catch (e) {}
-        }
-
-        document.addEventListener('click', function(event) {
-            const target = event.target.closest('[onclick*="navigateTo("][onclick], [onclick*="navigateToCollection("][onclick]');
-            if (target) openSmartLinkFirst(event);
-        }, true);
-
         function startAdInterval() {
             if (adPopupInterval) clearInterval(adPopupInterval);
             initPopupAds();
@@ -3154,7 +3111,7 @@
         function goToAd() {
             const popup = document.getElementById('popup-overlay');
             if (popup) { popup.style.display = 'none'; popup.setAttribute('aria-hidden', 'true'); }
-            window.open(SUPPORT_AD_URL, '_blank', 'noopener,noreferrer');
+            return false;
         }
         function toggleMobileMenu() { const menu = document.getElementById('mobile-menu'); if (menu) menu.classList.toggle('hidden'); }
         function toggleMobileDropdown() { const dropdown = document.getElementById('mobile-dropdown'); const arrow = document.getElementById('mobile-dropdown-arrow'); if (dropdown) { dropdown.classList.toggle('hidden'); if (arrow) arrow.textContent = dropdown.classList.contains('hidden') ? '▼' : '▲'; } }
