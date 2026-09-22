@@ -21,7 +21,8 @@
       const date = spans[1]?.textContent?.trim() || '';
       const text = n.querySelector('p')?.textContent?.trim() || '';
       if (!text) return;
-      const c = { key: keyFor({ name, text, date }), name, date, text };
+      const reply = n.querySelector('.mt-2.ml-1 p')?.textContent?.trim() || '';
+      const c = { key: keyFor({ name, text, date }), name, date, text, reply };
       existing.set(c.key, c);
     });
     state.comments = [...existing.values()];
@@ -38,10 +39,12 @@
   }
   function commentCard(c, meta) {
     const likes = meta.likes[c.key] || 0, spoiler = !!meta.spoilers[c.key], replies = meta.replies[c.key] || [];
+    const serverReply = c.reply ? `<div class="mt-2 ml-1 p-2 rounded-lg border border-zinc-700 bg-zinc-900/70"><div class="text-[10px] font-bold text-brand-400">🤖 NOVA</div><div class="text-xs sm:text-sm text-zinc-300 break-words mt-1">${esc(c.reply)}</div></div>` : '';
     return `<div class="comment-item ng-enhanced-card flex gap-2 sm:gap-3 items-start p-2 rounded-lg border border-transparent hover:border-zinc-800" data-ui-enhanced="1">
       <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-zinc-800 flex items-center justify-center text-xs sm:text-sm font-bold text-brand-500 shrink-0">${esc((c.name||'A').charAt(0).toUpperCase())}</div>
       <div class="space-y-1 min-w-0 flex-1"><div class="flex items-center gap-2 flex-wrap"><span class="text-xs sm:text-sm font-bold text-white">${esc(c.name)}</span><span class="text-[10px] text-zinc-500">${esc(c.date)}</span></div>
       <div class="ng-comment-body ${spoiler?'blur-md select-none cursor-pointer':''}" data-spoiler="${spoiler?'1':'0'}" title="${spoiler?'Klik untuk tampilkan':' '}" style="transition:filter .2s">${esc(c.text)}</div>
+      ${serverReply}
       <div class="flex flex-wrap items-center gap-2 pt-1"><button data-like="${esc(c.key)}" class="text-[10px] text-zinc-400 hover:text-white">👍 ${likes}</button><button data-reply="${esc(c.key)}" class="text-[10px] text-zinc-400 hover:text-white">↩️ Reply</button><button data-spoiler="${esc(c.key)}" class="text-[10px] text-zinc-400 hover:text-white">${spoiler?'👁️ Tampilkan':'⚠️ Spoiler'}</button></div>
       ${replies.map(r=>`<div class="ml-4 sm:ml-6 mt-2 pl-3 border-l border-zinc-800"><div class="text-[10px] font-bold text-zinc-300">${esc(r.name)} <span class="font-normal text-zinc-600">• ${esc(r.date)}</span></div><div class="text-[11px] text-zinc-400 mt-0.5">${esc(r.text)}</div></div>`).join('')}
       <div data-replybox="${esc(c.key)}" class="hidden mt-2 flex gap-2"><input class="flex-1 bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-[11px] text-white" placeholder="Balas komentar..."><button class="px-3 py-2 rounded-lg bg-brand-500 text-white text-[11px] font-bold">Kirim</button></div>
