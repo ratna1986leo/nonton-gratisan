@@ -1,4 +1,4 @@
-const CACHE = 'nontongratisan-pwa-v5';
+const CACHE = 'nontongratisan-pwa-v6';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
@@ -67,19 +67,23 @@ self.addEventListener('fetch', event => {
         .then(async response => {
           const finalResponse = await injectCommentsEnhancer(response);
           const copy = finalResponse.clone();
-          caches.open(CACHE).then(cache => cache.put('/', copy));
+          caches.open(CACHE).then(cache => cache.put(request, copy));
           return finalResponse;
         })
-        .catch(() => caches.match('/'))
+        .catch(async () => {
+          const cached = await caches.match(request);
+          return cached || caches.match('/');
+        })
     );
     return;
   }
 
-  // Google Sheets catalog is the source of truth. Never serve it from Cache Storage.
-  if (url.pathname === '/api/catalog') {
+  // API responses are dynamic and must never be served from Service Worker cache.
+  // This keeps Google Sheets, TMDB and admin/comment endpoints consistent across browsers.
+  if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request, { cache: 'no-store' }).catch(() =>
-        new Response(JSON.stringify({ error: 'Catalog temporarily unavailable' }), {
+        new Response(JSON.stringify({ error: 'API temporarily unavailable' }), {
           status: 503,
           headers: { 'Content-Type': 'application/json; charset=utf-8' }
         })
