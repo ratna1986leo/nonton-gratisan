@@ -47,7 +47,7 @@ async function getRecommendations(c){
   }catch(e){return [];}
 }
 
-const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbwkSryiL98ofeLE13KhjqrzD8NtgxwVUEu6dvLiNAgO-i9O8bphnxy-bQ0yc6KXlyHV/exec';
+const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbxYo5Qu0Hd4hMKRJczxYdaYQ1huW0hlacSZTLTHxyKusH4glfmK52KuWXsnfy9nslwp/exec';
 
 function auth(req){
   const expected=process.env.NOVA_BOT_SECRET||process.env.NOVA_ADMIN_KEY;
