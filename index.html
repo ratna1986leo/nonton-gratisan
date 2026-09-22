@@ -1420,8 +1420,21 @@
                 libraryLastSuccessAt = Date.now();
 
                 if (changed || !store.getState().isLibraryLoaded) {
+                    const previousState = store.getState();
+                    const previousMedia = previousState.currentMedia;
                     store.setState({ libraryData: parsedData, isLibraryLoaded: true });
                     renderAllSections();
+
+                    // Jika film pustaka yang sedang dibuka sudah dihapus dari Sheet,
+                    // jangan biarkan tab lama terus menampilkan data yang sudah tidak ada.
+                    if (previousMedia?.isLibraryItem) {
+                        const stillExists = findLibraryItemByStableId(String(previousMedia.id));
+                        if (!stillExists) {
+                            closeDetailPage();
+                            showToast('Film tersebut sudah dihapus dari Pustaka.', '🗑️');
+                        }
+                    }
+
                     if (!silent) showToast('Pustaka Google Sheets berhasil diperbarui.', '✅');
                 }
                 return true;
