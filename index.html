@@ -2428,17 +2428,38 @@
         }
 
 
+        function getPlayablePlayerLink(item) {
+            if (!item) return '';
+            const raw = item.link || item.Link || item.playerLink || item.playerUrl || item.player_url || '';
+            const safe = formatEmbedUrl(raw);
+            return safe && safe !== 'about:blank' ? safe : '';
+        }
+
+        function hasPlayablePlayerLink(item) {
+            return Boolean(getPlayablePlayerLink(item));
+        }
+
         function updateDetailSourceStatus(item) {
             const badge = document.getElementById('detail-source-status');
             const notice = document.getElementById('detail-discovery-notice');
             const isLibrary = Boolean(item?.isLibraryItem);
+            const hasPlayer = hasPlayablePlayerLink(item);
             if (badge) {
-                badge.textContent = isLibrary ? 'PUSTAKA • TERSEDIA' : 'TMDB • DISCOVERY';
+                badge.textContent = isLibrary
+                    ? 'PUSTAKA • TERSEDIA'
+                    : hasPlayer
+                        ? 'TMDB • PLAYER TERSEDIA'
+                        : 'TMDB • DISCOVERY';
                 badge.className = isLibrary
                     ? 'text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-300'
-                    : 'text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-300';
+                    : hasPlayer
+                        ? 'text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+                        : 'text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-300';
             }
-            if (notice) notice.classList.toggle('hidden', isLibrary);
+            if (notice) {
+                notice.classList.toggle('hidden', isLibrary || hasPlayer);
+                notice.innerHTML = '<span class="font-bold text-cyan-300">TMDB Discovery:</span> Film/series ini ditemukan dari TMDB, belum tercatat di Pustaka website, dan belum memiliki link player yang bisa diputar di sini. Trailer resmi tetap bisa diputar bila tersedia.';
+            }
         }
 
         function clearDiscoveryPlayer() {
@@ -2463,7 +2484,7 @@
             const epContainer = document.getElementById('episodes-container');
             const epGrid = document.getElementById('episodes-grid');
             const isSeries = item.type === 'tv';
-            if (isSeries && !item.isLibraryItem) {
+            if (isSeries && !item.isLibraryItem && !hasPlayablePlayerLink(item)) {
                 epContainer.classList.remove('hidden');
                 let epHTML = '';
                 for (let i = 1; i <= 10; i++) { epHTML += `<button onclick="switchEpisode(${i})" class="focusable px-2.5 sm:px-3.5 py-2 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium touch-target ${i === 1 ? 'bg-brand-500 text-white font-bold' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}">Episode ${i}</button>`; }
@@ -2486,7 +2507,7 @@
             }
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
             document.getElementById('detail-section').classList.remove('hidden');
-            if (item.isLibraryItem) setupVideoSource(item);
+            if (item.isLibraryItem || hasPlayablePlayerLink(item)) setupVideoSource(item);
             else clearDiscoveryPlayer();
             if (!item.isLibraryItem) {
                 try {
@@ -2512,7 +2533,9 @@
                 currentVideoUrl = url;
                 prepareIframe(url);
             } else {
-                updateIframeSource();
+                const url = getPlayablePlayerLink(item);
+                currentVideoUrl = url;
+                prepareIframe(url);
             }
         }
 
@@ -2578,7 +2601,16 @@
             if (!iframe) return;
             if (state.currentServer < 1 || state.currentServer > 3) store.setState({ currentServer: 1 });
             if (!item.isLibraryItem) {
-                clearDiscoveryPlayer();
+                const playerUrl = getPlayablePlayerLink(item);
+                if (!playerUrl) {
+                    clearDiscoveryPlayer();
+                    updateServerButtons();
+                    updateEpisodeNavButtons(false, 1, 1);
+                    return;
+                }
+                if (state.currentServer !== 1) store.setState({ currentServer: 1 });
+                currentVideoUrl = playerUrl;
+                prepareIframe(currentVideoUrl);
                 updateServerButtons();
                 updateEpisodeNavButtons(false, 1, 1);
                 return;
@@ -2594,7 +2626,15 @@
             for (let i = 1; i <= 3; i++) {
                 const btn = document.getElementById(`server-btn-${i}`);
                 if (btn) {
-                    if (!state.currentMedia?.isLibraryItem) {
+                    if (!state.currentMedia?.isLibraryItem && hasPlayablePlayerLink(state.currentMedia)) {
+                        const enabled = i === 1;
+                        btn.disabled = !enabled;
+                        btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
+                        btn.className = enabled
+                            ? "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-emerald-600 text-white transition-all touch-target"
+                            : "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-600 cursor-not-allowed touch-target";
+                        btn.innerHTML = enabled ? 'Player Link' : serverNames[i-1] + ' · Pustaka saja';
+                    } else if (!state.currentMedia?.isLibraryItem) {
                         btn.disabled = true;
                         btn.setAttribute('aria-disabled', 'true');
                         btn.className = "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-600 cursor-not-allowed touch-target";
@@ -2615,11 +2655,19 @@
         }
 
         function switchServer(serverNum) {
-            if (!store.getState().currentMedia?.isLibraryItem) {
-                showToast('Film ini masih TMDB Discovery dan belum tersedia di Pustaka.', 'ℹ️');
-                return;
-            }
+            const item = store.getState().currentMedia;
+            if (!item) return;
             if (serverNum < 1 || serverNum > 3) { showToast('Server tidak tersedia', '⚠️'); return; }
+            if (!item.isLibraryItem) {
+                if (!hasPlayablePlayerLink(item)) {
+                    showToast('Film ini masih TMDB Discovery dan belum memiliki link player.', 'ℹ️');
+                    return;
+                }
+                if (serverNum !== 1) {
+                    showToast('TMDB dengan player link hanya menggunakan Player Link.', 'ℹ️');
+                    return;
+                }
+            }
             store.setState({ currentServer: serverNum });
             updateIframeSource();
             showToast(`Server ${serverNum} dipilih`, '🔄');
@@ -2674,8 +2722,10 @@
         }
 
         function openExternalPlayer() {
-            if (!store.getState().currentMedia?.isLibraryItem) {
-                showToast('Film TMDB Discovery belum tersedia di Pustaka.', 'ℹ️');
+            const item = store.getState().currentMedia;
+            if (!item) return;
+            if (!item.isLibraryItem && !hasPlayablePlayerLink(item)) {
+                showToast('Film TMDB Discovery belum memiliki link player.', 'ℹ️');
                 return;
             }
             openCurrentPlayerInNewTab();
