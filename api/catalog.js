@@ -6,7 +6,7 @@ export default async function handler(req,res){
     const source=String(process.env.GOOGLE_SHEETS_CSV_URL||DEFAULT_CSV).trim();
     const r=await fetch(source,{cache:'no-store'});
     const body=await r.text();
-    res.setHeader('Cache-Control','public, s-maxage=60, stale-while-revalidate=300');
+    res.setHeader('Cache-Control','no-store, no-cache, max-age=0, s-maxage=0, stale-while-revalidate=0, must-revalidate');
     res.setHeader('Content-Type','text/csv; charset=utf-8');
     return res.status(r.status).send(body);
   }catch(e){
