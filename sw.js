@@ -1,4 +1,4 @@
-const CACHE = 'nontongratisan-pwa-v6';
+const CACHE = 'nontongratisan-pwa-v7';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
@@ -12,7 +12,8 @@ const STATIC = [
   '/phase4-seo.js',
   '/phase7-surprise.js',
   '/smart-search.js',
-  '/comments-enhancer.js'
+  '/comments-enhancer.js',
+  '/dukung.html'
 ];
 
 const FRESH_MODULES = new Set([
@@ -74,6 +75,22 @@ self.addEventListener('fetch', event => {
           const cached = await caches.match(request);
           return cached || caches.match('/');
         })
+    );
+    return;
+  }
+
+  // Halaman dukungan harus selalu mengambil versi terbaru agar QRIS tidak tertahan cache lama.
+  if (url.pathname === '/dukung.html') {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then(response => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then(cache => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
     );
     return;
   }
