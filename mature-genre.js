@@ -1,7 +1,6 @@
 /* NontonGratisan Mature 18+ — non-explicit mature movies only. */
 (() => {
   'use strict';
-  const API_KEY = typeof DEFAULT_API_KEY !== 'undefined' ? DEFAULT_API_KEY : '';
   const SECTION_ID = 'mature-18-section';
   const CAROUSEL_ID = 'mature-18-carousel';
 
@@ -47,10 +46,10 @@
   async function loadMature() {
     const section = ensureSection();
     const carousel = document.getElementById(CAROUSEL_ID);
-    if (!section || !carousel || !API_KEY) return;
+    if (!section || !carousel) return;
     section.classList.remove('hidden');
     try {
-      const url = `https://api.themoviedb.org/3/discover/movie?language=id-ID&sort_by=popularity.desc&include_adult=false&certification_country=US&certification.gte=R&certification.lte=NC-17&vote_count.gte=10&api_key=${API_KEY}`;
+      const url = '/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc&include_adult=false&certification_country=US&certification.gte=R&certification.lte=NC-17&vote_count.gte=10';
       const response = await fetch(url);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
