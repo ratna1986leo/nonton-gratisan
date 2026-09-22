@@ -1374,7 +1374,7 @@
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), timeout);
                 try {
-                    const response = await fetch(url, { signal: controller.signal });
+                    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
                     clearTimeout(timeoutId);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     return response;
@@ -1401,7 +1401,7 @@
         async function loadLibraryFromGoogleSheets() {
             try {
                 // Catalog proxy is optional: TMDB/fallback must still render if it is slow.
-                const response = await fetchWithRetry('/api/catalog', 2, 8000);
+                const response = await fetchWithRetry('/api/catalog?ts=' + Date.now(), 2, 8000);
                 const csvText = await response.text();
                 const parsedData = parseCSV(csvText);
                 if (parsedData.length === 0) throw new Error('Data CSV kosong');
@@ -1463,21 +1463,11 @@
         }
 
         function loadFallbackLibraryData() {
-            const fallbackData = [
-                { Judul: "Nonton Spider-Man- Brand New Day (2026) Sub Indo", Poster: "https://ik.imagekit.io/yhhmgwam7/imag).jpg", Link: "//mxdrop.sx/e/q1l9pl1rt1zzkv", Genre: "film barat", Tahun: "2026", Rating: "8,8", Aktor: "Tom Holland", Deskripsi: "mengisahkan Peter Parker..." },
-                { Judul: "Supergirl [2026] sub indonesia", Poster: "https://ik.imagekit.io/yhhmgwam7/super.jpg", Link: "//mxdrop.sx/e/q1ldj30xszxpoe", Genre: "film barat", Tahun: "2026", Rating: "8.8", Aktor: "", Deskripsi: "" },
-                { Judul: "The Gentleman Thief (2026) sub indonesia", Poster: "https://ik.imagekit.io/yhhmgwam7/The%20Gentleman%20Thief%20(2026)%20Sub%20Indo.jpg", Link: "//mxdrop.sx/e/dkqdx163he1xm7", Genre: "film barat", Tahun: "2026", Rating: "8,8", Aktor: "", Deskripsi: "" },
-                { Judul: "NONTON Colony (2026) Sub Indo", Poster: "https://ik.imagekit.io/yhhmgwam7/images.jpg", Link: "//mxdrop.sx/e/36n3pn3wf668gw", Genre: "film asia", Tahun: "2026", Rating: "8,8", Aktor: "", Deskripsi: "" },
-                { Judul: "ANTRI DONG (1990) FULL MOVIE HD", Poster: "https://ik.imagekit.io/yhhmgwam7/images%20(1).jpg", Link: "//mxdrop.sx/e/jd9keqdnimnm7k", Genre: "film indonesia", Tahun: "1990", Rating: "8.6", Aktor: "", Deskripsi: "" },
-                { Judul: "[1] CAK KARTOLO NYETRIP bag [1]", Poster: "https://ik.imagekit.io/yhhmgwam7/cak.jpg", Link: "https://www.youtube-nocookie.com/embed/2geBf7LuZSc?si=flYfM0SPNGOZ2TPZ&controls=0&start=5", Genre: "ludruk", Tahun: "1980", Rating: "1", Aktor: "cak kartolo", Deskripsi: "• Ning Tini • Ning Suzi • Cak Sapari • Cak Basman • Cak Bagong • Cak Yayuk" },
-                { Judul: "[2] CAK KARTOLO NYETRIP bag [2]", Poster: "https://ik.imagekit.io/yhhmgwam7/cak.jpg", Link: "https://www.youtube-nocookie.com/embed/2geBf7LuZSc?si=flYfM0SPNGOZ2TPZ&controls=0&start=5", Genre: "ludruk", Tahun: "1980", Rating: "1", Aktor: "cak kartolo", Deskripsi: "Episode 2" },
-                { Judul: "Wayang Golek-Asep Sunandar - Panca Tunggal", Poster: "https://ik.imagekit.io/yhhmgwam7/sddefault.jpg", Link: "https://www.youtube-nocookie.com/embed/Bkp60lq8I4k?si=0o8FU3kmxW1VbvGX&controls=0&start=200", Genre: "wayang", Tahun: "2026", Rating: "8,8", Aktor: "Asep Sunanda", Deskripsi: "" },
-                { Judul: "JOKO KENDIL VIRAL TIKTOK- KETHOPRAK MINI SLAMET BUDOYO", Poster: "https://ik.imagekit.io/yhhmgwam7/k%20emdil%20(1).jpg", Link: "https://www.youtube-nocookie.com/embed/1p9AnYGAv2s?si=YK3HcUXS8Llbd1yj&start=60", Genre: "ketoprak, drama", Tahun: "2023", Rating: "8,8", Aktor: "", Deskripsi: "" }
-            ];
-            store.setState({ libraryData: fallbackData, isLibraryLoaded: true });
-            // Render fallback immediately so a slow/unavailable external source
-            // never leaves the public catalog empty.
-            try { renderAllSections(); } catch (e) { console.warn('Fallback render gagal:', e); }
+            const current = store.getState();
+            // Google Sheet is the source of truth. Never replace it with hardcoded stale data.
+            if (Array.isArray(current.libraryData) && current.libraryData.length > 0) return;
+            store.setState({ libraryData: [], isLibraryLoaded: false });
+            try { renderAllSections(); } catch (e) { console.warn('Render katalog kosong gagal:', e); }
         }
 
         // ================= FUNGSI TMDB =================
@@ -3326,7 +3316,8 @@
 
             setTimeout(() => {
                 if (!store.getState().isLibraryLoaded) {
-                    loadFallbackLibraryData();
+                    // Jangan inject katalog hardcoded; retry sumber utama agar semua browser konsisten.
+                    loadLibraryFromGoogleSheets();
                     fetchTMDBCatalogs();
                 }
             }, 10000);
