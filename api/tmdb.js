@@ -1,4 +1,4 @@
-const ALLOWED_PATH=/^\/3\/(trending\/all\/week|discover\/(movie|tv)|search\/(movie|tv)|(?:movie|tv)\/\d+(?:\/videos)?)$/;
+const ALLOWED_PATH=/^\/3\/(trending\/all\/week|discover\/(movie|tv)|search\/(movie|tv|multi)|(?:movie|tv)\/\d+(?:\/videos)?)$/;
 
 export default async function handler(req,res){
   try{
@@ -11,7 +11,7 @@ export default async function handler(req,res){
     const params=new URLSearchParams();
     for(const [k,v] of Object.entries(req.query||{})){
       if(k==='path'||Array.isArray(v)||v==null) continue;
-      if(!['language','query','page','include_adult','sort_by','with_genres','primary_release_year','first_air_date_year'].includes(k)) continue;
+      if(!['language','query','page','include_adult','sort_by','with_genres','primary_release_year','first_air_date_year','certification_country','certification.gte','certification.lte','vote_count.gte'].includes(k)) continue;
       params.set(k,String(v));
     }
     if(!params.has('language')) params.set('language','id-ID');
