@@ -1534,6 +1534,7 @@
         }
 
         // ================= FUNGSI TMDB =================
+
         async function fetchTMDBCatalogs() {
             try {
                 const genreEl = document.getElementById('genre-filter');
@@ -1541,46 +1542,66 @@
                 const genreId = genreEl ? genreEl.value : '';
                 const yearVal = yearEl ? yearEl.value : '';
                 let endpointAppend = '';
-                if (genreId) endpointAppend += `&with_genres=${genreId}`;
-                if (yearVal) endpointAppend += `&primary_release_year=${yearVal}&first_air_date_year=${yearVal}`;
-                
+                if (genreId) endpointAppend += '&with_genres=' + encodeURIComponent(genreId);
+                if (yearVal) endpointAppend += '&primary_release_year=' + encodeURIComponent(yearVal) + '&first_air_date_year=' + encodeURIComponent(yearVal);
+
+                // Hero/highlight diprioritaskan supaya tampil cepat.
+                try {
+                    const heroRes = await fetchWithRetry(
+                        '/api/tmdb?path=%2F3%2Ftrending%2Fall%2Fweek&language=id-ID' + endpointAppend,
+                        1,
+                        5000
+                    );
+                    if (heroRes.ok) {
+                        const data = await heroRes.json();
+                        const heroItems = Array.isArray(data?.results)
+                            ? data.results.map(normalizeTMDBItem).filter(Boolean)
+                            : [];
+                        if (heroItems.length) {
+                            store.setState({ trendingData: heroItems, heroItems: heroItems.slice(0, 5) });
+                            cacheTMDBData('trending', heroItems);
+                            setupHeroCarousel();
+                            renderAllSections();
+                        }
+                    }
+                } catch (heroErr) {
+                    console.warn('Highlight TMDB gagal dimuat cepat:', heroErr);
+                } finally {
+                    // Jangan tahan seluruh halaman hanya karena katalog discovery lain lambat.
+                    hideLoading();
+                }
+
+                // Movie/Series/Thriller dimuat di belakang layar setelah hero sudah tampil.
                 const results = await Promise.allSettled([
-                    fetchWithRetry(`/api/tmdb?path=%2F3%2Ftrending%2Fall%2Fweek&language=id-ID${endpointAppend}`, 2, 8000),
-                    fetchWithRetry(`/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc${endpointAppend}`, 2, 8000),
-                    fetchWithRetry(`/api/tmdb?path=%2F3%2Fdiscover%2Ftv&language=id-ID&sort_by=popularity.desc${endpointAppend}`, 2, 8000),
-                    fetchWithRetry(`/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&with_genres=53&sort_by=popularity.desc${endpointAppend}`, 2, 8000)
+                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc' + endpointAppend, 1, 6000),
+                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Ftv&language=id-ID&sort_by=popularity.desc' + endpointAppend, 1, 6000),
+                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&with_genres=53&sort_by=popularity.desc' + endpointAppend, 1, 6000)
                 ]);
-                
-                const newState = {};
-                if (results[0].status === 'fulfilled' && results[0].value.ok) {
-                    const data = await results[0].value.json();
-                    if (data?.results?.length) newState.trendingData = data.results.map(normalizeTMDBItem).filter(Boolean);
-                }
-                if (results[1].status === 'fulfilled' && results[1].value.ok) {
-                    const data = await results[1].value.json();
-                    if (data?.results?.length) newState.moviesData = data.results.map(normalizeTMDBItem).filter(Boolean);
-                }
-                if (results[2].status === 'fulfilled' && results[2].value.ok) {
-                    const data = await results[2].value.json();
-                    if (data?.results?.length) newState.seriesData = data.results.map(normalizeTMDBItem).filter(Boolean);
-                }
-                if (results[3].status === 'fulfilled' && results[3].value.ok) {
-                    const data = await results[3].value.json();
-                    if (data?.results?.length) newState.thrillerData = data.results.map(normalizeTMDBItem).filter(Boolean);
-                }
-                
+
+                const cacheKeys = ['movies', 'series', 'thriller'];
+                results.forEach((result, index) => {
+                    if (result.status !== 'fulfilled' || !result.value.ok) return;
+                    result.value.json().then(data => {
+                        const normalized = Array.isArray(data?.results)
+                            ? data.results.map(normalizeTMDBItem).filter(Boolean)
+                            : [];
+                        if (!normalized.length) return;
+                        const key = cacheKeys[index];
+                        const patch = {};
+                        patch[key === 'movies' ? 'moviesData' : key === 'series' ? 'seriesData' : 'thrillerData'] = normalized;
+                        store.setState(patch);
+                        cacheTMDBData(key, normalized);
+                        renderAllSections();
+                    }).catch(err => console.warn('TMDB parse gagal:', err));
+                });
+
                 safeStorageSet('last_tmdb_update', Date.now().toString());
-                if (Object.keys(newState).length > 0) store.setState(newState);
-                if (newState.trendingData) cacheTMDBData('trending', newState.trendingData);
-                if (newState.moviesData) cacheTMDBData('movies', newState.moviesData);
-                if (newState.seriesData) cacheTMDBData('series', newState.seriesData);
-                if (newState.thrillerData) cacheTMDBData('thriller', newState.thrillerData);
-                setupHeroCarousel();
-                renderAllSections();
+                results.forEach(result => {
+                    if (result.status === 'rejected') console.warn('TMDB discovery gagal:', result.reason);
+                });
             } catch (err) {
                 console.error('❌ Error fetching TMDB:', err);
                 renderAllSections();
-            } finally {
                 hideLoading();
             }
         }
@@ -1809,7 +1830,8 @@
             const libraryLoaded = state.isLibraryLoaded && Array.isArray(state.libraryData);
 
             // TMDB hanya untuk discovery/trending. Tidak digabung ke pustaka.
-            const trendingData = Array.isArray(state.trendingData) ? state.trendingData : [];
+            const trendingRaw = Array.isArray(state.trendingData) ? state.trendingData : [];
+            const trendingData = trendingRaw.map(item => enrichTMDBWithLibraryPlayer(item, state.libraryData));
 
             // Google Sheets adalah sumber tunggal untuk konten yang dianggap ada di website.
             const libraryMovies = libraryLoaded ? mergeTMDBWithLibrary([], state.libraryData, 'movie') : [];
@@ -2446,6 +2468,31 @@
         }
 
 
+
+        function enrichTMDBWithLibraryPlayer(item, libraryData = null) {
+            if (!item || item.isLibraryItem) return item;
+            const rawExisting = item.link || item.Link || item.playerLink || item.playerUrl || item.player_url || '';
+            if (String(rawExisting || '').trim()) return item;
+
+            const rows = Array.isArray(libraryData)
+                ? libraryData
+                : (Array.isArray(store.getState().libraryData) ? store.getState().libraryData : []);
+            if (!rows.length) return item;
+
+            const tmdbKey = normalizeLibraryCompareTitle(item.title);
+            const tmdbYear = parseInt(item.year, 10);
+            const match = rows.find(row => {
+                const rowTitle = row.Judul || row.judul || row.Title || row.title || '';
+                if (normalizeLibraryCompareTitle(rowTitle) !== tmdbKey) return false;
+                const rowYear = parseInt(row.Tahun || row.tahun || row.Year || row.year || '', 10);
+                if (!Number.isFinite(tmdbYear) || !Number.isFinite(rowYear)) return true;
+                return Math.abs(tmdbYear - rowYear) <= 1;
+            });
+
+            const link = match?.Link || match?.link || match?.playerLink || match?.playerUrl || match?.player_url || '';
+            return String(link || '').trim() ? { ...item, link: String(link).trim() } : item;
+        }
+
         function getPlayablePlayerLink(item) {
             if (!item) return '';
             const raw = item.link || item.Link || item.playerLink || item.playerUrl || item.player_url || '';
@@ -2487,6 +2534,7 @@
         }
 
         async function openDetailPage(item) {
+            item = enrichTMDBWithLibraryPlayer(item);
             store.setState({ currentMedia: item, currentServer: 1, currentSeason: 1, currentEpisode: 1, trailerKey: '', libraryEpisodes: item.libraryEpisodes || [], currentLibraryEpisodeIndex: 0 });
             updateDetailSourceStatus(item);
             updatePageSEO(item);
@@ -3082,7 +3130,8 @@
                     const name = escapeHtml(comment.name || 'Anonim');
                     const text = escapeHtml(comment.text || '');
                     const date = escapeHtml(comment.date || '');
-                    const reply = escapeHtml(comment.reply || '');
+                    const rawReply = comment.reply ?? comment.jawaban ?? comment.Jawaban ?? comment.balasan ?? comment.Balasan ?? comment.replyText ?? comment.answer ?? comment.Answer ?? '';
+                    const reply = escapeHtml(rawReply);
                     const replyLinked = reply.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" class="text-cyan-300 underline break-all">$1</a>');
                     const initial = escapeHtml((comment.name || 'A').charAt(0).toUpperCase());
                     const replyHtml = reply ? `<div class="mt-2 ml-1 p-2 rounded-lg border border-zinc-700 bg-zinc-900/70"><div class="text-[10px] font-bold text-brand-400">🤖 NOVA</div><p class="text-xs sm:text-sm text-zinc-300 break-words mt-1">${replyLinked}</p></div>` : '';
