@@ -1,4 +1,4 @@
-const CACHE = 'nontongratisan-pwa-v4';
+const CACHE = 'nontongratisan-pwa-v5';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
@@ -71,6 +71,19 @@ self.addEventListener('fetch', event => {
           return finalResponse;
         })
         .catch(() => caches.match('/'))
+    );
+    return;
+  }
+
+  // Google Sheets catalog is the source of truth. Never serve it from Cache Storage.
+  if (url.pathname === '/api/catalog') {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' }).catch(() =>
+        new Response(JSON.stringify({ error: 'Catalog temporarily unavailable' }), {
+          status: 503,
+          headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        })
+      )
     );
     return;
   }
