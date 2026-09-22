@@ -644,6 +644,27 @@
 #nova-push-btn .p-dot{width:8px;height:8px;border-radius:50%;background:#2563eb;box-shadow:0 0 10px rgba(37,99,235,.8)}
 #nova-push-btn.enabled .p-dot{background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,.8)}
 @media(max-width:640px){#nova-push-btn{right:12px;bottom:78px;padding:9px 11px;font-size:10px}body:has(#phase5-bottom-nav) #nova-push-btn{bottom:calc(76px + env(safe-area-inset-bottom))}}
+        /* Final natural poster pass: no neon/glow on recommendation/movie cards */
+        .poster-card,
+        .poster-card:hover,
+        .poster-card:focus,
+        .poster-card:active {
+            box-shadow: none !important;
+            text-shadow: none !important;
+            filter: none !important;
+        }
+        .poster-card .play-overlay,
+        .poster-card .play-overlay:hover {
+            box-shadow: none !important;
+            filter: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }
+        .poster-card .shadow,
+        .poster-card .shadow-lg,
+        .poster-card .shadow-xl {
+            box-shadow: none !important;
+        }
 </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-16 lg:pb-0">
