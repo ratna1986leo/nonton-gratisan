@@ -400,6 +400,11 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 .novaSideBtn[data-view="film"]:hover{background:#ededee!important;color:#202123!important}
 .novaSideBtn[data-view="film"].active{background:#e9e9eb!important;color:#202123!important;box-shadow:none!important}
 .novaSideBtn.active{background:#e9e9eb!important;color:#202123!important}
+.novaSideBtn[data-view="chat"]{font-weight:800!important}
+.novaSideBtn[data-view="chat"] b{font-size:13px!important}
+.novaSideBtn[data-view="chat"] span{font-size:12px!important}
+.novaFeature{min-height:34px!important;padding:6px 8px!important;font-size:11px!important}
+.novaFeature span{font-size:8px!important}
 .novaFeature{font-size:9.5px!important}
 .novaSideBottom{padding:8px 3px 1px!important}
 .novaSideBottom label{font-size:8px!important;margin-bottom:4px!important}
@@ -644,7 +649,7 @@ body{
   .novaPortrait{height:430px!important;width:min(300px,72%)!important}
 }
 @media(max-width:700px){
-  .novaSidebar{width:280px!important;min-width:280px!important}
+  .novaSidebar{width:240px!important;min-width:240px!important}
   .novaSideBtn,.novaFeature{min-height:50px!important;font-size:14px!important}
   .novaHero{gap:10px!important}
   .novaChatShell .chat{min-height:390px!important}
@@ -697,10 +702,10 @@ body.novaApp{min-height:100vh!important;background:radial-gradient(circle at 10%
 .novaLayout{min-height:100vh!important;background:linear-gradient(135deg,rgba(16,185,129,.08),rgba(139,92,246,.12))!important}
 .novaSidebar{width:300px!important;min-width:300px!important;flex:0 0 300px!important;padding:16px 14px!important;background:rgba(249,250,250,.97)!important;border-right:1px solid rgba(0,0,0,.09)!important}
 .novaSideTop{padding:2px 6px 12px!important}.novaBrand b{font-size:16px!important}.novaBrand small{font-size:10px!important}.novaBrandMark{width:34px!important;height:34px!important;font-size:16px!important}
-.novaNewChat{height:44px!important;font-size:13px!important;border-radius:11px!important;margin-bottom:10px!important}
-.novaNavTitle,.novaSideTitle{margin:14px 7px 7px!important;font-size:11px!important;letter-spacing:.09em!important;font-weight:800!important;color:#777!important}
-.novaSideNav,.novaFeatureList{gap:5px!important}.novaSideBtn,.novaFeature{min-height:48px!important;padding:11px 12px!important;gap:10px!important;font-size:14px!important;line-height:1.25!important;border-radius:11px!important}
-.novaSideBtn b{font-size:14px!important}.novaSideBtn span,.novaFeature span{width:28px!important;flex:0 0 28px!important;font-size:10px!important;font-weight:800!important;text-align:center!important}
+.novaNewChat{height:38px!important;font-size:12px!important;border-radius:9px!important;margin-bottom:6px!important}
+.novaNavTitle,.novaSideTitle{margin:9px 5px 5px!important;font-size:9px!important;letter-spacing:.08em!important;font-weight:800!important;color:#777!important}
+.novaSideNav,.novaFeatureList{gap:3px!important}.novaSideBtn,.novaFeature{min-height:38px!important;padding:7px 9px!important;gap:7px!important;font-size:12px!important;line-height:1.15!important;border-radius:9px!important}
+.novaSideBtn b{font-size:12px!important}.novaSideBtn span,.novaFeature span{width:22px!important;flex:0 0 22px!important;font-size:9px!important;font-weight:800!important;text-align:center!important}
 .novaFeature{color:#343438!important;background:transparent!important}.novaFeature:hover,.novaSideBtn:hover{background:#ededf0!important}.novaFeature:active{background:#e5e5e8!important}
 .novaSideBottom{margin-top:auto!important;padding:14px 5px 4px!important;border-top:1px solid #e4e4e6!important}.novaSideBottom label{display:block!important;font-size:11px!important;font-weight:800!important;color:#555!important;margin:0 0 7px!important}
 .novaSideBottom input#key{height:42px!important;width:100%!important;font-size:12px!important;padding:0 11px!important;border-radius:10px!important;background:#fff!important}.novaOnline{font-size:10px!important;margin-top:8px!important}
@@ -710,7 +715,7 @@ body.novaApp{min-height:100vh!important;background:radial-gradient(circle at 10%
 .novaHero .chat{width:100%!important;height:auto!important;min-height:620px!important;border:0!important;border-radius:20px!important;background:rgba(255,255,255,.97)!important;box-shadow:0 24px 70px rgba(0,0,0,.20)!important}
 .novaHero .chatHead{border-bottom:1px solid #e5e5e7!important}.novaHero .chatBody{min-height:520px!important;max-height:none!important;overflow:visible!important;padding:22px 24px!important}
 .novaHero .chatInput{position:sticky!important;bottom:14px!important;width:auto!important;max-width:none!important;margin:12px 18px 18px!important;z-index:5!important}.novaHero .bubble{max-width:860px!important;font-size:14px!important}.novaHero .quick{max-width:860px!important}
-@media(max-width:800px){.novaSidebar{width:290px!important;min-width:290px!important;flex-basis:290px!important}.novaHero{width:calc(100% - 24px)!important;padding:16px 0 90px!important}}
+@media(max-width:800px){.novaSidebar{width:240px!important;min-width:240px!important;flex-basis:240px!important}.novaHero{width:calc(100% - 24px)!important;padding:16px 0 90px!important}}
 @media(max-width:700px){.novaSidebar{width:292px!important;min-width:292px!important}.novaSideBtn,.novaFeature{min-height:50px!important;font-size:14px!important}.novaHero{width:calc(100% - 14px)!important;padding:8px 0 82px!important}.novaHero .chat{min-height:520px!important;border-radius:16px!important}.novaHero .chatBody{padding:14px!important;min-height:420px!important}.novaHero .chatInput{margin:8px!important}}
 </style><style id="nova-admin-v13-visible-gradient">
 /* NOVA v13 — background hijau/ungu harus terlihat jelas di area chat */
@@ -786,6 +791,28 @@ body.novaApp{
   .novaMain:before{inset:52px 0 0 0}
   .novaHero .novaWelcome{padding:22px 18px 20px!important;border-radius:18px!important}
 }
+</style><style id="nova-admin-v14-clean">
+/* NOVA v14 — clean admin dashboard shell */
+.novaLayout{display:flex;min-height:100vh}
+.novaSidebar{width:220px!important;min-width:220px!important;flex:0 0 220px!important;display:flex!important;flex-direction:column!important;padding:10px 9px!important;overflow:hidden!important}
+.novaSideNav,.novaFeatureList{overflow-y:auto;scrollbar-width:thin}
+.novaSideNav{flex:0 0 auto;max-height:none}
+.novaFeatureList{flex:1 1 auto;min-height:80px;padding-right:2px}
+.novaSideBottom{flex:0 0 auto!important;margin-top:10px!important}
+.novaMain{min-width:0!important;min-height:100vh!important}
+.novaView{display:none!important}.novaView.active{display:block!important}
+.novaDashboard{width:min(1040px,calc(100% - 44px));margin:0 auto;padding:38px 0 90px}
+.novaDashHero{padding:28px 30px;border:1px solid rgba(255,255,255,.52);border-radius:24px;background:rgba(255,255,255,.84);backdrop-filter:blur(18px);box-shadow:0 18px 55px rgba(0,0,0,.12);margin-bottom:18px}
+.novaDashHero h1{margin:0 0 8px;font-size:clamp(28px,3vw,40px);letter-spacing:-.035em;color:#17202b}
+.novaDashHero p{margin:0;color:#5b6470;line-height:1.6;font-size:14px}
+.novaDashGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.novaDashCard{border:1px solid rgba(255,255,255,.62);border-radius:18px;background:rgba(255,255,255,.9);padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.08)}
+.novaDashCard b{display:block;font-size:16px;color:#202630;margin-bottom:7px}.novaDashCard span{font-size:12px;color:#68717d;line-height:1.5}
+.novaDashActions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.novaDashAction{border:1px solid rgba(0,0,0,.08);border-radius:12px;background:rgba(255,255,255,.94);padding:13px 12px;text-align:left;cursor:pointer;font-weight:700;color:#27303a}
+.novaDashAction:hover{background:#fff;transform:translateY(-1px)}
+@media(max-width:850px){.novaDashGrid{grid-template-columns:1fr}.novaDashActions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.novaSidebar{width:240px!important;min-width:240px!important;flex-basis:240px!important}.novaDashboard{width:calc(100% - 20px);padding:18px 0 70px}.novaDashHero{padding:22px 18px;border-radius:18px}.novaDashActions{grid-template-columns:1fr}.novaFeatureList{max-height:none}}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
@@ -799,22 +826,22 @@ body.novaApp{
 
     <div class="novaNavTitle">MENU</div>
     <nav class="novaSideNav">
-      <button class="novaSideBtn active" data-view="chat"><span>⌂</span><b>Chat NOVA</b></button>
+      <button class="novaSideBtn active" data-view="dashboard"><span>⌂</span><b>Dashboard</b></button>
+      <button class="novaSideBtn" data-view="chat"><span>✦</span><b>Chat NOVA</b></button>
       <button class="novaSideBtn" data-view="film"><span>01</span><b>Tambah Film</b></button>
       <button class="novaSideBtn" data-view="comments"><span>02</span><b>Komentar</b></button>
     </nav>
 
     <div class="novaSideTitle">FITUR NOVA</div>
     <div class="novaFeatureList">
-      <button class="novaFeature" data-prompt="Data film series di pustaka"><span>01</span>Data film series di pustaka</button>
-      <button class="novaFeature" data-prompt="Data film bioskop di pustaka"><span>02</span>Data film bioskop di pustaka</button>
-      <button class="novaFeature" data-prompt="Data seluruh film bioskop series di pustaka"><span>03</span>Data seluruh film bioskop/series di pustaka</button>
-      <button class="novaFeature" data-prompt="Data film series di TMDB"><span>04</span>Data film series di TMDB</button>
-      <button class="novaFeature" data-prompt="Data film bioskop di TMDB"><span>05</span>Data film bioskop di TMDB</button>
-      <button class="novaFeature" data-prompt="Data seluruh film bioskop series di TMDB"><span>06</span>Data seluruh film bioskop/series di TMDB</button>
-      <button class="novaFeature" data-prompt="Inspeksi data pustaka"><span>07</span>Inspeksi data pustaka</button>
-      <button class="novaFeature" data-prompt="Inspeksi data TMDB"><span>08</span>Inspeksi data TMDB</button>
-      <button class="novaFeature" data-prompt="Film di TMDB yang punya player"><span>09</span>Film di TMDB yang punya player</button>
+      <button class="novaFeature" data-prompt="Cek series di pustaka"><span>01</span>Cek Series</button>
+      <button class="novaFeature" data-prompt="Cek film bioskop di pustaka"><span>02</span>Cek Film Bioskop</button>
+      <button class="novaFeature" data-prompt="Cek pustaka"><span>03</span>Ringkasan Pustaka</button>
+      <button class="novaFeature" data-prompt="Series trending minggu ini"><span>04</span>Data film series di TMDB</button>
+      <button class="novaFeature" data-prompt="Film trending minggu ini"><span>05</span>Data film bioskop di TMDB</button>
+      <button class="novaFeature" data-prompt="Trending film dan series minggu ini"><span>06</span>Data seluruh film bioskop/series di TMDB</button>
+      <button class="novaFeature" data-prompt="Cek status player di pustaka"><span>07</span>Status Player</button>
+      <button class="novaFeature" data-prompt="Trending film dan series minggu ini"><span>08</span>Trending TMDB</button>
     </div>
 
     <div class="novaSideBottom">
@@ -836,7 +863,58 @@ body.novaApp{
       <div class="novaHeaderStatus"><i></i> Online</div>
     </header>
 
-    <section class="novaView active" id="view-chat">
+    <section class="novaSupportArea" aria-label="Dukungan Saweria">
+      <div class="novaSupportBanner">
+        <div class="novaSupportTitle">
+          <span class="novaSupportIcon">💜</span>
+          <div>
+            <strong>Dukung NOVA</strong>
+            <small>Terima kasih sudah mendukung NontonGratisan</small>
+          </div>
+        </div>
+        <div class="novaSupportMilestone">
+          <iframe
+            src="https://saweria.co/widgets/milestone?streamKey=a37eeea944ee57f64b34ea25c08d6832"
+            title="Saweria Milestone"
+            loading="lazy"
+            frameborder="0"
+            scrolling="no"></iframe>
+        </div>
+      </div>
+      <div class="novaRecentBanner">
+        <span class="novaRecentLabel">💜 Dukungan terbaru</span>
+        <div class="novaRecentWidget">
+          <iframe
+            src="https://saweria.co/widgets/recent?streamKey=a37eeea944ee57f64b34ea25c08d6832"
+            title="Saweria Recent Support"
+            loading="lazy"
+            frameborder="0"
+            scrolling="no"></iframe>
+        </div>
+      </div>
+    </section>
+
+    <section class="novaView active" id="view-dashboard">
+      <div class="novaDashboard">
+        <div class="novaDashHero">
+          <h1>Selamat datang di NOVA</h1>
+          <p>Admin Movie Assistant untuk mengelola pustaka, metadata TMDB, film, dan komentar dari satu tempat.</p>
+        </div>
+        <div class="novaDashGrid">
+          <button class="novaDashCard" data-view-target="film"><b>🎬 Tambah Film</b><span>Cari metadata TMDB, preview kandidat, lalu muat pilihan ke Google Sheet.</span></button>
+          <button class="novaDashCard" data-view-target="chat"><b>✦ Chat NOVA</b><span>Gunakan NOVA untuk memeriksa pustaka, TMDB, dan status data.</span></button>
+          <button class="novaDashCard" data-view-target="comments"><b>💬 Komentar</b><span>Lihat komentar terbaru dan status balasan NOVA.</span></button>
+        </div>
+        <div class="novaDashActions">
+          <button class="novaDashAction" data-view-target="film">＋ Tambah Film</button>
+          <button class="novaDashAction" data-prompt="Film trending minggu ini">🔎 Cek TMDB</button>
+          <button class="novaDashAction" data-prompt="Cek pustaka">📚 Cek Pustaka</button>
+          <button class="novaDashAction" data-view-target="comments">💬 Komentar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="novaView" id="view-chat">
       <div class="novaHero"><div class="novaVisual">
   <div class="novaRoom"></div><div class="novaWindow"><div class="novaCity"></div></div>
   <div class="novaVisualText">NOVA ♡<small>Film bukan sekadar hiburan,<br>tapi juga tentang perasaan.</small></div>
@@ -863,8 +941,8 @@ body.novaApp{
             <div class="bubble ai">Halo bro! 💜<br>Saya NOVA, siap membantu kamu di NontonGratisan. Ada yang ingin kamu tanyakan?</div>
             <div class="quick">
               <button data-prompt="Film apa saja yang bisa diputar?">Film yang bisa diputar</button>
-              <button data-prompt="Cek film di TMDB">Cek TMDB</button>
-              <button data-prompt="Cek pustaka film">Cek pustaka</button>
+              <button data-prompt="Film trending minggu ini">Cek TMDB</button>
+              <button data-prompt="Cek pustaka">Cek pustaka</button>
               <button data-prompt="Lihat status player">Status player</button>
             </div>
           </div>
@@ -922,7 +1000,7 @@ window.setNovaVisualState=function(name){const p=$('novaPortrait'),badge=$('stat
 let novaBusy=false;
 let novaCooldownUntil=0;
 let novaNextAllowedAt=0;
-const NOVA_CLIENT_MIN_INTERVAL_MS=10000;
+const NOVA_CLIENT_MIN_INTERVAL_MS=1500;
 let novaCooldownTimer=null;
 
 function startNovaCooldown(ms){
@@ -942,6 +1020,14 @@ function startNovaCooldown(ms){
 }
 
 
+function scrollNovaChatToBottom(force=false){
+ const body=document.querySelector('#novaChat .chatBody');
+ if(!body)return;
+ const distance=body.scrollHeight-body.scrollTop-body.clientHeight;
+ if(force || distance<180){
+   requestAnimationFrame(()=>{body.scrollTo({top:body.scrollHeight,behavior:'smooth'});});
+ }
+}
 function renderNovaMessage(role,text,meta=''){
  const body=document.querySelector('#novaChat .chatBody');if(!body)return;
  const empty=body.querySelector('.novaEmptyState');if(empty)empty.remove();
@@ -949,7 +1035,8 @@ function renderNovaMessage(role,text,meta=''){
  const label=role==='user'?'Kamu':'NOVA';
  wrap.innerHTML='<div class="novaMessageLabel">'+label+'</div><div class="novaMessageText"></div>'+(meta?'<div class="novaMessageMeta">'+meta+'</div>':'');
  wrap.querySelector('.novaMessageText').textContent=String(text||'');
- body.appendChild(wrap);body.scrollTop=body.scrollHeight;
+ body.appendChild(wrap);
+ scrollNovaChatToBottom(role==='user');
  return wrap;
 }
 function setNovaSearching(active,label='Mencari...'){
@@ -957,7 +1044,8 @@ function setNovaSearching(active,label='Mencari...'){
  if(!active)return;
  const body=document.querySelector('#novaChat .chatBody');if(!body)return;
  const el=document.createElement('div');el.id='novaSearching';el.className='novaSearching';el.innerHTML='<span></span><span></span><span></span><b>'+label+'</b>';
- body.appendChild(el);body.scrollTop=body.scrollHeight;
+ body.appendChild(el);
+ scrollNovaChatToBottom(true);
 }
 
 async function sendNova(message){
@@ -978,7 +1066,7 @@ async function sendNova(message){
   if(r.status===429){
     const retryMs=Math.max(5000,(Number(data.retryAfterSec)||20)*1000);
     startNovaCooldown(retryMs);
-    throw new Error(data.error||'NOVA sedang terkena rate limit API. Tunggu sebentar sebelum mencoba lagi.');
+    throw new Error(data.error||'NOVA sedang menerima terlalu banyak permintaan. Tunggu sebentar sebelum mencoba lagi.');
   }
   if(!r.ok)throw new Error(data.error||'Request gagal');
   setNovaSearching(false);
@@ -992,7 +1080,7 @@ async function sendNova(message){
  finally{novaBusy=false;$('stageSend').disabled=false}
 }
 
-$('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('stageMessage').value=m;sendNova(m)};
+$('stageSend').onclick=()=>{const m=$('stageMessage').value.trim();if(!m)return;$('stageMessage').value='';sendNova(m);};
 document.querySelectorAll('.quick button').forEach(b=>b.onclick=()=>{const m=b.dataset.prompt;$('stageMessage').value=m;sendNova(m)});
 
 $('filmLookup').onclick=async()=>{
@@ -1088,20 +1176,199 @@ $('refreshComments').onclick=loadHighlights;
 // NOVA ChatGPT-style sidebar navigation
 (function(){
  const buttons=[...document.querySelectorAll('.novaSideBtn')];
- const views={chat:document.getElementById('view-chat'),film:document.getElementById('view-film'),comments:document.getElementById('view-comments')};
+ const views={dashboard:document.getElementById('view-dashboard'),chat:document.getElementById('view-chat'),film:document.getElementById('view-film'),comments:document.getElementById('view-comments')};
  const title=document.getElementById('novaPageTitle');
  function view(name){
    Object.entries(views).forEach(([k,v])=>v.classList.toggle('active',k===name));
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.view===name));
-   if(title)title.textContent=name==='chat'?'Chat NOVA':name==='film'?'Tambah Film':'Komentar';
+   if(title)title.textContent=name==='dashboard'?'Dashboard':name==='chat'?'Chat NOVA':name==='film'?'Tambah Film':'Komentar';
    document.getElementById('novaSidebar')?.classList.remove('open');
+    if(name==='comments') loadHighlights();
  }
  buttons.forEach(b=>b.addEventListener('click',()=>view(b.dataset.view)));
+ document.querySelectorAll('[data-view-target]').forEach(b=>b.addEventListener('click',()=>view(b.dataset.viewTarget)));
+ document.querySelectorAll('.novaDashAction[data-prompt]').forEach(b=>b.addEventListener('click',()=>{view('chat');const m=b.dataset.prompt;$('stageMessage').value=m;sendNova(m)}));
  document.getElementById('novaMobileMenu')?.addEventListener('click',()=>document.getElementById('novaSidebar')?.classList.toggle('open'));
  document.getElementById('novaCollapse')?.addEventListener('click',()=>document.getElementById('novaSidebar')?.classList.remove('open'));
- document.getElementById('novaNewChat')?.addEventListener('click',()=>{view('chat');const body=document.querySelector('#view-chat .chatBody');if(body)body.scrollTop=0;});
- document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{view('chat');const input=document.getElementById('stageMessage');if(input){input.value=b.dataset.prompt;input.focus();}}));
+ document.getElementById('novaNewChat')?.addEventListener('click',()=>{
+   view('chat');
+   const body=document.querySelector('#view-chat .chatBody');
+   if(body)requestAnimationFrame(()=>body.scrollTo({top:0,behavior:'smooth'}));
+ });
+ document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{
+   view('chat');
+   const input=document.getElementById('stageMessage');
+   const prompt=String(b.dataset.prompt||'').trim();
+   if(!prompt)return;
+   if(input)input.value=prompt;
+   sendNova(prompt);
+ }));
 })();
 </script>
-</body>
+<style id="nova-admin-v14-sidebar-fix">
+/* v14 sidebar fix: no horizontal clipping, compact feature area, Chat NOVA easy to reach */
+.novaLayout{overflow:hidden!important}
+.novaSidebar{
+  width:220px!important;min-width:220px!important;flex:0 0 220px!important;
+  box-sizing:border-box!important;min-height:100vh!important;
+  overflow:hidden!important;
+}
+.novaSideTop,.novaSideNav,.novaFeatureList,.novaSideBottom{min-width:0!important;max-width:100%!important;box-sizing:border-box!important}
+.novaSideTop{flex:0 0 auto!important}
+.novaSideNav{overflow:visible!important;flex:0 0 auto!important}
+.novaSideBtn,.novaFeature{
+  width:100%!important;max-width:100%!important;min-width:0!important;
+  box-sizing:border-box!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;
+}
+.novaSideBtn[data-view="chat"]{
+  background:#ececf0!important;color:#202123!important;font-weight:800!important;
+  min-height:42px!important;font-size:13px!important;
+}
+.novaSideBtn[data-view="chat"] span{font-size:11px!important}
+.novaFeatureList{
+  flex:1 1 auto!important;min-height:0!important;height:auto!important;
+  max-height:230px!important;overflow-y:auto!important;overflow-x:hidden!important;
+  scrollbar-width:thin!important;padding-right:3px!important;
+}
+.novaFeature{min-height:32px!important;padding:6px 8px!important;font-size:11px!important}
+.novaFeature span{width:20px!important;flex:0 0 20px!important}
+.novaSideBottom{
+  flex:0 0 auto!important;margin-top:8px!important;padding:9px 3px 3px!important;
+  overflow:hidden!important;
+}
+.novaSideBottom input#key{max-width:100%!important;box-sizing:border-box!important}
+@media(max-width:700px){
+  .novaSidebar{width:240px!important;min-width:240px!important;flex-basis:240px!important}
+  .novaFeatureList{max-height:240px!important}
+}
+</style>
+<style id="nova-saweria-chat-polish">
+.novaSupportArea{
+  position:relative;
+  z-index:2;
+  width:100%;
+  padding:8px 18px 10px;
+  background:rgba(250,250,251,.88);
+  border-bottom:1px solid rgba(0,0,0,.07);
+  backdrop-filter:blur(14px);
+}
+.novaSupportBanner{
+  width:min(1040px,100%);
+  min-height:56px;
+  margin:0 auto 7px;
+  padding:8px 12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  border:1px solid #e8e4ff;
+  border-radius:13px;
+  background:linear-gradient(135deg,#fbfaff,#fff);
+  box-shadow:0 4px 18px rgba(0,0,0,.045);
+}
+.novaSupportTitle{
+  min-width:0;
+  display:flex;
+  align-items:center;
+  gap:9px;
+}
+.novaSupportIcon{
+  width:31px;
+  height:31px;
+  flex:0 0 31px;
+  display:grid;
+  place-items:center;
+  border-radius:9px;
+  background:#f0edff;
+}
+.novaSupportTitle strong{
+  display:block;
+  color:#202123;
+  font-size:12px;
+  line-height:1.2;
+}
+.novaSupportTitle small{
+  display:block;
+  margin-top:2px;
+  color:#77777d;
+  font-size:10px;
+}
+.novaSupportMilestone{
+  width:300px;
+  height:40px;
+  flex:0 0 300px;
+  overflow:hidden;
+  border-radius:9px;
+}
+.novaSupportMilestone iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+}
+.novaRecentBanner{
+  width:min(1040px,100%);
+  min-height:34px;
+  margin:0 auto;
+  padding:4px 9px;
+  display:flex;
+  align-items:center;
+  gap:9px;
+  border:1px solid #ececef;
+  border-radius:9px;
+  background:#fff;
+  overflow:hidden;
+}
+.novaRecentLabel{
+  flex:0 0 auto;
+  color:#6d5dfc;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
+.novaRecentWidget{
+  min-width:0;
+  flex:1 1 auto;
+  height:27px;
+  overflow:hidden;
+}
+.novaRecentWidget iframe{
+  width:100%;
+  height:100%;
+  display:block;
+  border:0;
+}
+.novaHero .chatBody{
+  max-height:calc(100vh - 275px)!important;
+  min-height:360px!important;
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior:contain;
+  scroll-behavior:smooth;
+  scrollbar-width:thin;
+}
+.novaHero .chatBody::-webkit-scrollbar{width:7px}
+.novaHero .chatBody::-webkit-scrollbar-thumb{background:#d4d4d8;border-radius:99px}
+.novaHero .chatInput{z-index:8!important}
+@media(max-width:700px){
+  .novaSupportArea{padding:7px 9px 8px}
+  .novaSupportBanner{
+    align-items:flex-start;
+    flex-direction:column;
+    gap:7px;
+    padding:9px;
+  }
+  .novaSupportMilestone{
+    width:100%;
+    flex-basis:auto;
+  }
+  .novaRecentBanner{padding:4px 7px}
+  .novaRecentLabel{font-size:9px}
+  .novaRecentWidget{height:25px}
+  .novaHero .chatBody{
+    max-height:calc(100vh - 270px)!important;
+    min-height:350px!important;
+  }
+}
+</style></body>
 </html>
