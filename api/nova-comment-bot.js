@@ -1,4 +1,3 @@
-const MODEL=process.env.OPENAI_MODEL||'gpt-5.6-luna';
 const SHEET_CSV_URL=process.env.GOOGLE_SHEETS_CSV_URL||'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
 
 function parseCSV(text){
@@ -48,7 +47,7 @@ async function getRecommendations(c){
   }catch(e){return [];}
 }
 
-const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbwkSryiL98ofeLE13KhjqrzD8NtgxwVUEu6dvLiNAgO-i9O8bphnxy-bQ0yc6KXlyHV/exec';
+const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbxYo5Qu0Hd4hMKRJczxYdaYQ1huW0hlacSZTLTHxyKusH4glfmK52KuWXsnfy9nslwp/exec';
 
 function auth(req){
   const expected=process.env.NOVA_BOT_SECRET||process.env.NOVA_ADMIN_KEY;
@@ -57,34 +56,36 @@ function auth(req){
   if(supplied!==expected) throw Object.assign(new Error('Webhook secret salah'),{status:401});
 }
 
-async function draftReply(c){
-  if(!process.env.OPENAI_API_KEY) throw Object.assign(new Error('OPENAI_API_KEY belum disetel di Vercel'),{status:503});
-  const input=[
-    'Kamu adalah NOVA, asisten komunitas NontonGratisan.',
-    'Balas komentar pengunjung dalam Bahasa Indonesia.',
-    'Buat 1-2 kalimat yang ramah, natural, singkat, dan relevan dengan judul film.',
-    'Jangan mengaku sebagai manusia tertentu, jangan mengarang fakta, jangan memberi tautan streaming ilegal, dan jangan meminta data pribadi.',
-    'Jika komentar hanya sapaan, balas secara ramah.',
-    'Jika bertanya tentang ketersediaan film, jawab secara netral dan jangan menjanjikan film akan tersedia jika tidak ada informasi tersebut.',
-    'Judul: '+String(c.title||''),
-    'Nama: '+String(c.name||'Anonim'),
-    'Komentar: '+String(c.text||'')
-  ].join('\n');
+function draftReply(c){
+  const name=String(c.name||'').trim();
+  const title=String(c.title||'').trim();
+  const text=String(c.text||'').trim();
+  const q=norm(text);
+  const who=name&&name.toLowerCase()!=='anonim'?name:'bro';
+  const movie=title||'film ini';
 
-  const r=await fetch('https://api.openai.com/v1/responses',{
-    method:'POST',
-    headers:{'Content-Type':'application/json',Authorization:'Bearer '+process.env.OPENAI_API_KEY},
-    body:JSON.stringify({model:MODEL,input,store:false})
-  });
-  const j=await r.json().catch(()=>({}));
-  if(!r.ok) throw new Error(j.error?.message||'OpenAI API gagal');
-
-  let a=j.output_text;
-  if(!a&&Array.isArray(j.output)){
-    a=j.output.flatMap(x=>x.content||[]).filter(x=>x.type==='output_text').map(x=>x.text).join('\n');
+  if(!text){
+    return 'Makasih sudah mampir, '+who+' 🙏';
   }
-  if(!String(a||'').trim()) throw new Error('Balasan AI kosong');
-  return String(a).trim();
+  if(/^(hai|halo|hallo|hello|hi|hey|p|permisi|assalamualaikum)\\b/.test(q) || /\\b(hai|halo|hallo|hello|hi|hey)\\b/.test(q)){
+    return 'Halo '+who+' 👋 Makasih sudah mampir di NontonGratisan!';
+  }
+  if(/(makasih|terima kasih|thanks|thank you|thx)/.test(q)){
+    return 'Sama-sama, '+who+' 🙏 Semoga betah nonton di NontonGratisan!';
+  }
+  if(/(keren|bagus|mantap|suka|sangat bagus|nice|good|top)/.test(q)){
+    return 'Makasih, '+who+' 🙏 Senang komentarnya. Semoga '+movie+' juga menghibur!';
+  }
+  if(/(kapan|ada|tersedia|belum|tayang|rilis|upload|update|episode|eps|season|lanjut)/.test(q)){
+    return 'Makasih infonya, '+who+' 🙏 Untuk '+movie+', cek terus Pustaka NontonGratisan karena ketersediaan bisa berubah.';
+  }
+  if(/(rekomendasi|film lain|mirip|genre|selanjutnya|film terbaru|apa lagi|saran film)/.test(q)){
+    return 'Siap '+who+' 🎬 Aku carikan beberapa rekomendasi yang tersedia di Pustaka NontonGratisan.';
+  }
+  if(/(link|tautan|dimana|di mana|nonton|cara nonton)/.test(q)){
+    return 'Makasih, '+who+' 🙏 Coba cek halaman '+movie+' di NontonGratisan untuk melihat informasi dan player yang tersedia.';
+  }
+  return 'Makasih sudah komentar, '+who+' 🙏 Semoga '+movie+' bisa jadi tontonan yang seru!';
 }
 
 async function replyToSheet(c,reply){
@@ -119,12 +120,12 @@ export default async function handler(req,res){
     const commentId=String(c.commentId||c.id||'').trim();
     if(!commentId) return res.status(400).json({error:'Comment ID wajib diisi'});
 
-    let reply=await draftReply(c);
+    let reply=draftReply(c);
     const wantsRec=/rekomendasi|film lain|mirip|genre|selanjutnya|film terbaru|apa lagi|saran film/i.test(String(c.text||''));
     if(wantsRec){
       const recs=await getRecommendations(c);
       if(recs.length){
-        reply += '\\n\\n🎬 Rekomendasi dari Pustaka Film:\\n' + recs.map((x,i)=>`${i+1}. ${x.title}${x.year?' ('+x.year+')':''} — ${x.url}`).join('\\n');
+        reply += '\n\n🎬 Rekomendasi dari Pustaka Film:\n' + recs.map((x,i)=>`${i+1}. ${x.title}${x.year?' ('+x.year+')':''} — ${x.url}`).join('\n');
       }
     }
     const result=await replyToSheet(c,reply);
