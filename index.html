@@ -1200,7 +1200,6 @@
     <script>
         
 // ================= KONSTANTA & STATE =================
-        const DEFAULT_API_KEY = "e9a425d9a95b19ceecf5f763491a16a2";
         
         const GOOGLE_SHEETS_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv";
         const PUSTAKA_SERVER_2 = "https://paceboook21.blogspot.com/p/video-preview-body-margin-0-padding-0_0619822090.html";
@@ -1985,8 +1984,8 @@
             let tmdbMatches = [];
             try {
                 const results = await Promise.allSettled([
-                    fetchWithRetry(`https://api.themoviedb.org/3/search/movie?language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false&api_key=${DEFAULT_API_KEY}`, 2, 10000),
-                    fetchWithRetry(`https://api.themoviedb.org/3/search/tv?language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false&api_key=${DEFAULT_API_KEY}`, 2, 10000)
+                    fetchWithRetry(`https://api.themoviedb.org/3/search/movie?language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false`, 2, 10000),
+                    fetchWithRetry(`https://api.themoviedb.org/3/search/tv?language=id-ID&query=${encodeURIComponent(query)}&page=1&include_adult=false`, 2, 10000)
                 ]);
                 if (results[0].status === 'fulfilled' && results[0].value.ok) {
                     const data = await results[0].value.json();
@@ -2406,7 +2405,7 @@
             setupVideoSource(item);
             if (!item.isLibraryItem) {
                 try {
-                    const res = await fetchWithRetry(`https://api.themoviedb.org/3/${item.type}/${item.id}/videos?language=id-ID&api_key=${DEFAULT_API_KEY}`, 2, 10000);
+                    const res = await fetchWithRetry(`https://api.themoviedb.org/3/${item.type}/${item.id}/videos?language=id-ID`, 2, 10000);
                     if (res.ok) {
                         const data = await res.json();
                         const officialTrailer = data.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube') || data.results?.find(v => v.site === 'YouTube');
@@ -3220,7 +3219,7 @@
                 let item = mediaCache.get(key);
                 if (!item) {
                     try {
-                        const res = await fetchWithRetry(`https://api.themoviedb.org/3/${type}/${numericId}?language=id-ID&api_key=${DEFAULT_API_KEY}`, 2, 10000);
+                        const res = await fetchWithRetry(`https://api.themoviedb.org/3/${type}/${numericId}?language=id-ID`, 2, 10000);
                         if (res.ok) {
                             const data = await res.json();
                             item = normalizeTMDBItem({ ...data, media_type: type });
