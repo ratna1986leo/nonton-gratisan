@@ -1,4 +1,3 @@
-const MODEL=process.env.OPENAI_MODEL||'gpt-5.6-luna';
 const GCP_PROJECT_NUMBER=process.env.GCP_PROJECT_NUMBER||'246566536973';
 const GCP_WORKLOAD_IDENTITY_POOL_ID=process.env.GCP_WORKLOAD_IDENTITY_POOL_ID||'vercel';
 const GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID=process.env.GCP_WORKLOAD_IDENTITY_POOL_PROVIDER_ID||'vercel';
@@ -23,7 +22,7 @@ async function googleAuth(){
   return authClient;
 }
 function auth(req){
-  const expected=process.env.NOVA_ADMIN_KEY;
+  const expected=process.env.NOVA_ADMIN_KEY||process.env.KUNCI_ADMIN_NOVA;
   if(!expected)throw Object.assign(new Error('NOVA_ADMIN_KEY belum disetel di Vercel'),{status:503});
   const supplied=req.body?.adminKey||req.headers['x-nova-key']||'';
   if(supplied!==expected)throw Object.assign(new Error('Admin key salah'),{status:401});
@@ -144,7 +143,32 @@ export default async function handler(req,res){
     if(action!=='save')return res.status(400).json({error:'Action tidak dikenal'});
     const headers=await sheetsGet('1:1');
     if(!headers.length)throw new Error('Header Google Sheet tidak ditemukan');
-    const row=mapRow(parseHeaders(headers),data);
+    const sheetHeaders=parseHeaders(headers);
+    const titleHeader=sheetHeaders.find(h=>['judul','title','name'].includes(norm(h)));
+    const yearHeader=sheetHeaders.find(h=>['tahun','year'].includes(norm(h)));
+    if(!titleHeader)throw new Error('Kolom Judul Google Sheet tidak ditemukan');
+
+    // Cegah film yang sama masuk dua kali karena tombol save tertekan ulang.
+    const existing=await sheetsGet(SHEET_RANGE);
+    const existingRows=existing.slice(1);
+    const titleIndex=sheetHeaders.indexOf(titleHeader);
+    const yearIndex=yearHeader?sheetHeaders.indexOf(yearHeader):-1;
+    const targetTitle=norm(data.judul);
+    const targetYear=String(data.tahun||'').trim();
+    const duplicate=existingRows.find(r=>{
+      const sameTitle=norm(r[titleIndex])===targetTitle;
+      const sameYear=!targetYear||yearIndex<0||String(r[yearIndex]||'').trim()===targetYear;
+      return sameTitle&&sameYear;
+    });
+    if(duplicate){
+      return res.status(409).json({
+        error:'Film dengan judul dan tahun yang sama sudah ada di Google Sheet.',
+        duplicate:true,
+        data
+      });
+    }
+
+    const row=mapRow(sheetHeaders,data);
     if(!row.some(Boolean))throw new Error('Kolom Google Sheet tidak cocok dengan field film');
     const saved=await sheetsAppend(row);
     // Notifikasi push tidak boleh menggagalkan proses simpan film.
