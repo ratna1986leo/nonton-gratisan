@@ -46,15 +46,15 @@ function catalogContext(text){
   const genreKey=findExact('genre','genres');
 
   const extractEpisode=(title)=>{
-    const m=String(title||'').match(/\\b(?:episode|eps)\\s*[-.]?\\s*(\\d+)\\b/i);
+    const m=String(title||'').match(/\b(?:episode|eps)\s*[-.]?\s*(\d+)\b/i);
     return m?m[1]:'';
   };
 
   const cleanSeriesTitle=(title)=>{
     return String(title||'')
-      .replace(/\\s*[-–—]?\\s*(?:season|musim)\\s*\\d+\\s*(?:[-–—]?\\s*)?(?:episode|eps)\\s*[-.]?\\s*\\d+.*$/i,'')
-      .replace(/\\s*[-–—]?\\s*(?:episode|eps)\\s*[-.]?\\s*\\d+.*$/i,'')
-      .replace(/\\s*\\[[^\\]]*\\]\\s*$/,'')
+      .replace(/\s*[-–—]?\s*(?:season|musim)\s*\d+\s*(?:[-–—]?\s*)?(?:episode|eps)\s*[-.]?\s*\d+.*$/i,'')
+      .replace(/\s*[-–—]?\s*(?:episode|eps)\s*[-.]?\s*\d+.*$/i,'')
+      .replace(/\s*\[[^\]]*\]\s*$/,'')
       .trim();
   };
 
@@ -62,8 +62,8 @@ function catalogContext(text){
     const judul=o[titleKey]||'';
     const genre=genreKey?String(o[genreKey]||'').trim():'';
     const episode=extractEpisode(judul);
-    const seriesHint=/\\b(?:series|serial|tv\\s*series|web\\s*series|seri)\\b/i.test(genre)
-      || /\\b(?:season|musim|episode|eps)\\s*[-.]?\\s*\\d+/i.test(judul);
+    const seriesHint=/\b(?:series|serial|tv\s*series|web\s*series|seri)\b/i.test(genre)
+      || /\b(?:season|musim|episode|eps)\s*[-.]?\s*\d+/i.test(judul);
     const jenis=seriesHint?'series':'movie';
     const seriesTitle=jenis==='series'?cleanSeriesTitle(judul):'';
 
