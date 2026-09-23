@@ -117,6 +117,30 @@ async function loadTMDBDiscovery(){
   return {available:true,source:'TMDB',items};
 }
 
+function formatTMDBItems(items,title='🎬 TMDB'){
+  const list=(Array.isArray(items)?items:[]).slice(0,10);
+  if(!list.length)return title+' tidak menemukan hasil yang bisa ditampilkan.';
+  return title+':\n'+list.map((x,i)=>{
+    const type=x.tipe==='tv'?'Series':(x.tipe==='movie'?'Film':(x.tipe||'Film'));
+    const rating=x.rating?(' • ⭐ '+x.rating):'';
+    const year=x.tahun?' ('+x.tahun+')':'';
+    const id=x.tmdbId?' • TMDB '+x.tmdbId:'';
+    return (i+1)+'. '+x.judul+year+' — '+type+rating+id;
+  }).join('\n');
+}
+function isTrendingRequest(message){
+  const m=String(message||'').toLowerCase();
+  return /\btrending\b|\bterpopuler\b|\bpopuler\b|\bpopular\b/.test(m)
+    || /\b(minggu ini|week ini|this week)\b/.test(m);
+}
+function wantsDirectTMDB(message){
+  const m=String(message||'').toLowerCase();
+  return /\btmdb\b|the movie database|database film/i.test(m) || isTrendingRequest(message);
+}
+async function getTMDBForMessage(message,tmdbSearch){
+  if(tmdbSearch) return searchTMDB(tmdbSearch.query,tmdbSearch.type);
+  return loadTMDBDiscovery();
+}
 async function loadCatalog(){
   const controller=new AbortController();
   const timer=setTimeout(()=>controller.abort(),8000);
@@ -125,6 +149,13 @@ async function loadCatalog(){
   finally{ clearTimeout(timer); }
   if(!r.ok) throw new Error('Google Sheet katalog HTTP '+r.status);
   return catalogContext(await r.text());
+}
+
+function offlineTMDBReply(message,tmdb,tmdbSearch){
+  if(!tmdb?.available) return '⚠️ Data TMDB belum tersedia: '+String(tmdb?.error||'TMDB tidak dapat dihubungi.');
+  if(tmdbSearch) return formatTMDBItems(tmdb.items,'🔎 Hasil pencarian TMDB untuk “'+tmdbSearch.query+'”');
+  if(isTrendingRequest(message)) return formatTMDBItems(tmdb.items,'🔥 Trending TMDB minggu ini');
+  return formatTMDBItems(tmdb.items,'🎬 Data TMDB terbaru');
 }
 
 function offlineCatalogReply(message,catalog){
@@ -161,7 +192,7 @@ export default async function handler(req,res){
   const expected=process.env.NOVA_ADMIN_KEY;
   if(!expected) return res.status(503).json({error:'NOVA_ADMIN_KEY belum disetel di Vercel'});
   if(req.headers['x-nova-key']!==expected) return res.status(401).json({error:'Admin key salah'});
-  if(!process.env.OPENAI_API_KEY) return res.status(503).json({error:'OPENAI_API_KEY belum disetel di Vercel'});
+  const hasOpenAI=Boolean(process.env.OPENAI_API_KEY);
   const message=typeof req.body?.message==='string'?req.body.message.trim():'';
   if(!message) return res.status(400).json({error:'Pesan kosong'});
   if(message.length>4000) return res.status(400).json({error:'Pesan terlalu panjang'});
@@ -176,8 +207,13 @@ export default async function handler(req,res){
     const tmdbSearch=extractTMDBSearch(message);
     const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
     if(wantsTMDB){
-      try{ tmdb=await loadTMDBDiscovery(); }
+      try{ tmdb=await getTMDBForMessage(message,tmdbSearch); }
       catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
+    }
+    // Pertanyaan TMDB/trending yang sederhana tidak perlu OpenAI.
+    // Ini membuat fitur tetap hidup walau credit OpenAI habis.
+    if(wantsDirectTMDB(message)){
+      return res.status(200).json({ok:true,source:'TMDB',fallback:true,reply:offlineTMDBReply(message,tmdb,tmdbSearch)});
     }
     const normalizeTitle=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
     const libraryTitles=new Set((catalog.items||[]).map(x=>normalizeTitle(x.judul)).filter(Boolean));
@@ -228,6 +264,9 @@ export default async function handler(req,res){
       tmdbBlock
     ].join('\n\n');
 
+    if(!hasOpenAI){
+      return res.status(200).json({ok:true,fallback:true,reply:offlineCatalogReply(message,catalog),notice:'Jawaban katalog langsung karena OPENAI_API_KEY belum tersedia.'});
+    }
     const r=await fetch('https://api.openai.com/v1/responses',{
       method:'POST',
       headers:{'Content-Type':'application/json','Authorization':'Bearer '+process.env.OPENAI_API_KEY},
