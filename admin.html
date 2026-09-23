@@ -914,6 +914,8 @@ async function loadDashboard(){
   $('dashPlayableBarLabel').textContent=playablePct+'%';
   $('dashCatalogStatus').textContent=fmtNum(total)+' entri terbaca';
   $('dashNotificationStatus').textContent=(nr.notifications||[]).length+' notifikasi tersedia';
+  // Audit dasar selalu jalan tanpa OpenAI; AI analyzer tetap opsional.
+  runCatalogHealth();
   const ns=Array.isArray(nr.notifications)?nr.notifications:[];
   $('dashNotifCount').textContent=ns.length+' notifikasi';
   $('dashNotifications').innerHTML=ns.slice(0,8).map(n=>'<div class="dashItem"><div class="dashIcon">'+esc(n.icon||'•')+'</div><div><b>'+esc(n.title||'Notifikasi')+'</b><div>'+esc(n.text||'')+'</div><small>'+esc(n.time||'')+'</small></div></div>').join('')||'<div class="muted">Tidak ada notifikasi.</div>';
