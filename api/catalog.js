@@ -107,6 +107,12 @@ export default async function handler(req,res){
         const loc=BASE_URL+'/'+type+'/'+hashStable(title,type,link)+'/'+slugify(clean);
         if(!seen.has(loc)){seen.add(loc);urls.push({loc,changefreq:'weekly',priority:'0.8'})}
       }
+      const sitemapText=urls.map(u=>u.loc).join('\n')+'\n';
+      if(String(req.query?.format||'').toLowerCase()==='sitemap-text'){
+        res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+        res.setHeader('Content-Type','text/plain; charset=utf-8');
+        return res.status(200).send(sitemapText);
+      }
       const xml='<?xml version="1.0" encoding="UTF-8"?>\n'+
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+
         urls.map(u=>'  <url><loc>'+xmlEscape(u.loc)+'</loc><changefreq>'+u.changefreq+'</changefreq><priority>'+u.priority+'</priority></url>').join('\n')+
