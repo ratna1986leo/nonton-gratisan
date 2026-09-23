@@ -901,11 +901,11 @@ function addSaweriaDonation(d){const item={donator:d?.donator||d?.name||'Penduku
 async function loadSaweriaMilestone(){
  try{
   const key=$('key')?.value.trim();if(!key)return;
-  const r=await fetch('/api/nova-notifications',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'saweria',startDate:saweriaToday()})});
+  const r=await fetch('/api/nova-notifications',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'saweria'})});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Progress Saweria gagal dimuat');
   const p=Number(d.progress)||0;
   $('saweriaProgressValue').textContent=fmtRupiah(p);
-  $('saweriaProgressDate').textContent='Mulai '+saweriaToday();
+  $('saweriaProgressDate').textContent='Mulai '+String(d.startDate||saweriaToday());
   $('saweriaProgressStatus').textContent='Data Saweria terhubung';
   $('saweriaProgressBar').style.width=Math.min(100,Math.max(0,(p>0?100:0)))+'%';
  }catch(e){
