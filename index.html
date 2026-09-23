@@ -10,7 +10,6 @@
     <title>NontonGratisan - Nonton Film Sub Indo Gratis</title>
     
     <meta name="description" content="NontonGratisan menyediakan informasi film dan series subtitle Indonesia, lengkap dengan detail, rating, genre, dan pilihan tontonan.">
-    <meta name="keywords" content="reviewfilm21, lk21, nonton film gratis, bioskop21, streaming film sub indo, drakor sub indo, anime sub indo, smart tv streaming, pustaka film, seni wayang, ludruk, ketoprak">
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
     <meta name="author" content="NontonGratisan">
     <meta name="format-detection" content="telephone=no">
@@ -55,7 +54,7 @@
         "description": "Nonton film bioskop, drama korea, anime, dan TV series subtitle Indonesia gratis dengan pemutar multi-server cepat dan jernih.",
         "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://nonton-gratisan.vercel.app/?q={search_term_string}",
+            "target": "https://nonton-gratisan.vercel.app/search?q={search_term_string}",
             "query-input": "required name=search_term_string"
         },
         "inLanguage": "id-ID"
@@ -2422,9 +2421,7 @@
             const descriptionSource = item?.overview ? String(item.overview).replace(/\s+/g, ' ').trim() : fallbackDescription;
             const description = descriptionSource.slice(0, 155).replace(/\s+\S*$/, '').trim() || fallbackDescription.slice(0, 155);
 
-            const metaKeywords = item?.genre
-                ? `${cleanTitle}, ${mediaLabel.toLowerCase()}, ${String(item.genre).replace(/[|]/g, ', ')}, subtitle Indonesia, NontonGratisan`
-                : `${cleanTitle}, ${mediaLabel.toLowerCase()}, subtitle Indonesia, NontonGratisan`;
+
             const imageUrl = item?.poster_path ? getOptimizedImage(item.poster_path, 500) : 'https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg';
 
             document.title = title;
@@ -2434,9 +2431,6 @@
 
             const metaDesc = document.querySelector('meta[name="description"]');
             if (metaDesc) metaDesc.content = description;
-
-            const metaKeywordsNode = document.querySelector('meta[name="keywords"]');
-            if (metaKeywordsNode) metaKeywordsNode.content = metaKeywords;
 
             const robots = document.querySelector('meta[name="robots"]');
             if (robots) robots.content = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
@@ -2497,22 +2491,8 @@
                     inLanguage: 'id-ID',
                     isAccessibleForFree: true,
                     genre: genres,
-                    ...(year ? { dateCreated: `${year}-01-01` } : {}),
-                    ...(item?.rating ? {
-                        aggregateRating: {
-                            '@type': 'AggregateRating',
-                            ratingValue: String(item.rating),
-                            bestRating: '10',
-                            worstRating: '0',
-                            ratingCount: '1'
-                        }
-                    } : {}),
                     ...(cast.length ? { actor: cast } : {})
                 };
-
-                if (safeType === 'movie' && year) {
-                    data.datePublished = `${year}-01-01`;
-                }
 
                 const breadcrumbNode = document.getElementById('breadcrumb-jsonld');
                 if (breadcrumbNode) {
