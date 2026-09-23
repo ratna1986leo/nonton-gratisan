@@ -346,6 +346,8 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 /* Easy Admin Key access */
 .novaHeaderRight{display:flex;align-items:center;gap:10px}.adminKeyLauncher{height:32px;padding:0 10px;border:1px solid #27445f;border-radius:8px;background:#0b1928;color:#cfe2f3;font-size:9px;cursor:pointer}.adminKeyLauncher:hover{background:#11283d;border-color:#356082}.adminKeyLauncher.ready{border-color:#1f8f6a;color:#8ef0c7;background:#0b241d}.adminKeyModal{display:none;position:fixed;inset:0;z-index:300}.adminKeyModal.open{display:block}.adminKeyBackdrop{position:absolute;inset:0;background:rgba(1,7,13,.65);backdrop-filter:blur(3px)}.adminKeyDialog{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:min(430px,calc(100% - 28px));padding:18px;border:1px solid #27445f;border-radius:15px;background:linear-gradient(180deg,#0b1b2b,#081522);box-shadow:0 24px 80px rgba(0,0,0,.45);color:#eaf4ff}.adminKeyDialogHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}.adminKeyDialogHead>div{display:flex;gap:10px;align-items:flex-start}.adminKeyDialog h3{margin:0;font-size:16px}.adminKeyDialog p{margin:4px 0 0;color:#7e98b1;font-size:9px}.adminKeyIcon{width:32px;height:32px;display:grid;place-items:center;border-radius:9px;background:#122b45}.adminKeyClose{width:30px;height:30px;border:1px solid #23415d;border-radius:8px;background:#0d1b2a;color:#9bb2c7;font-size:18px}.adminKeyDialog label{display:block;font-size:9px;color:#89a0b8;margin-bottom:6px}.adminKeyInputWrap{display:flex;gap:7px}.adminKeyInputWrap input{flex:1;min-width:0;height:40px;border:1px solid #294966;border-radius:9px;background:#07121e;color:#eff7ff;padding:0 10px;outline:0}.adminKeyInputWrap input:focus{border-color:#5b8fc0;box-shadow:0 0 0 3px rgba(91,143,192,.12)}.adminKeyInputWrap button{height:40px;padding:0 10px;border:1px solid #294966;border-radius:9px;background:#0c1d2d;color:#9fb4c8;font-size:9px}.adminKeyHint{display:flex;gap:6px;align-items:center;margin-top:8px;color:#66819a;font-size:8px}.adminKeyHint span{color:#38d69f}.adminKeyActions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}.adminKeySecondary,.adminKeyPrimary{height:36px;padding:0 12px;border-radius:8px;font-size:9px}.adminKeySecondary{border:1px solid #27445f;background:#0c1b2a;color:#9bb2c7}.adminKeyPrimary{border:1px solid #596eff;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff}.adminKeyStatus{min-height:15px;margin-top:8px;font-size:8px;color:#91a8bd}.adminKeyStatus.ok{color:#58dfad}.adminKeyStatus.err{color:#ff8b8b}
 @media(max-width:700px){.novaHeaderRight{gap:6px}.adminKeyLauncher{padding:0 8px}.adminKeyLauncher span{display:none}.adminKeyDialog{padding:15px}}
+
+.dashBarRow:nth-child(4)>div i{background:linear-gradient(90deg,#f59e0b,#f97316)}.dashInfoNotice{padding:12px;border:1px solid rgba(245,158,11,.30);border-radius:9px;background:rgba(120,65,5,.12);color:#d8a85a;font-size:10px;line-height:1.5}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
@@ -469,9 +471,9 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
           <div class="dashMetric"><span>Total Pustaka</span><strong id="dashTotal">—</strong><small>seluruh entri aktif</small></div>
           <div class="dashMetric dashMetricGood"><span>Playable</span><strong id="dashPlayable">—</strong><small id="dashPlayablePct">—</small></div>
           <div class="dashMetric dashMetricWarn"><span>Tanpa Link</span><strong id="dashUnplayable">—</strong><small>perlu dilengkapi</small></div>
-          <div class="dashMetric"><span>Duplicate</span><strong id="dashDuplicate">—</strong><small>title + tahun</small></div>
           <div class="dashMetric"><span>Film</span><strong id="dashMovies">—</strong><small>kategori film</small></div>
           <div class="dashMetric"><span>Series</span><strong id="dashSeries">—</strong><small>kategori series</small></div>
+          <div class="dashMetric"><span>Bioskop</span><strong id="dashBioskop">—</strong><small>kategori bioskop</small></div>
         </div>
 
         <div class="dashGridMain">
@@ -480,6 +482,7 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
             <div class="dashBars">
               <div class="dashBarRow"><span>Film</span><div><i id="dashFilmBar" style="width:0%"></i></div><b id="dashFilmCount">—</b></div>
               <div class="dashBarRow"><span>Series</span><div><i id="dashSeriesBar" style="width:0%"></i></div><b id="dashSeriesCount">—</b></div>
+              <div class="dashBarRow"><span>Bioskop</span><div><i id="dashBioskopBar" style="width:0%"></i></div><b id="dashBioskopCount">—</b></div>
               <div class="dashBarRow"><span>Playable</span><div><i id="dashPlayableBar" style="width:0%"></i></div><b id="dashPlayableBarLabel">—</b></div>
             </div>
             <div class="dashFootNote">Angka diambil langsung dari Google Sheet melalui endpoint katalog.</div>
@@ -890,8 +893,8 @@ async function loadDashboard(){
   if(!catalogResp.ok||cr.error)throw new Error(cr.error||'Katalog gagal dimuat');
   if(!notifResp.ok||nr.error)throw new Error(nr.error||'Notifikasi gagal dimuat');
   const s=cr.stats||{};
-  const total=Number(s.total)||0, playable=Number(s.playable)||0, unplayable=Number(s.unplayable)||0, movies=Number(s.movies)||0, series=Number(s.series)||0;
-  const max=Math.max(movies,series,1);
+  const total=Number(s.total)||0, playable=Number(s.playable)||0, unplayable=Number(s.unplayable)||0, movies=Number(s.movies)||0, series=Number(s.series)||0, bioskop=Number(s.bioskop)||0;
+  const max=Math.max(movies,series,bioskop,1);
   const playablePct=total?Math.round((playable/total)*100):0;
   $('dashTotal').textContent=fmtNum(total);
   $('dashPlayable').textContent=fmtNum(playable);
@@ -899,12 +902,15 @@ async function loadDashboard(){
   $('dashDuplicate').textContent=fmtNum(s.duplicates);
   $('dashMovies').textContent=fmtNum(movies);
   $('dashSeries').textContent=fmtNum(series);
+  $('dashBioskop').textContent=fmtNum(bioskop);
   $('dashPlayablePct').textContent=playablePct+'% dari pustaka';
   $('dashFilmBar').style.width=Math.round((movies/max)*100)+'%';
   $('dashSeriesBar').style.width=Math.round((series/max)*100)+'%';
+  $('dashBioskopBar').style.width=Math.round((bioskop/max)*100)+'%';
   $('dashPlayableBar').style.width=playablePct+'%';
   $('dashFilmCount').textContent=fmtNum(movies);
   $('dashSeriesCount').textContent=fmtNum(series);
+  $('dashBioskopCount').textContent=fmtNum(bioskop);
   $('dashPlayableBarLabel').textContent=playablePct+'%';
   $('dashCatalogStatus').textContent=fmtNum(total)+' entri terbaca';
   $('dashNotificationStatus').textContent=(nr.notifications||[]).length+' notifikasi tersedia';
@@ -934,7 +940,15 @@ async function runCatalogAI(){
  box.textContent='NOVA sedang menganalisis katalog...';
  try{
   const r=await fetch('/api/nova-catalog-analyze',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({})});
-  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Analisis NOVA gagal');
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok){
+    const msg=String(d.error||'Analisis NOVA gagal');
+    const credit=/credits remaining|billing|insufficient|quota/i.test(msg);
+    box.innerHTML=credit
+      ? '<div class="dashInfoNotice">ℹ️ Analisis AI belum tersedia karena credit OpenAI habis. <b>Cek Kesehatan Katalog</b> tetap bisa digunakan karena audit dasar berjalan tanpa AI.</div>'
+      : '<div class="statusErr">Error: '+esc(msg)+'</div>';
+    return;
+  }
   box.innerHTML='<div class="healthPreview"><pre>'+esc(String(d.analysis||''))+'</pre></div>';
  }catch(e){box.innerHTML='<div class="statusErr">Error: '+esc(e.message)+'</div>'}
 }
