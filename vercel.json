@@ -13,6 +13,10 @@
       "destination": "/api/catalog?format=sitemap"
     },
     {
+      "source": "/sitemap-bing.txt",
+      "destination": "/api/catalog?format=sitemap-text"
+    },
+    {
       "source": "/sitemap-yandex.xml",
       "destination": "/api/catalog?format=sitemap"
     },
