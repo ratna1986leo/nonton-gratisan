@@ -41,7 +41,7 @@ async function sheetsAppend(values){
   const r=await authClient.request({url,method:'POST',headers:{'Content-Type':'application/json'},data:{majorDimension:'ROWS',values:[values]}});
   return r.data;
 }
-async function tmdbLookup(title,year=''){
+async function tmdbLookup(title,year='',tmdbId=''){
   if(!TMDB_API_KEY)throw new Error('TMDB_API_KEY belum disetel di Vercel');
   const u='https://api.themoviedb.org/3/search/multi?api_key='+encodeURIComponent(TMDB_API_KEY)+'&language=id-ID&query='+encodeURIComponent(title)+'&include_adult=false';
   const r=await fetch(u,{headers:{accept:'application/json'}}),j=await r.json();
@@ -49,10 +49,13 @@ async function tmdbLookup(title,year=''){
   const results=(j.results||[]).filter(x=>x.media_type==='movie'||x.media_type==='tv');
   const wanted=String(year||'').trim();
   const getYear=x=>String((x.media_type==='tv'?x.first_air_date:x.release_date)||'').slice(0,4);
+  const requestedId=String(tmdbId||'').trim();
   const ranked=results.slice().sort((a,b)=>{
     const ay=getYear(a),by=getYear(b);
+    const aId=requestedId && String(a.id)===requestedId ? 2 : 0;
+    const bId=requestedId && String(b.id)===requestedId ? 2 : 0;
     const am=wanted&&ay===wanted?1:0,bm=wanted&&by===wanted?1:0;
-    return bm-am;
+    return (bId+bm)-(aId+am);
   });
   const item=ranked[0];
   if(!item)throw new Error('Film/series tidak ditemukan di TMDB');
@@ -102,14 +105,44 @@ export default async function handler(req,res){
     const action=String(req.body?.action||'preview').trim();
     const title=String(req.body?.title||'').trim();
     const year=String(req.body?.year||'').trim();
+    const requestedTMDBId=String(req.body?.tmdbId||'').trim();
     if(!title)return res.status(400).json({error:'Judul film wajib diisi'});
-    const lookup=await tmdbLookup(title,year); const data=lookup.data;
+    const lookup=await tmdbLookup(title,year,requestedTMDBId); const data=lookup.data;
     const authorizedDomains=String(process.env.AUTHORIZED_EMBED_DOMAINS||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
-    if(action==='preview')return res.status(200).json({ok:true,readOnly:true,data,candidates:lookup.candidates,authorizedDomains});
+    if(action==='preview')return res.status(200).json({ok:true,readOnly:true,data,candidates:lookup.candidates,authorizedDomains,selectedTMDBId:requestedTMDBId||String(data.tmdbId||'')});
     if(action!=='save')return res.status(400).json({error:'Action tidak dikenal'});
     const headers=await sheetsGet('1:1');
     if(!headers.length)throw new Error('Header Google Sheet tidak ditemukan');
-    const row=mapRow(parseHeaders(headers),data);
+    const headerRow=parseHeaders(headers);
+    const findHeader=(...names)=>headerRow.find(h=>names.includes(norm(h)));
+    const existing=await sheetsGet(SHEET_RANGE);
+    const titleHeader=findHeader('judul','title','name');
+    const yearHeader=findHeader('tahun','year');
+    const typeHeader=findHeader('tipe','type','jenis');
+    const canonical=(value)=>String(value||'').toLowerCase().replace(/^nonton\\s*/i,'').replace(/\\[\\s*\\d{4}\\s*\\]/g,'').replace(/sub\\s*indo(?:nesia)?/gi,'').replace(/[^a-z0-9]+/gi,'').trim();
+    const newTitleKey=canonical(data.judul);
+    const newYear=String(data.tahun||'').trim();
+    if(titleHeader && existing.length>1){
+      for(let i=1;i<existing.length;i++){
+        const rowObj=Object.fromEntries(headerRow.map((h,j)=>[h,String(existing[i]?.[j]??'').trim()]));
+        const sameTitle=canonical(rowObj[titleHeader])===newTitleKey;
+        const sameYear=!newYear||!yearHeader||!rowObj[yearHeader]||String(rowObj[yearHeader]).trim()===newYear;
+        if(sameTitle&&sameYear){
+          return res.status(409).json({
+            ok:false,
+            duplicate:true,
+            rowNumber:i+1,
+            existing:{
+              judul:rowObj[titleHeader]||'',
+              tahun:yearHeader?rowObj[yearHeader]||'':'',
+              tipe:typeHeader?rowObj[typeHeader]||'':''
+            },
+            error:'Film/series dengan judul dan tahun yang sama sudah ada di Google Sheet.'
+          });
+        }
+      }
+    }
+    const row=mapRow(headerRow,data);
     if(!row.some(Boolean))throw new Error('Kolom Google Sheet tidak cocok dengan field film');
     const saved=await sheetsAppend(row);
     // Notifikasi push tidak boleh menggagalkan proses simpan film.
