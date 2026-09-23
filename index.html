@@ -744,7 +744,6 @@
                     <a href="/" onclick="event.preventDefault(); navigateTo('home')" id="nav-home" class="focusable px-3 py-2 rounded-lg text-white bg-zinc-800/80 hover:text-brand-500 transition-colors focus:outline-none">Beranda</a>
                     <a href="/movies" onclick="event.preventDefault(); navigateTo('movies')" id="nav-movies" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors focus:outline-none">Film Bioskop</a>
                     <a href="/tv" onclick="event.preventDefault(); navigateTo('tv')" id="nav-tv" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors focus:outline-none">TV Series</a>
-                    <a href="/search" id="nav-search" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors focus:outline-none">🔎 Cari</a>
                     
                     <div class="relative dropdown" id="desktop-dropdown">
                         <button onclick="toggleDesktopDropdown()" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors flex items-center gap-1 focus:outline-none">
@@ -1059,11 +1058,27 @@
                 </div>
             </div>
 
-            <div class="bg-zinc-900/70 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3" aria-label="Dukung NontonGratisan">
-                <div>
-                    <p class="text-xs sm:text-sm font-bold text-white">❤️ Dukung NontonGratisan</p>
-                    <p class="text-[10px] sm:text-xs text-zinc-400 mt-1">Kalau situs ini membantu kamu, dukunganmu membantu pengembangan fitur dan server.</p>
+            <div class="bg-zinc-900/70 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-4" aria-label="Dukung NontonGratisan">
+                <div class="flex items-center gap-3 min-w-0">
+                    <a href="https://saweria.co/Riviewfilm21" target="_blank" rel="noopener noreferrer" aria-label="Buka QRIS Saweria" class="shrink-0 rounded-xl bg-white p-2 border border-zinc-700 hover:border-brand-500 transition-colors shadow-lg">
+                        <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASgAAAEoAQAAAADDfFG0AAABg0lEQVR42u2ZwW7EMBBCoer///LrYcaOk7WjHluJHHaTiBNiMEyMfnF9Kaigggrqr6G+Jcl1jyzmI/Nt+HrwJZo1LCMks7wNX0++ZAkNeWFwPRdn4euAwitx8a+jvi7GSlSO37/y1XJyMWXqn/C158tzHhEu19cisvA1Lq9G5aLMxMnf81dlLXDnLtOTmfNxh6r0QGsMmR7G9rHwdZ9Hl2ld/m5KdGQet/rCSCDZlvuYtOT2/PB1QxUpvgqjhQHGcRC+nnnVnVR7Lj0DmNO3P/1rEjS2Ek2Xcz5uUX0+olpLgC2QIf61mccxivO+M2v0dcoTHbqWss0a9sPXHQXuXC8k4JIW0dcGZdnYvVF10cW0//D1iWIuKerWvgJr+DrsJzp/udx/Nu7wdd9PtLDG0qv7ENlPHPL95VstrQ73yfeHPtTLCWoTbdFtMv3x0B+n15eoRnlMnnjlq7+mlZEtAgtfDxQwf9vNulFmHrd9qBLYWEl3d8z37ff8lUkLKqig/hHqB3OSuUoBtuD6AAAAAElFTkSuQmCC" alt="QRIS Saweria NontonGratisan" class="w-24 h-24 sm:w-28 sm:h-28 object-contain rounded-lg" loading="lazy">
+                    </a>
+                    <div class="min-w-0">
+                        <p class="text-xs sm:text-sm font-bold text-white">❤️ Dukung NontonGratisan via Saweria</p>
+                        <p class="text-[10px] sm:text-xs text-zinc-400 mt-1 leading-relaxed">Scan QRIS untuk memberikan dukungan. Dana dukungan membantu pengembangan fitur dan server.</p>
+                        <p class="text-[9px] sm:text-[10px] text-zinc-500 mt-1">Tap QRIS untuk membuka halaman Saweria.</p>
+                    </div>
                 </div>
+                <div class="flex flex-wrap gap-2 shrink-0">
+                    <a href="https://saweria.co/Riviewfilm21" target="_blank" rel="noopener noreferrer"
+                       class="bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg sm:rounded-xl transition-colors">
+                        Dukung via Saweria
+                    </a>
+                    <a href="/dukung.html" class="bg-zinc-800 hover:bg-zinc-700 text-zinc-200 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-lg sm:rounded-xl transition-colors">
+                        Buka QRIS
+                    </a>
+                </div>
+            </div>
                 <a href="https://saweria.co/Riviewfilm21" target="_blank" rel="noopener noreferrer"
                    class="shrink-0 bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-lg sm:rounded-xl transition-colors">
                     Dukung via Saweria
@@ -1087,6 +1102,10 @@
                     <div>
                         <h4 class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Sinopsis Ringkas:</h4>
                         <p id="detail-overview" class="text-xs sm:text-sm text-zinc-300 leading-relaxed max-h-28 sm:max-h-36 overflow-y-auto pr-2">Deskripsi film...</p>
+                    </div>
+                    <div id="detail-actors-wrap" class="hidden">
+                        <h4 class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Pemeran / Aktor:</h4>
+                        <p id="detail-actors" class="text-xs sm:text-sm text-zinc-300 leading-relaxed max-h-20 sm:max-h-24 overflow-y-auto pr-2"></p>
                     </div>
 
                     <div id="watch-providers-section" class="hidden space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 sm:p-4">
@@ -1792,9 +1811,9 @@
                     type: isSeries ? 'tv' : 'movie',
                     rating: rating.toFixed(1), year,
                     genre: item.Genre || (isSeries ? 'TV Series' : 'Movie'),
-                    overview: item.Deskripsi || 'Tidak ada deskripsi tersedia.',
+                    overview: item.Deskripsi || item.DESKRIPSI || item.deskripsi || item.Description || item.description || 'Tidak ada deskripsi tersedia.',
                     poster_path: poster, backdrop_path: poster,
-                    link: item.Link || '', actors: item.Aktor || '',
+                    link: item.Link || item.LINK || item.link || '', actors: item.Aktor || item.AKTOR || item.aktor || item.Actors || item.actors || '',
                     isLibraryItem: true, popularity: 0,
                     libraryEpisodes: isSeries ? getLibraryEpisodes(title, libraryData) : []
                 };
@@ -2541,9 +2560,9 @@
             if (!match) return item;
 
             const link = match.Link || match.link || match.playerLink || match.playerUrl || match.player_url || '';
-            const description = match.Deskripsi || match.deskripsi || match.Description || match.description || '';
-            const actors = match.Aktor || match.aktor || match.Actors || match.actors || '';
-            const genre = match.Genre || match.genre || '';
+            const description = match.Deskripsi || match.DESKRIPSI || match.deskripsi || match.Description || match.description || '';
+            const actors = match.Aktor || match.AKTOR || match.aktor || match.Actors || match.actors || '';
+            const genre = match.Genre || match.GENRE || match.genre || '';
             const sheetRating = match.Rating || match.rating || '';
             const sheetYear = match.Tahun || match.tahun || match.Year || match.year || '';
 
@@ -2813,6 +2832,11 @@
             document.getElementById('detail-year').textContent = item.year;
             document.getElementById('detail-genres').textContent = item.genre || 'Pustaka Film';
             document.getElementById('detail-overview').textContent = item.overview || 'Tidak ada deskripsi tersedia.';
+            const actorWrap = document.getElementById('detail-actors-wrap');
+            const actorEl = document.getElementById('detail-actors');
+            const actorText = String(item.actors || item.Aktor || '').trim();
+            if (actorEl) actorEl.textContent = actorText;
+            if (actorWrap) actorWrap.classList.toggle('hidden', !actorText);
             document.getElementById('detail-poster').src = getOptimizedImage(item.poster_path, 500);
             renderRelatedLinks(item);
             updateDetailFavoriteButton();
@@ -3056,6 +3080,14 @@
             if (currentEpisode) {
                 const cleanedTitle = currentEpisode.Judul.replace(/^Nonton\s*/i, '').replace(/Sub\s*Indo(?:nesia)?/i, '').trim();
                 document.getElementById('detail-title').textContent = cleanedTitle;
+                const epDescription = currentEpisode.Deskripsi || currentEpisode.DESKRIPSI || currentEpisode.deskripsi || currentEpisode.Description || currentEpisode.description || '';
+                const epActors = currentEpisode.Aktor || currentEpisode.AKTOR || currentEpisode.aktor || currentEpisode.Actors || currentEpisode.actors || '';
+                const overviewEl = document.getElementById('detail-overview');
+                const actorWrap = document.getElementById('detail-actors-wrap');
+                const actorEl = document.getElementById('detail-actors');
+                if (overviewEl) overviewEl.textContent = epDescription || 'Tidak ada deskripsi tersedia.';
+                if (actorEl) actorEl.textContent = epActors;
+                if (actorWrap) actorWrap.classList.toggle('hidden', !String(epActors).trim());
             }
         }
 
