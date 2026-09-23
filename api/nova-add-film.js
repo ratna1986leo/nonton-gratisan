@@ -168,14 +168,26 @@ export default async function handler(req,res){
     const titleHeader=findHeader('judul','title','name');
     const yearHeader=findHeader('tahun','year');
     const typeHeader=findHeader('tipe','type','jenis');
-    const canonical=(value)=>String(value||'').toLowerCase().replace(/^nonton\\s*/i,'').replace(/\\[\\s*\\d{4}\\s*\\]/g,'').replace(/sub\\s*indo(?:nesia)?/gi,'').replace(/[^a-z0-9]+/gi,'').trim();
+    const canonical=(value)=>String(value||'')
+      .normalize('NFKD')
+      .replace(/[\\u0300-\\u036f]/g,'')
+      .toLowerCase()
+      .replace(/^nonton\\s*/i,'')
+      .replace(/\\[\\s*\\d{4}\\s*\\]/g,'')
+      .replace(/sub\\s*indo(?:nesia)?/gi,'')
+      .replace(/[^a-z0-9]+/g,'')
+      .trim();
     const newTitleKey=canonical(data.judul);
     const newYear=String(data.tahun||'').trim();
     if(titleHeader && existing.length>1){
       for(let i=1;i<existing.length;i++){
         const rowObj=Object.fromEntries(headerRow.map((h,j)=>[h,String(existing[i]?.[j]??'').trim()]));
-        const sameTitle=canonical(rowObj[titleHeader])===newTitleKey;
-        const sameYear=!newYear||!yearHeader||!rowObj[yearHeader]||String(rowObj[yearHeader]).trim()===newYear;
+        const existingTitleKey=canonical(rowObj[titleHeader]);
+        const existingYear=yearHeader?String(rowObj[yearHeader]||'').trim():'';
+        const sameTitle=Boolean(newTitleKey)&&existingTitleKey===newTitleKey;
+        // Karena fitur ini memang mendeteksi judul + tahun, tahun kosong TIDAK
+        // boleh dianggap sama dengan tahun baru. Ini mencegah false duplicate.
+        const sameYear=Boolean(yearHeader&&newYear&&existingYear&&existingYear===newYear);
         if(sameTitle&&sameYear){
           return res.status(409).json({
             ok:false,
@@ -183,7 +195,7 @@ export default async function handler(req,res){
             rowNumber:i+1,
             existing:{
               judul:rowObj[titleHeader]||'',
-              tahun:yearHeader?rowObj[yearHeader]||'':'',
+              tahun:existingYear,
               tipe:typeHeader?rowObj[typeHeader]||'':''
             },
             error:'Film/series dengan judul dan tahun yang sama sudah ada di Google Sheet.'
