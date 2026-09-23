@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#09090b">
+  <meta name="robots" content="index,follow">
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <title>Pencarian Film & Series - NontonGratisan</title>
+  <meta id="meta-description" name="description" content="Cari film dan series di NontonGratisan dari katalog TMDB dan Pustaka.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html{background:#09090b}
+    body{margin:0;background:#09090b;color:#f4f4f5;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    .card{transition:transform .2s ease,box-shadow .2s ease}
+    .card:hover{transform:translateY(-3px);box-shadow:0 12px 30px rgba(0,0,0,.35)}
+    .poster{aspect-ratio:2/3;background:#18181b}
+    .poster img{width:100%;height:100%;object-fit:cover}
+    .spinner{width:34px;height:34px;border:3px solid #27272a;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+</head>
+<body class="min-h-screen">
+  <header class="sticky top-0 z-30 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 sm:py-4 flex items-center gap-3">
+      <a href="/" class="shrink-0 flex items-center gap-2 text-white font-black">
+        <span class="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center">▶</span>
+        <span>Nonton<span class="text-blue-400">Gratisan</span></span>
+      </a>
+      <form id="search-form" class="flex-1 flex gap-2" autocomplete="off">
+        <input id="search-input" class="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm text-white outline-none focus:border-blue-500" placeholder="Cari judul film atau series..." aria-label="Cari film atau series">
+        <button class="px-4 sm:px-5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm" type="submit">Cari</button>
+      </form>
+      <a href="/" class="hidden sm:inline-flex text-xs text-zinc-400 hover:text-white">Beranda</a>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 py-5 sm:py-8">
+    <div class="flex items-end justify-between gap-3 mb-5">
+      <div>
+        <p class="text-[11px] uppercase tracking-[.18em] text-blue-400 font-bold">Pencarian</p>
+        <h1 class="text-xl sm:text-2xl font-black text-white mt-1">Cari Film & Series</h1>
+        <p id="search-meta" class="text-xs sm:text-sm text-zinc-500 mt-1">Masukkan judul lalu tekan Cari.</p>
+      </div>
+      <select id="type-filter" class="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-300">
+        <option value="all">Semua</option>
+        <option value="movie">Film</option>
+        <option value="tv">Series</option>
+      </select>
+    </div>
+
+    <div id="status" class="hidden py-12 flex-col items-center justify-center gap-3 text-zinc-500">
+      <div class="spinner"></div><span>Mencari...</span>
+    </div>
+
+    <div id="results" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4"></div>
+    <div id="empty" class="hidden text-center py-16">
+      <div class="text-5xl mb-3">🔎</div>
+      <h2 class="font-bold text-white">Tidak ada hasil</h2>
+      <p class="text-sm text-zinc-500 mt-1">Coba judul lain atau kata kunci yang lebih pendek.</p>
+    </div>
+  </main>
+
+<script>
+(function(){
+  const input=document.getElementById('search-input');
+  const form=document.getElementById('search-form');
+  const typeFilter=document.getElementById('type-filter');
+  const results=document.getElementById('results');
+  const status=document.getElementById('status');
+  const empty=document.getElementById('empty');
+  const meta=document.getElementById('search-meta');
+  const params=new URLSearchParams(location.search);
+  let currentResults=[];
+
+  const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+  const slugify=s=>String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+  const hashStable=(title,type,link)=>{
+    const source=`${type||'movie'}|${String(title||'').trim().toLowerCase()}|${String(link||'').trim()}`;
+    let hash=2166136261;
+    for(let i=0;i<source.length;i++){hash^=source.charCodeAt(i);hash=Math.imul(hash,16777619)}
+    return Math.abs(hash>>>0)||1;
+  };
+  const isSeries=row=>{
+    const title=String(row.Judul||'').toLowerCase(),genre=String(row.Genre||'').toLowerCase(),type=String(row.Tipe||row.Type||row.Jenis||'').toLowerCase();
+    return /series|tv|serial|drakor/.test(type) ||
+      /series|drakor|k-drama|k drama|drama korea|tv korea|tv asia|tv indonesia|tv barat|tv india/.test(genre) ||
+      /season|series|episode|\bep\b|\bbag(?:ian)?\s*\d+\b|\[\s*\d{1,3}\s*\]/i.test(title);
+  };
+  function normalizeTMDB(item,type){
+    const title=item.title||item.name||'Tanpa Judul';
+    const date=item.release_date||item.first_air_date||'';
+    return {
+      id:item.id,title,type,year:date.slice(0,4)||'',
+      rating:item.vote_average?Number(item.vote_average).toFixed(1):'N/A',
+      overview:item.overview||'',
+      poster:item.poster_path?'https://image.tmdb.org/t/p/w500'+item.poster_path:'',
+      genre:type==='tv'?'TV Series':'Film',
+      popularity:Number(item.popularity||0)
+    };
+  }
+  async function fetchJSON(url){
+    const u=new URL(url,location.origin);
+    const src=u.toString().startsWith(location.origin+'/api/tmdb')?u:null;
+    const r=await fetch(url,{cache:'no-store'});
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return r.json();
+  }
+  async function searchTMDB(q){
+    const reqs=[
+      fetchJSON('/api/tmdb?path=%2F3%2Fsearch%2Fmovie&language=id-ID&query='+encodeURIComponent(q)+'&page=1&include_adult=false'),
+      fetchJSON('/api/tmdb?path=%2F3%2Fsearch%2Ftv&language=id-ID&query='+encodeURIComponent(q)+'&page=1&include_adult=false')
+    ];
+    const out=[];
+    const settled=await Promise.allSettled(reqs);
+    settled.forEach((x,i)=>{
+      if(x.status==='fulfilled'&&Array.isArray(x.value?.results)){
+        const t=i===0?'movie':'tv';
+        x.value.results.forEach(v=>out.push(normalizeTMDB(v,t)));
+      }
+    });
+    return out;
+  }
+  async function searchLibrary(q){
+    try{
+      const r=await fetch('/api/catalog?ts='+Date.now(),{cache:'no-store'});
+      if(!r.ok)return [];
+      const csv=await r.text();
+      const rows=[];
+      let row=[],val='',quoted=false;
+      for(let i=0;i<csv.length;i++){
+        const c=csv[i],n=csv[i+1];
+        if(c==='"'){ if(quoted&&n==='"'){val+='"';i++}else quoted=!quoted; }
+        else if(c===','&&!quoted){row.push(val);val='';}
+        else if((c==='\n'||c==='\r')&&!quoted){if(c==='\r'&&n==='\n')i++;row.push(val);val='';if(row.some(v=>String(v).trim()!==''))rows.push(row);row=[];}
+        else val+=c;
+      }
+      row.push(val); if(row.some(v=>String(v).trim()!==''))rows.push(row);
+      if(rows.length<2)return [];
+      const headers=rows[0].map(h=>String(h).trim().replace(/^\uFEFF/,''));
+      return rows.slice(1).map(v=>{
+        const o={};headers.forEach((h,i)=>o[h]=String(v[i]??'').trim());return o;
+      }).filter(o=>{
+        const hay=[o.Judul,o.Genre,o.Aktor,o.Deskripsi].join(' ').toLowerCase();
+        return hay.includes(q.toLowerCase());
+      }).slice(0,40).map(o=>{
+        const type=isSeries(o)?'tv':'movie';
+        const title=o.Judul||'Tanpa Judul';
+        const display=title.replace(/^Nonton\s*/i,'').replace(/\[\s*\d{1,4}\s*\]/g,'').replace(/Ep(?:isode)?\s*\d+/gi,'').replace(/\bBag(?:ian)?\s*\d+\b/gi,'').replace(/Sub\s*Indo(?:nesia)?/gi,'').trim()||title;
+        return {
+          id:hashStable(title,type,o.Link||''),
+          title:display,type,
+          year:o.Tahun||'',
+          rating:o.Rating||'N/A',
+          overview:o.Deskripsi||'',
+          poster:o.Poster||'',
+          genre:o.Genre||(type==='tv'?'TV Series':'Film'),
+          link:o.Link||'',
+          library:true,popularity:0
+        };
+      });
+    }catch(_){return []}
+  }
+  function render(){
+    const type=typeFilter.value;
+    const filtered=type==='all'?currentResults:currentResults.filter(x=>x.type===type);
+    results.innerHTML=filtered.map(item=>{
+      const href=item.library
+        ? '/'+item.type+'/'+encodeURIComponent(item.id)+'/'+slugify(item.title)
+        : '/'+item.type+'/'+encodeURIComponent(item.id)+'/'+slugify(item.title);
+      return '<a href="'+esc(href)+'" class="card bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden block">'+
+        '<div class="poster"><img src="'+esc(item.poster||'https://placehold.co/500x750/18181b/2563eb?text=NontonGratisan')+'" alt="Poster '+esc(item.title)+'" loading="lazy" onerror="this.src=\'https://placehold.co/500x750/18181b/2563eb?text=NontonGratisan\'"></div>'+
+        '<div class="p-3"><div class="flex items-center gap-2 text-[10px]"><span class="text-amber-400 font-bold">★ '+esc(item.rating)+'</span><span class="text-zinc-500">'+esc(item.year)+'</span></div>'+
+        '<h3 class="mt-1 text-xs sm:text-sm font-bold text-white line-clamp-2">'+esc(item.title)+'</h3>'+
+        '<p class="mt-1 text-[9px] text-zinc-500 uppercase tracking-wide">'+esc(item.type==='tv'?'Series':'Film')+(item.library?' • Pustaka':' • TMDB')+'</p></div></a>';
+    }).join('');
+    empty.classList.toggle('hidden',filtered.length!==0);
+    meta.textContent=filtered.length?`${filtered.length} hasil untuk “${input.value.trim()}”`:'Tidak ada hasil yang cocok.';
+  }
+  async function run(q){
+    q=(q||'').trim();
+    input.value=q;
+    if(!q){history.replaceState({},'', '/search'); results.innerHTML=''; empty.classList.add('hidden'); meta.textContent='Masukkan judul lalu tekan Cari.'; return;}
+    history.replaceState({},'', '/search?q='+encodeURIComponent(q));
+    status.classList.remove('hidden'); status.classList.add('flex'); empty.classList.add('hidden'); results.innerHTML='';
+    try{
+      const [tmdb,library]=await Promise.all([searchTMDB(q),searchLibrary(q)]);
+      const map=new Map();
+      [...tmdb,...library].forEach(x=>{
+        const key=x.type+'|'+x.title.toLowerCase()+'|'+(x.year||'');
+        if(!map.has(key))map.set(key,x);
+      });
+      currentResults=[...map.values()].sort((a,b)=>b.popularity-a.popularity);
+      render();
+    }finally{
+      status.classList.add('hidden'); status.classList.remove('flex');
+    }
+  }
+  form.addEventListener('submit',e=>{e.preventDefault();run(input.value)});
+  typeFilter.addEventListener('change',render);
+  run(params.get('q')||'');
+})();
+</script>
+</body>
+</html>
