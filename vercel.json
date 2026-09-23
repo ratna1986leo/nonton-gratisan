@@ -5,6 +5,10 @@
       "destination": "/api/nova-catalog-actions?mode=fix-preview"
     },
     {
+      "source": "/search",
+      "destination": "/search.html"
+    },
+    {
       "source": "/admin",
       "destination": "/admin.html"
     },
