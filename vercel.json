@@ -8,6 +8,14 @@
       "source": "/sitemap.xml",
       "destination": "/api/catalog?format=sitemap"
     },
+    {
+      "source": "/sitemap-bing.xml",
+      "destination": "/api/catalog?format=sitemap"
+    },
+    {
+      "source": "/sitemap-yandex.xml",
+      "destination": "/api/catalog?format=sitemap"
+    },
 
     {
       "source": "/search",
