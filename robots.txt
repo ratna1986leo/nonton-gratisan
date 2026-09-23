@@ -3,4 +3,5 @@ Allow: /
 
 Sitemap: https://nonton-gratisan.vercel.app/sitemap.xml
 Sitemap: https://nonton-gratisan.vercel.app/sitemap-bing.xml
+Sitemap: https://nonton-gratisan.vercel.app/sitemap-bing.txt
 Sitemap: https://nonton-gratisan.vercel.app/sitemap-yandex.xml
