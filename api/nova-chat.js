@@ -213,13 +213,36 @@ function offlineCatalogReply(message,catalog){
   const pool=titleTerms.length>=2 ? items : (typeWord?items.filter(x=>x.tipe===typeWord):items);
   const wantsCount=/\b(berapa|jumlah|total|ada berapa)\b/.test(m);
   const wantsPlayable=/\b(bisa diputar|bisa ditonton|playable|siap diputar)\b/.test(m);
-  if(wantsCount||/\bfilm\b.*\bseries\b|\bseries\b.*\bfilm\b|\bbioskop\b/.test(m)){
+  const wantsTitles=/\b(tampilkan|tampilkanlah|daftar|list|judul|judul-judul|judul_judul)\b/.test(m);
+  const asksFilm=/\b(film|movie)\b/.test(m);
+  const asksSeries=/\b(series|serial|tv|episode|season)\b/.test(m);
+  const asksBoth=asksFilm&&asksSeries;
+
+  // Permintaan "tampilkan judul" harus mengembalikan daftar judul dari katalog,
+  // bukan ringkasan jumlah. Untuk film+series, tampilkan keduanya terpisah.
+  if(wantsTitles && (asksFilm||asksSeries)){
+    const selected=asksBoth
+      ? items.filter(x=>x.tipe==='Film'||x.tipe==='Series')
+      : items.filter(x=>x.tipe===(asksFilm?'Film':'Series'));
+    if(!selected.length) return '📚 Belum ada judul yang cocok di pustaka.';
+    const filmList=selected.filter(x=>x.tipe==='Film');
+    const seriesList=selected.filter(x=>x.tipe==='Series');
+    const block=(label,list)=>list.length
+      ? label+' ('+list.length+'):\n'+list.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')).join('\\n')
+      : '';
+    return '📚 Judul di pustaka'+(asksBoth?' — Film & Series':'')+'\\n\\n'+[
+      block('🎬 Film',filmList),
+      block('📺 Series',seriesList)
+    ].filter(Boolean).join('\\n\\n');
+  }
+
+  if(wantsCount){
     return '📚 Pustaka saat ini: '+(cat.film||0)+' Film, '+(cat.series||0)+' Series, '+(cat.bioskop||0)+' Bioskop, total '+(catalog.total||0)+' entri. Yang tercatat punya Link/Player: '+(catalog.playable||0)+'.';
   }
   if(wantsPlayable){
-    const list=playable.filter(x=>!typeWant||x.tipe===typeWant).slice(0,12);
+    const list=playable.filter(x=>!typeWord||x.tipe===typeWord).slice(0,12);
     if(!list.length)return 'Belum ada data player yang cocok untuk kategori tersebut di pustaka.';
-    return '🎬 '+(typeWant||'Konten')+' yang tercatat playable, contoh: '+list.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')).join('; ')+'.';
+    return '🎬 '+(typeWord||'Konten')+' yang tercatat playable, contoh: '+list.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')).join('; ')+'.';
   }
   const clean=m.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ');
   const terms=clean.split(/\s+/).filter(x=>x.length>=3&&!stopWords.includes(x));
