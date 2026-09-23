@@ -310,7 +310,10 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 /* NOVA admin execution pass */
 .featureHead{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}.featureHead h2{margin:0 0 7px}.formGrid{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:12px;margin-top:14px}.formGrid label,.playerBox label{display:block;font-size:11px;color:#777;margin:0 0 6px}.formGrid input{width:100%;height:40px}.actionRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.actionRow.compact{margin-top:8px}.ghostBtn{height:38px;padding:0 13px;border:1px solid #d8d8dd;border-radius:8px;background:#fff;color:#444}.ghostBtn:hover{background:#f5f5f6}.candidateGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}.candidateCard{border:1px solid #e3e3e6;border-radius:10px;padding:10px;background:#fff;cursor:pointer}.candidateCard:hover{background:#fafafa}.candidateCard.selected{border-color:#202123;box-shadow:0 0 0 2px rgba(32,33,35,.06)}.candidateCard b{display:block;font-size:12px;line-height:1.35}.candidateMeta{font-size:10px;color:#777;margin-top:4px}.playerBox{margin-top:16px;padding:14px;border:1px solid #e5e5e8;border-radius:11px;background:#fafafa}.playerBoxHead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}.playerBoxHead small{display:block;color:#777;font-size:10px;margin-top:3px}.miniBadge{font-size:9px;color:#666;border:1px solid #ddd;border-radius:999px;padding:3px 7px;background:#fff}.playerBox textarea{width:100%;margin-top:10px;min-height:92px;resize:vertical;line-height:1.45}.playerResult{margin-top:9px;padding:9px 10px;border:1px dashed #d9d9de;border-radius:8px;background:#fff;word-break:break-all;font-size:11px}.playerUrl{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #ececef}.playerUrl:last-child{border-bottom:0}.playerUrl code{font-size:10px;word-break:break-all;color:#333}.playerUrl button{flex:0 0 auto}.tinyBtn{height:28px;padding:0 8px;border:1px solid #d8d8dc;border-radius:7px;background:#fff;color:#333;font-size:10px}.tinyBtn:hover{background:#f4f4f5}.chatLine{display:flex;gap:9px;margin:0 0 14px;align-items:flex-start}.chatLine.user{justify-content:flex-end}.chatBubble{max-width:min(820px,88%);padding:12px 14px;border-radius:12px;border:1px solid #ececef;background:#f7f7f8;color:#202123;line-height:1.6;font-size:13px;position:relative}.chatLine.user .chatBubble{background:#f1f1f3;border-color:#e2e2e5}.chatName{font-size:9px;color:#888;margin-bottom:4px}.chatActions{display:flex;justify-content:flex-end;margin-top:7px}.copyReply{height:26px;padding:0 8px;border:1px solid #ddd;border-radius:7px;background:#fff;color:#666;font-size:9px}.typingDots{display:inline-flex;gap:4px;align-items:center}.typingDots i{width:5px;height:5px;border-radius:50%;background:#777;animation:novaTyping 1s infinite ease-in-out}.typingDots i:nth-child(2){animation-delay:.14s}.typingDots i:nth-child(3){animation-delay:.28s}@keyframes novaTyping{0%,80%,100%{opacity:.25;transform:translateY(0)}40%{opacity:1;transform:translateY(-2px)}}.chatInput textarea{flex:1;min-height:40px;max-height:120px;border:0!important;outline:0;background:transparent;color:#202123;padding:9px 8px;resize:none;line-height:1.4}.chatInput{display:flex;align-items:flex-end;gap:8px}.chatInput .sendBtn{flex:0 0 34px}.statusOk{color:#087f5b}.statusWarn{color:#8a5a00}.statusErr{color:#b42318}
 @media(max-width:700px){.formGrid{grid-template-columns:1fr}.candidateGrid{grid-template-columns:1fr}.featureHead{display:block}.playerBox{padding:11px}.playerUrl{align-items:flex-start}.chatBubble{max-width:94%;font-size:12px}}
-</style></head>
+
+/* Dashboard */
+.dashGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}.dashStat{padding:13px;border:1px solid #e5e5e8;border-radius:10px;background:#fafafa}.dashStat span{display:block;font-size:10px;color:#888}.dashStat b{display:block;font-size:24px;margin-top:4px}.dashStat small{display:block;color:#888;font-size:9px;margin-top:4px}.dashTwo{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.dashPanel{border:1px solid #e5e5e8;border-radius:11px;padding:13px;background:#fff}.panelTitle{display:flex;justify-content:space-between;gap:10px;align-items:center;font-size:12px;border-bottom:1px solid #eee;padding-bottom:9px}.panelTitle small{font-size:9px;color:#888}.dashList{padding-top:8px}.dashItem{display:flex;gap:8px;padding:9px 0;border-bottom:1px solid #f0f0f0}.dashItem:last-child{border-bottom:0}.dashIcon{width:24px;text-align:center}.dashItem b{font-size:11px}.dashItem div div{font-size:10px;color:#666;line-height:1.4;margin-top:2px}.dashItem small{display:block;color:#999;font-size:8px;margin-top:3px}.healthChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.healthChips span{padding:6px 8px;border:1px solid #e5e5e8;border-radius:999px;background:#fafafa;font-size:9px}.healthPreview{max-height:340px;overflow:auto;border:1px solid #ededee;border-radius:8px;background:#fafafa}.healthPreview pre{white-space:pre-wrap;word-break:break-word;padding:10px;margin:0;font:10px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#444}
+@media(max-width:800px){.dashGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashTwo{grid-template-columns:1fr}}</style></head>
 <body class="novaApp">
 <div class="novaLayout">
   <aside class="novaSidebar" id="novaSidebar">
@@ -324,6 +327,7 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
     <div class="novaNavTitle">MENU</div>
     <nav class="novaSideNav">
       <button class="novaSideBtn active" data-view="chat"><span>⌕</span><b>Chat NOVA</b></button>
+      <button class="novaSideBtn" data-view="dashboard"><span>▦</span><b>Dashboard</b></button>
       <button class="novaSideBtn" data-view="film"><span>▣</span><b>Tambah Film</b></button>
       <button class="novaSideBtn" data-view="comments"><span>◌</span><b>Komentar</b></button>
     </nav>
@@ -400,6 +404,29 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
         </div>
       </div></div>
       <div class="novaStatusLine" id="status"></div>
+    </section>
+
+    <section class="novaView" id="view-dashboard">
+      <div class="novaFeatureCard">
+        <div class="featureHead">
+          <div><h2>📊 Dashboard NOVA</h2><p class="muted">Ringkasan pustaka, status player, notifikasi, dan audit katalog. Semua pemeriksaan di sini bersifat READ-ONLY.</p></div>
+          <button class="ghostBtn" id="refreshDashboard">↻ Refresh</button>
+        </div>
+        <div id="dashStats" class="dashGrid" style="margin-top:16px">
+          <div class="dashStat"><span>Total</span><b>—</b></div><div class="dashStat"><span>Playable</span><b>—</b></div><div class="dashStat"><span>Movies</span><b>—</b></div><div class="dashStat"><span>Series</span><b>—</b></div>
+        </div>
+        <div class="dashTwo">
+          <div class="dashPanel">
+            <div class="panelTitle"><b>🔔 Notification Center</b><small id="dashNotifCount">—</small></div>
+            <div id="dashNotifications" class="dashList">Belum dimuat.</div>
+          </div>
+          <div class="dashPanel">
+            <div class="panelTitle"><b>🩺 Catalog Health</b><small>READ-ONLY</small></div>
+            <div class="actionRow compact"><button class="action" id="runCatalogHealth">🔍 Cek Kesehatan Katalog</button><button class="ghostBtn" id="runCatalogAI">🤖 Analisis NOVA</button></div>
+            <div id="dashHealth" class="dashList">Belum diperiksa.</div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="novaView" id="view-film">
@@ -636,7 +663,7 @@ function renderAdminComments(){
  if(!filtered.length){box.innerHTML='<div class="muted">Tidak ada komentar yang cocok.</div>';return}
  box.innerHTML=filtered.map(x=>{
   const replied=String(x.reply||'').trim();
-  return '<div class="comment"><div><b>'+esc(x.name||'Anonim')+'</b><span class="badge">'+(replied?'Sudah dibalas':'Menunggu balasan')+'</span></div><div class="muted" style="margin-top:4px">'+esc(x.title||'')+' • '+esc(x.date||'')+'</div><div style="margin-top:8px;white-space:pre-wrap">'+esc(x.text||'')+'</div>'+(replied?'<div class="reply"><b>🤖 NOVA</b><div style="margin-top:5px;white-space:pre-wrap">'+esc(replied)+'</div></div>':'')+'</div>';
+  return '<div class="comment"><div><b>'+esc(x.name||'Anonim')+'</b><span class="badge">'+(replied?'Sudah dibalas':'Menunggu balasan')+'</span></div><div class="muted" style="margin-top:4px">'+esc(x.title||'')+' • '+esc(x.date||'')+'</div><div style="margin-top:8px;white-space:pre-wrap">'+esc(x.text||'')+'</div>'+(replied?'<div class="reply"><b>🤖 NOVA</b><div style="margin-top:5px;white-space:pre-wrap">'+esc(replied)+'</div></div>':'<div class="actionRow compact"><button class="tinyBtn replyWithNova" data-comment="'+esc(JSON.stringify(x))+'">🤖 Balas dengan NOVA</button></div>')+'</div>';
  }).join('');
 }
 async function loadHighlights(){
@@ -673,12 +700,13 @@ $('commentFilter')?.addEventListener('change',renderAdminComments);
 // NOVA ChatGPT-style sidebar navigation
 (function(){
  const buttons=[...document.querySelectorAll('.novaSideBtn')];
- const views={chat:document.getElementById('view-chat'),film:document.getElementById('view-film'),comments:document.getElementById('view-comments')};
+ const views={chat:document.getElementById('view-chat'),dashboard:document.getElementById('view-dashboard'),film:document.getElementById('view-film'),comments:document.getElementById('view-comments')};
  const title=document.getElementById('novaPageTitle');
  function view(name){
    Object.entries(views).forEach(([k,v])=>v.classList.toggle('active',k===name));
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.view===name));
-   if(title)title.textContent=name==='chat'?'Chat NOVA':name==='film'?'Tambah Film':'Komentar';
+   if(title)title.textContent=name==='chat'?'Chat NOVA':name==='dashboard'?'Dashboard':name==='film'?'Tambah Film':'Komentar';
+   if(name==='dashboard')loadDashboard();
    document.getElementById('novaSidebar')?.classList.remove('open');
  }
  buttons.forEach(b=>b.addEventListener('click',()=>view(b.dataset.view)));
@@ -687,6 +715,63 @@ $('commentFilter')?.addEventListener('change',renderAdminComments);
  document.getElementById('novaNewChat')?.addEventListener('click',()=>{view('chat');chatReset();});
  document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{view('chat');const input=document.getElementById('stageMessage');if(input){input.value=b.dataset.prompt;input.focus();}}));
 })();
+
+// Dashboard and comment actions
+function fmtNum(v){return v==null?'—':new Intl.NumberFormat('id-ID').format(Number(v)||0);}
+async function loadDashboard(){
+ const key=$('key').value.trim();
+ if(!key){$('dashHealth').innerHTML='<div class="statusWarn">Isi Admin Key terlebih dahulu.</div>';return}
+ $('dashStats').innerHTML='<div class="dashStat"><span>Total</span><b>…</b></div><div class="dashStat"><span>Playable</span><b>…</b></div><div class="dashStat"><span>Movies</span><b>…</b></div><div class="dashStat"><span>Series</span><b>…</b></div>';
+ $('dashNotifications').textContent='Memuat notifikasi...';
+ try{
+  const [cr,nr]=await Promise.all([
+    fetch('/api/nova-catalog').then(r=>r.json()),
+    fetch('/api/nova-notifications',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({})}).then(r=>r.json())
+  ]);
+  if(cr.error)throw new Error(cr.error);
+  const s=cr.stats||{};
+  $('dashStats').innerHTML='<div class="dashStat"><span>Total</span><b>'+fmtNum(s.total)+'</b><small>'+fmtNum(s.duplicates)+' duplicate title-year</small></div><div class="dashStat"><span>Playable</span><b>'+fmtNum(s.playable)+'</b><small>'+fmtNum(s.unplayable)+' belum punya Link</small></div><div class="dashStat"><span>Movies</span><b>'+fmtNum(s.movies)+'</b><small>'+fmtNum(s.missingYear)+' tanpa tahun</small></div><div class="dashStat"><span>Series</span><b>'+fmtNum(s.series)+'</b><small>'+fmtNum(s.missingDescription)+' tanpa deskripsi</small></div>';
+  const ns=Array.isArray(nr.notifications)?nr.notifications:[];
+  $('dashNotifCount').textContent=ns.length+' notifikasi';
+  $('dashNotifications').innerHTML=ns.slice(0,8).map(n=>'<div class="dashItem"><div class="dashIcon">'+esc(n.icon||'•')+'</div><div><b>'+esc(n.title||'Notifikasi')+'</b><div>'+esc(n.text||'')+'</div><small>'+esc(n.time||'')+'</small></div></div>').join('')||'<div class="muted">Tidak ada notifikasi.</div>';
+ }catch(e){$('dashNotifications').innerHTML='<div class="statusErr">Error: '+esc(e.message)+'</div>'}
+}
+async function runCatalogHealth(){
+ const key=$('key').value.trim(),box=$('dashHealth');
+ if(!key){box.innerHTML='<div class="statusWarn">Isi Admin Key terlebih dahulu.</div>';return}
+ box.textContent='Memeriksa katalog...';
+ try{
+  const r=await fetch('/api/nova-catalog-actions?mode=fix-preview',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({adminKey:key})});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Audit katalog gagal');
+  const c=d.counts||{};
+  box.innerHTML='<div class="healthChips">'+Object.entries(c).map(([k,v])=>'<span>'+esc(k)+': <b>'+fmtNum(v)+'</b></span>').join('')+'</div><div class="healthPreview"><pre>'+esc(String(d.preview||''))+'</pre></div>';
+ }catch(e){box.innerHTML='<div class="statusErr">Error: '+esc(e.message)+'</div>'}
+}
+async function runCatalogAI(){
+ const key=$('key').value.trim(),box=$('dashHealth');
+ if(!key){box.innerHTML='<div class="statusWarn">Isi Admin Key terlebih dahulu.</div>';return}
+ box.textContent='NOVA sedang menganalisis katalog...';
+ try{
+  const r=await fetch('/api/nova-catalog-analyze',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({})});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Analisis NOVA gagal');
+  box.innerHTML='<div class="healthPreview"><pre>'+esc(String(d.analysis||''))+'</pre></div>';
+ }catch(e){box.innerHTML='<div class="statusErr">Error: '+esc(e.message)+'</div>'}
+}
+$('refreshDashboard')?.addEventListener('click',loadDashboard);
+$('runCatalogHealth')?.addEventListener('click',runCatalogHealth);
+$('runCatalogAI')?.addEventListener('click',runCatalogAI);
+
+document.addEventListener('click',async e=>{
+ const b=e.target.closest('.replyWithNova');if(!b)return;
+ const key=$('key').value.trim();if(!key){$('status').textContent='Isi Admin Key terlebih dahulu.';return}
+ let c={};try{c=JSON.parse(b.dataset.comment||'{}')}catch{}
+ b.disabled=true;b.textContent='Memproses...';
+ try{
+  const r=await fetch('/api/nova-comment-bot',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({commentId:c.commentId||c.id,title:c.title,name:c.name,text:c.text,mediaId:c.mediaId})});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Balasan NOVA gagal');
+  b.textContent='✅ Terkirim';setTimeout(loadHighlights,700);
+ }catch(err){b.disabled=false;b.textContent='🤖 Balas dengan NOVA';$('status').textContent='Error: '+err.message}
+});
 </script>
 </body>
 </html>
