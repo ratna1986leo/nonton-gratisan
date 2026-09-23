@@ -331,6 +331,18 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 .dashEmpty{min-height:120px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;color:#7890aa;font-size:10px}.dashEmpty b{font-size:12px;color:#dce9f7}.dashEmpty span{line-height:1.45}.dashFocusKey{margin-top:8px;height:31px;padding:0 10px;border:1px solid #294866;border-radius:8px;background:#0c1e31;color:#bcd2e7;font-size:9px}.dashFocusKey:hover{background:#12304a}.novaDashboard button{font-family:inherit}
 
 
+/* Saweria support widgets */
+.saweriaWidgetGrid{display:grid;grid-template-columns:1.05fr 1fr;gap:12px;margin-top:12px}
+.saweriaWidgetCard{min-width:0;border:1px solid #1b334d;border-radius:13px;background:linear-gradient(180deg,rgba(10,25,41,.96),rgba(8,18,30,.94));padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.17);overflow:hidden}
+.saweriaWidgetHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid #152b42}
+.saweriaWidgetHead b{display:block;font-size:12px;color:#eff7ff}.saweriaWidgetHead small{display:block;margin-top:3px;color:#68819e;font-size:8px;line-height:1.4}
+.saweriaWidgetLive{font-size:8px;letter-spacing:.1em;padding:6px 9px;border:1px solid rgba(16,185,129,.25);border-radius:999px;background:rgba(16,185,129,.08);color:#6ee7b7;white-space:nowrap}
+.saweriaWidgetFrame{margin-top:12px;border:1px solid #17314a;border-radius:10px;background:#071522;overflow:hidden}
+.saweriaWidgetFrame iframe{display:block;width:100%;border:0;background:transparent}
+.saweriaMilestoneFrame iframe{height:230px}.saweriaRecentFrame iframe{height:150px}
+.saweriaWidgetNote{margin-top:8px;color:#506b86;font-size:8px;line-height:1.45}
+@media(max-width:1100px){.saweriaWidgetGrid{grid-template-columns:1fr}}
+@media(max-width:700px){.saweriaWidgetCard{padding:11px}.saweriaWidgetHead{gap:8px}.saweriaWidgetLive{padding:5px 7px;font-size:7px}.saweriaMilestoneFrame iframe{height:220px}.saweriaRecentFrame iframe{height:130px}}
 /* Tambah Film: input friendly light-blue fields */
 #view-film input,#view-film textarea{background:#eef7ff!important;color:#17324d!important;border:1px solid #9fc8ec!important;caret-color:#17324d!important}
 #view-film input::placeholder,#view-film textarea::placeholder{color:#6f8aa3!important;opacity:1}
@@ -519,6 +531,46 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
             <div id="dashHealth" class="dashList darkList">Belum diperiksa.</div>
           </section>
         </div>
+
+        <section class="saweriaWidgetGrid" aria-label="Dukungan Saweria">
+          <article class="saweriaWidgetCard">
+            <div class="saweriaWidgetHead">
+              <div>
+                <b>🎯 Saweria Milestone</b>
+                <small>Progress dukungan dana terdeteksi langsung dari widget Saweria.</small>
+              </div>
+              <span class="saweriaWidgetLive">● LIVE</span>
+            </div>
+            <div class="saweriaWidgetFrame saweriaMilestoneFrame">
+              <iframe
+                src="https://saweria.co/widgets/milestone?streamKey=a37eeea944ee57f64b34ea25c08d6832"
+                title="Saweria Milestone"
+                loading="eager"
+                referrerpolicy="strict-origin-when-cross-origin">
+              </iframe>
+            </div>
+            <div class="saweriaWidgetNote">Widget memuat data dukungan dari Saweria. Saat ada saweran masuk, milestone mengikuti data pada akun Saweria.</div>
+          </article>
+
+          <article class="saweriaWidgetCard">
+            <div class="saweriaWidgetHead">
+              <div>
+                <b>📡 Running Text Dukungan</b>
+                <small>Menampilkan dukungan terbaru secara realtime dari Saweria.</small>
+              </div>
+              <span class="saweriaWidgetLive">● LIVE</span>
+            </div>
+            <div class="saweriaWidgetFrame saweriaRecentFrame">
+              <iframe
+                src="https://saweria.co/widgets/recent?streamKey=a37eeea944ee57f64b34ea25c08d6832"
+                title="Saweria Recent Donations"
+                loading="eager"
+                referrerpolicy="strict-origin-when-cross-origin">
+              </iframe>
+            </div>
+            <div class="saweriaWidgetNote">Running text mengikuti daftar dukungan terbaru yang disediakan Saweria untuk stream key ini.</div>
+          </article>
+        </section>
 
         <section class="dashQuick">
           <div><b>Aksi Cepat</b><small>langsung ke fitur admin</small></div>
