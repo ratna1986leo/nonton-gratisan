@@ -205,7 +205,7 @@ export default async function handler(req,res){
       : JSON.stringify(catalog);
     let tmdb={available:false,source:'TMDB',items:[]};
     const tmdbSearch=extractTMDBSearch(message);
-    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch);
+    const wantsTMDB=/\btmdb\b|the movie database|database film|belum masuk pustaka|belum ada di pustaka|tidak ada di pustaka|beda dengan pustaka|bandingkan.*pustaka|pustaka.*tmdb|tmdb.*pustaka/i.test(message)||Boolean(tmdbSearch)||isTrendingRequest(message);
     if(wantsTMDB){
       try{ tmdb=await getTMDBForMessage(message,tmdbSearch); }
       catch(e){ tmdb={available:false,source:'TMDB',items:[],error:e.message}; }
