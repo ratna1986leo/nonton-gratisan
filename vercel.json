@@ -4,6 +4,14 @@
       "source": "/api/nova-catalog-fix-preview",
       "destination": "/api/nova-catalog-actions?mode=fix-preview"
     },
+    {
+      "source": "/sitemap-google.xml",
+      "destination": "/api/catalog?format=sitemap"
+    },
+    {
+      "source": "/sitemap-yandex-live.xml",
+      "destination": "/api/catalog?format=sitemap"
+    },
 
     {
       "source": "/search",
