@@ -31,6 +31,15 @@ export default async function handler(req,res){
     const find=(...names)=>{const n=names.map(x=>x.toLowerCase()); return columns.find(c=>n.includes(c.toLowerCase()))};
     const titleKey=find('title','judul','name')||columns[0];
     const typeKey=find('type','tipe','kategori');
+    const inferType=(o)=>{
+      const title=String(o[titleKey]||'').toLowerCase();
+      const genre=String(genreKey?o[genreKey]||'':'').toLowerCase();
+      const s=title+' '+genre;
+      if(/\bbioskop\b/.test(s)) return 'Bioskop';
+      if(/\bseries\b|\bserial\b|\bseason\b|\bepisode\b/.test(s)) return 'Series';
+      if(/\bfilm\b|\bmovie\b/.test(s)) return 'Film';
+      return 'Lainnya';
+    };
     const yearKey=find('year','tahun');
     const linkKey=find('link','url','video','embed','source');
     const descKey=find('description','deskripsi','sinopsis','overview');
@@ -47,8 +56,10 @@ export default async function handler(req,res){
       missingActor:actorKey?objects.filter(x=>!String(x[actorKey]||'').trim()).length:null,
       missingYear:yearKey?objects.filter(x=>!String(x[yearKey]||'').trim()).length:null,
       duplicates:objects.length-new Set(titledYears).size,
-      movies:typeKey?objects.filter(x=>/movie|film/i.test(x[typeKey])).length:null,
-      series:typeKey?objects.filter(x=>/tv|series/i.test(x[typeKey])).length:null,
+      movies:objects.filter(x=>inferType(x)==='Film').length,
+      series:objects.filter(x=>inferType(x)==='Series').length,
+      bioskop:objects.filter(x=>inferType(x)==='Bioskop').length,
+      otherTypes:objects.filter(x=>inferType(x)==='Lainnya').length,
       years:yearKey?[...new Set(objects.map(x=>x[yearKey]).filter(Boolean))].sort().reverse().slice(0,10):[]
     };
     return res.status(200).json({ok:true,count:objects.length,columns,rows:objects.slice(0,500),stats});
