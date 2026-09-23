@@ -5,6 +5,11 @@
       "destination": "/api/nova-catalog-actions?mode=fix-preview"
     },
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/catalog?format=sitemap"
+    },
+
+    {
       "source": "/search",
       "destination": "/search.html"
     },
