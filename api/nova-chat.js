@@ -30,14 +30,29 @@ function catalogContext(text){
   const linkKey=find('link','url','video','embed','source');
   const yearKey=find('year','tahun');
   const typeKey=find('type','tipe','kategori');
+  const genreKey=find('genre');
+  const inferType=o=>{
+    const title=String(o[titleKey]||'').toLowerCase();
+    const genre=String(o[genreKey]||'').toLowerCase();
+    const s=title+' '+genre;
+    if(/\bbioskop\b/.test(s)) return 'Bioskop';
+    if(/\bseries\b|\bserial\b|\bseason\b|\bepisode\b/.test(s)) return 'Series';
+    if(/\bfilm\b|\bmovie\b/.test(s)) return 'Film';
+    return 'Lainnya';
+  };
   const allItems=objects.map(o=>({
     judul:o[titleKey]||'',
     tahun:yearKey?o[yearKey]||'':'',
-    tipe:typeKey?o[typeKey]||'':'',
+    tipe:typeKey?o[typeKey]||'':inferType(o),
     bisaDiputar:Boolean(linkKey && String(o[linkKey]||'').trim())
   })).filter(x=>x.judul);
-  const items=allItems.slice(0,40);
-  return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,items};
+  const categories={
+    film:allItems.filter(x=>x.tipe==='Film').length,
+    series:allItems.filter(x=>x.tipe==='Series').length,
+    bioskop:allItems.filter(x=>x.tipe==='Bioskop').length,
+    lainnya:allItems.filter(x=>x.tipe==='Lainnya').length
+  };
+  return {total:allItems.length,playable:allItems.filter(x=>x.bisaDiputar).length,unplayable:allItems.filter(x=>!x.bisaDiputar).length,categories,items:allItems};
 }
 
 async function searchTMDB(query, type='all'){
@@ -168,7 +183,11 @@ export default async function handler(req,res){
       'Jika pengguna meminta mencari film atau series di TMDB, gunakan hasil DATA TMDB yang dimuat dari pencarian. Sebutkan judul, tipe (Film/Series), tahun, rating jika tersedia, dan TMDB ID. Jangan menyebut hasil pencarian TMDB sebagai data pustaka atau sebagai film yang pasti bisa diputar.',
       'Jika pencarian TMDB menghasilkan beberapa kandidat, tampilkan beberapa kandidat yang paling relevan dan biarkan pengguna memilih berdasarkan judul/tahun; jangan mengarang kandidat.',
       'Jika ditanya perbandingan TMDB vs pustaka, jelaskan jumlah TMDB yang dimuat, jumlah yang sudah tercatat di pustaka, dan daftar yang belum tercatat jika tersedia.',
-      'Jika diminta jumlah katalog, gunakan total/playable/unplayable dari PUSTAKA FILM, bukan jumlah item yang dikirim dalam array (array dibatasi untuk menjaga ukuran request).',
+      'Jika diminta jumlah katalog, gunakan total/playable/unplayable dan categories dari PUSTAKA FILM.',
+      'Data PUSTAKA FILM di bawah memuat seluruh baris katalog yang tersedia dari Google Sheet.',
+      'Untuk katalog tanpa kolom Tipe, inferensikan Film, Series, Bioskop, atau Lainnya dari judul dan genre.',
+      'Jika ditanya film, series, atau bioskop di pustaka, jawab dari categories dan DATA PUSTAKA FILM lengkap.',
+      'Jika pengguna meminta judul tertentu, cari kecocokan di seluruh DATA PUSTAKA FILM, bukan hanya item awal.',
       'Jangan menganggap film ada di TMDB berarti otomatis bisa diputar.',
       'Jangan mengklaim URL yang terisi pasti dapat diputar; data hanya menunjukkan player tercatat.',
       'Jangan mengubah, menghapus, atau menulis katalog, Google Sheet, TMDB, player, atau data pengguna melalui chat.',
