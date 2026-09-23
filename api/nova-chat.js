@@ -127,6 +127,35 @@ async function loadCatalog(){
   return catalogContext(await r.text());
 }
 
+function offlineCatalogReply(message,catalog){
+  const m=String(message||'').toLowerCase();
+  const items=Array.isArray(catalog?.items)?catalog.items:[];
+  const cat=catalog?.categories||{};
+  const playable=items.filter(x=>x.bisaDiputar);
+  const typeWant=/\bbioskop\b/.test(m)?'Bioskop':/\b(series|serial|tv|episode|season)\b/.test(m)?'Series':/\b(film|movie)\b/.test(m)?'Film':'';
+  const pool=typeWant?items.filter(x=>x.tipe===typeWant):items;
+  const wantsCount=/\b(berapa|jumlah|total|ada berapa)\b/.test(m);
+  const wantsPlayable=/\b(bisa diputar|bisa ditonton|playable|siap diputar)\b/.test(m);
+  if(wantsCount||/\bfilm\b.*\bseries\b|\bseries\b.*\bfilm\b|\bbioskop\b/.test(m)){
+    return '📚 Pustaka saat ini: '+(cat.film||0)+' Film, '+(cat.series||0)+' Series, '+(cat.bioskop||0)+' Bioskop, total '+(catalog.total||0)+' entri. Yang tercatat punya Link/Player: '+(catalog.playable||0)+'.';
+  }
+  if(wantsPlayable){
+    const list=playable.filter(x=>!typeWant||x.tipe===typeWant).slice(0,12);
+    if(!list.length)return 'Belum ada data player yang cocok untuk kategori tersebut di pustaka.';
+    return '🎬 '+(typeWant||'Konten')+' yang tercatat playable, contoh: '+list.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')).join('; ')+'.';
+  }
+  const clean=m.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ');
+  const terms=clean.split(/\s+/).filter(x=>x.length>=3&&!['cari','film','series','serial','bioskop','yang','ada','dong','bro','tolong','bisa','ditonton','diputar'].includes(x));
+  if(terms.length){
+    const hits=pool.filter(x=>{
+      const t=String(x.judul||'').toLowerCase();
+      return terms.some(w=>t.includes(w));
+    }).slice(0,10);
+    if(hits.length)return '🔎 Ditemukan di pustaka:\n'+hits.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')+' — '+(x.tipe||'Lainnya')+(x.bisaDiputar?' — player tercatat':' — belum ada player')).join('\n');
+  }
+  return '📚 Saya masih bisa membaca pustaka secara langsung: '+(cat.film||0)+' Film, '+(cat.series||0)+' Series, '+(cat.bioskop||0)+' Bioskop, total '+(catalog.total||0)+' entri. Untuk pertanyaan yang lebih kompleks, layanan AI NOVA perlu credit OpenAI tersedia kembali.';
+}
+
 export default async function handler(req,res){
   if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
   const expected=process.env.NOVA_ADMIN_KEY;
@@ -212,6 +241,10 @@ export default async function handler(req,res){
     const data=await r.json();
     if(!r.ok){
       const msg=data?.error?.message||'OpenAI request gagal';
+      const creditIssue=/credits remaining|billing|insufficient|quota/i.test(String(msg));
+      if(creditIssue && catalog && catalog.total){
+        return res.status(200).json({ok:true,fallback:true,reply:offlineCatalogReply(message,catalog),notice:'Jawaban katalog langsung karena credit OpenAI sedang habis.'});
+      }
       const status=r.status===429?429:r.status;
       return res.status(status).json({error:status===429?'NOVA sedang terlalu sibuk. Coba lagi beberapa saat lagi.':msg});
     }
