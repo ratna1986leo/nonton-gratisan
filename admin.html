@@ -329,6 +329,19 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 @media(max-width:700px){.novaDashboard{padding:18px 12px 34px}.dashHero{display:block}.dashHeroActions{margin-top:12px}.dashStatsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashMetric{min-height:95px}.dashHero h1{font-size:22px}.dashQuick{grid-template-columns:1fr 1fr}.dashQuick>div{grid-column:1/-1}}
 
 .dashEmpty{min-height:120px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;color:#7890aa;font-size:10px}.dashEmpty b{font-size:12px;color:#dce9f7}.dashEmpty span{line-height:1.45}.dashFocusKey{margin-top:8px;height:31px;padding:0 10px;border:1px solid #294866;border-radius:8px;background:#0c1e31;color:#bcd2e7;font-size:9px}.dashFocusKey:hover{background:#12304a}.novaDashboard button{font-family:inherit}
+
+/* Dashboard fullscreen mode — sidebar becomes an overlay menu */
+.novaLayout.dashboardMode .novaSidebar{position:fixed;left:-270px;top:0;bottom:0;width:250px;z-index:120;box-shadow:10px 0 40px rgba(0,0,0,.34);transition:left .18s ease;background:#08121f;border-right:1px solid #1c3852}
+.novaLayout.dashboardMode .novaSidebar.open{left:0}
+.novaLayout.dashboardMode .novaMain{width:100%;min-width:0}
+.novaLayout.dashboardMode .novaMobileMenu{display:block}
+.novaLayout.dashboardMode .novaHeader{padding-left:14px}
+.novaLayout.dashboardMode .novaSidebar .novaSideTop,.novaLayout.dashboardMode .novaSidebar .novaSideBottom{background:#08121f}
+.novaLayout.dashboardMode .novaSidebar .novaBrand,.novaLayout.dashboardMode .novaSidebar .novaNavTitle,.novaLayout.dashboardMode .novaSidebar .novaSideTitle,.novaLayout.dashboardMode .novaSidebar label,.novaLayout.dashboardMode .novaSidebar small,.novaLayout.dashboardMode .novaSidebar b{color:#d7e7f5}
+.novaLayout.dashboardMode .novaSidebar .novaNewChat,.novaLayout.dashboardMode .novaSidebar input{background:#0c1c2c;border-color:#24425f;color:#d7e7f5}
+.novaLayout.dashboardMode .novaSidebar .novaSideBtn,.novaLayout.dashboardMode .novaSidebar .novaFeature{color:#93aac0}
+.novaLayout.dashboardMode .novaSidebar .novaSideBtn.active,.novaLayout.dashboardMode .novaSidebar .novaFeature:hover{background:#12253a;color:#fff}
+@media(max-width:700px){.novaLayout.dashboardMode .novaSidebar{width:260px}}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
@@ -765,7 +778,8 @@ $('commentFilter')?.addEventListener('change',renderAdminComments);
  function view(name){
    Object.entries(views).forEach(([k,v])=>v.classList.toggle('active',k===name));
    buttons.forEach(b=>b.classList.toggle('active',b.dataset.view===name));
-   if(title)title.textContent=name==='chat'?'Chat NOVA':name==='dashboard'?'Dashboard':name==='film'?'Tambah Film':'Komentar';
+   if(title)title.textContent=name==='chat'?'Chat NOVA':name==='dashboard'?'Dashboard NOVA':name==='film'?'Tambah Film':'Komentar';
+   document.querySelector('.novaLayout')?.classList.toggle('dashboardMode',name==='dashboard');
    if(name==='dashboard')loadDashboard();
    document.getElementById('novaSidebar')?.classList.remove('open');
  }
@@ -776,7 +790,10 @@ document.querySelectorAll('[data-dash-go]').forEach(b=>b.addEventListener('click
   const target=document.querySelector('.novaSideBtn[data-view="'+b.dataset.dashGo+'"]');
   if(target)target.click();
 }));
-if(document.getElementById('view-dashboard')?.classList.contains('active'))loadDashboard();
+if(document.getElementById('view-dashboard')?.classList.contains('active')){
+  document.querySelector('.novaLayout')?.classList.add('dashboardMode');
+  loadDashboard();
+}
 
  document.getElementById('novaNewChat')?.addEventListener('click',()=>{view('chat');chatReset();});
  document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{view('chat');const input=document.getElementById('stageMessage');if(input){input.value=b.dataset.prompt;input.focus();}}));
