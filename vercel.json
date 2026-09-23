@@ -22,12 +22,12 @@
       "destination": "/admin.html"
     },
     {
-      "source": "/movie/:id/:slug*",
-      "destination": "/api/seo-page?type=movie&id=:id&slug=:slug*"
+      "source": "/movie/:path*",
+      "destination": "/"
     },
     {
-      "source": "/tv/:id/:slug*",
-      "destination": "/api/seo-page?type=tv&id=:id&slug=:slug*"
+      "source": "/tv/:path*",
+      "destination": "/"
     },
     {
       "source": "/collection/:path*",
