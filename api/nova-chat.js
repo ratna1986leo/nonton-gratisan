@@ -59,25 +59,67 @@ async function searchTMDB(query, type='all'){
   if(!TMDB_API_KEY) return {available:false,source:'TMDB',query,type,items:[],error:'TMDB_API_KEY belum disetel'};
   const clean=String(query||'').trim();
   if(!clean) return {available:false,source:'TMDB',query:'',type,items:[],error:'Query TMDB kosong'};
-  const endpoint=type==='series'?'tv':type==='film'?'movie':'multi';
-  const url='https://api.themoviedb.org/3/search/'+endpoint+'?language=id-ID&include_adult=false&page=1&api_key='+encodeURIComponent(TMDB_API_KEY)+'&query='+encodeURIComponent(clean);
-  const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
-  if(!r.ok) throw new Error('TMDB search HTTP '+r.status);
-  const data=await r.json();
-  const items=(Array.isArray(data?.results)?data.results:[]).filter(x=>{
-    if(endpoint==='tv') return true;
-    if(endpoint==='movie') return true;
-    return x.media_type==='movie'||x.media_type==='tv';
-  }).slice(0,8).map(x=>({
-    tmdbId:x.id,
-    tipe:(x.media_type==='tv'||endpoint==='tv')?'Series':'Film',
-    judul:(x.media_type==='tv'||endpoint==='tv')?(x.name||''):(x.title||''),
-    tahun:String((x.media_type==='tv'||endpoint==='tv')?x.first_air_date:x.release_date||'').slice(0,4),
-    rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
-    poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
-    deskripsi:x.overview||''
-  }));
-  return {available:true,source:'TMDB',query:clean,type,totalResults:Number(data.total_results||items.length),items};
+
+  const candidates=[];
+  const addQuery=q=>{const x=String(q||'').trim();if(x&&!candidates.includes(x))candidates.push(x);};
+  addQuery(clean);
+  addQuery(clean.replace(/[,:;!?]+/g,' ').replace(/\s+/g,' ').trim());
+
+  // Variasi alias yang umum untuk judul Korea: cari juga lewat judul asli
+  // bila judul populer berbahasa Inggris tidak langsung ditemukan TMDB.
+  const aliases={
+    'my bias, my boss':'최애의 사원',
+    'my bias my boss':'최애의 사원'
+  };
+  const alias=aliases[clean.toLowerCase()];
+  if(alias)addQuery(alias);
+
+  const endpoints=type==='series'?['tv','multi']:type==='film'?['movie','tv','multi']:['multi','tv','movie'];
+  const raw=[];
+  for(const endpoint of endpoints){
+    for(const q of candidates){
+      const url='https://api.themoviedb.org/3/search/'+endpoint+'?language=id-ID&include_adult=false&page=1&api_key='+encodeURIComponent(TMDB_API_KEY)+'&query='+encodeURIComponent(q);
+      const r=await fetch(url,{headers:{accept:'application/json'},cache:'no-store'});
+      if(!r.ok)continue;
+      const data=await r.json();
+      const arr=Array.isArray(data?.results)?data.results:[];
+      for(const x of arr){
+        if(endpoint==='tv' || endpoint==='movie' || x.media_type==='movie'||x.media_type==='tv') raw.push({...x,__endpoint:endpoint,__query:q});
+      }
+      // exact alias/query match is enough; don't hammer the API unnecessarily.
+      if(raw.length>=12)break;
+    }
+    if(raw.length>=12)break;
+  }
+
+  const normalize=s=>String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();
+  const nq=normalize(clean);
+  const seen=new Set();
+  const items=raw.map(x=>{
+    const isTv=x.media_type==='tv'||x.__endpoint==='tv';
+    const judul=isTv?(x.name||''):(x.title||'');
+    const id=String(x.id||'');
+    const key=(isTv?'tv':'movie')+'-'+id;
+    if(!id||!judul||seen.has(key))return null;
+    seen.add(key);
+    const nn=normalize(judul);
+    let relevance=0;
+    if(nn===nq)relevance+=100;
+    if(nn.includes(nq)||nq.includes(nn))relevance+=60;
+    if(x.__query!==clean)relevance+=20;
+    return {
+      tmdbId:x.id,
+      tipe:isTv?'Series':'Film',
+      judul,
+      tahun:String(isTv?x.first_air_date:x.release_date||'').slice(0,4),
+      rating:typeof x.vote_average==='number'?x.vote_average.toFixed(1):'',
+      poster:x.poster_path?'https://image.tmdb.org/t/p/w342'+x.poster_path:'',
+      deskripsi:x.overview||'',
+      _relevance:relevance
+    };
+  }).filter(Boolean).sort((a,b)=>b._relevance-a._relevance).slice(0,8).map(({_relevance,...x})=>x);
+
+  return {available:true,source:'TMDB',query:clean,type,totalResults:items.length,items};
 }
 
 function extractTMDBSearch(message){
@@ -163,8 +205,12 @@ function offlineCatalogReply(message,catalog){
   const items=Array.isArray(catalog?.items)?catalog.items:[];
   const cat=catalog?.categories||{};
   const playable=items.filter(x=>x.bisaDiputar);
-  const typeWant=/\bbioskop\b/.test(m)?'Bioskop':/\b(series|serial|tv|episode|season)\b/.test(m)?'Series':/\b(film|movie)\b/.test(m)?'Film':'';
-  const pool=typeWant?items.filter(x=>x.tipe===typeWant):items;
+  const typeWord=/\bbioskop\b/.test(m)?'Bioskop':/\b(series|serial|tv|episode|season)\b/.test(m)?'Series':/\b(film|movie)\b/.test(m)?'Film':'';
+  const stopWords=['film','movie','series','serial','bioskop','yang','ada','dong','bro','tolong','bisa','ditonton','diputar','pustaka','cek','di'];
+  const titleTerms=m.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(x=>x.length>=3&&!stopWords.includes(x));
+  // Untuk pencarian judul, jangan memaksa kategori "Film" hanya karena user
+  // mengetik kata film; seri seperti My Bias, My Boss tetap bisa ditemukan.
+  const pool=titleTerms.length>=2 ? items : (typeWord?items.filter(x=>x.tipe===typeWord):items);
   const wantsCount=/\b(berapa|jumlah|total|ada berapa)\b/.test(m);
   const wantsPlayable=/\b(bisa diputar|bisa ditonton|playable|siap diputar)\b/.test(m);
   if(wantsCount||/\bfilm\b.*\bseries\b|\bseries\b.*\bfilm\b|\bbioskop\b/.test(m)){
@@ -176,7 +222,7 @@ function offlineCatalogReply(message,catalog){
     return '🎬 '+(typeWant||'Konten')+' yang tercatat playable, contoh: '+list.map((x,i)=>(i+1)+'. '+x.judul+(x.tahun?' ('+x.tahun+')':'')).join('; ')+'.';
   }
   const clean=m.normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,' ');
-  const terms=clean.split(/\s+/).filter(x=>x.length>=3&&!['cari','film','series','serial','bioskop','yang','ada','dong','bro','tolong','bisa','ditonton','diputar'].includes(x));
+  const terms=clean.split(/\s+/).filter(x=>x.length>=3&&!stopWords.includes(x));
   if(terms.length){
     const hits=pool.filter(x=>{
       const t=String(x.judul||'').toLowerCase();
