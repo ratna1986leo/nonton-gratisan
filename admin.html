@@ -347,6 +347,8 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 #view-film input,#view-film textarea{background:#eef7ff!important;color:#17324d!important;border:1px solid #9fc8ec!important;caret-color:#17324d!important}
 #view-film input::placeholder,#view-film textarea::placeholder{color:#6f8aa3!important;opacity:1}
 #view-film input:focus,#view-film textarea:focus{background:#f5faff!important;border-color:#4f9ee8!important;box-shadow:0 0 0 3px rgba(79,158,232,.16)!important;outline:0}
+/* Saweria realtime monitor */
+.saweriaMonitor{margin-top:12px;border:1px solid #17314a;border-radius:10px;background:#071522;padding:13px}.saweriaProgressTop,.saweriaProgressMeta{display:flex;justify-content:space-between;gap:10px;align-items:center}.saweriaProgressTop span,.saweriaProgressMeta span{font-size:8px;color:#68819e}.saweriaProgressTop strong{font-size:23px;color:#f7fbff}.saweriaProgressTrack{height:11px;margin:12px 0 7px;border:1px solid #17314a;border-radius:999px;background:#0b1826;overflow:hidden}.saweriaProgressTrack i{display:block;width:0;height:100%;border-radius:999px;background:linear-gradient(90deg,#10b981,#38bdf8,#7c3aed);box-shadow:0 0 16px rgba(56,189,248,.3);transition:width .35s ease}.saweriaProgressMeta{font-size:8px}.saweriaLatest{margin-top:12px;padding-top:10px;border-top:1px solid #14283d}.saweriaLatest span{display:block;font-size:8px;color:#68819e}.saweriaLatest b{display:block;margin-top:5px;font-size:11px;color:#dbe8f4;line-height:1.45}.saweriaTicker{margin-top:12px;min-height:145px;max-height:230px;overflow:hidden;border:1px solid #17314a;border-radius:10px;background:#071522;padding:8px 12px}.saweriaTickerItem{padding:9px 0;border-bottom:1px solid #14283d;animation:saweriaTickerIn .3s ease}.saweriaTickerItem:last-child{border-bottom:0}.saweriaTickerItem b{font-size:11px;color:#f7fbff}.saweriaTickerItem span{display:block;margin-top:3px;font-size:9px;color:#7f96ae;line-height:1.4}.saweriaTickerEmpty{height:125px;display:flex;align-items:center;justify-content:center;text-align:center;color:#516a82;font-size:9px}.saweriaTickerActions{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px}.saweriaTickerActions a{font-size:8px;color:#72b8ff;text-decoration:none}.saweriaTickerActions a:hover{text-decoration:underline}.saweriaWidgetLive.saweriaConnected{border-color:rgba(16,185,129,.35);background:rgba(16,185,129,.10);color:#6ee7b7}.saweriaWidgetLive.saweriaWaiting{border-color:rgba(245,158,11,.35);background:rgba(245,158,11,.08);color:#fbbf24}.saweriaWidgetLive.saweriaError{border-color:rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#fca5a5}@keyframes saweriaTickerIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 /* Dashboard fullscreen mode — sidebar becomes an overlay menu */
 .novaLayout.dashboardMode .novaSidebar{position:fixed;left:-270px;top:0;bottom:0;width:250px;z-index:120;box-shadow:10px 0 40px rgba(0,0,0,.34);transition:left .18s ease;background:#08121f;border-right:1px solid #1c3852}
 .novaLayout.dashboardMode .novaSidebar.open{left:0}
@@ -537,38 +539,43 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
             <div class="saweriaWidgetHead">
               <div>
                 <b>🎯 Saweria Milestone</b>
-                <small>Progress dukungan dana terdeteksi langsung dari widget Saweria.</small>
+                <small>Monitor progress dukungan dari stream key Saweria tanpa iframe.</small>
               </div>
-              <span class="saweriaWidgetLive">● LIVE</span>
+              <span class="saweriaWidgetLive" id="saweriaLiveBadge">● MENGHUBUNGKAN</span>
             </div>
-            <div class="saweriaWidgetFrame saweriaMilestoneFrame">
-              <iframe
-                src="https://saweria.co/widgets/milestone?streamKey=a37eeea944ee57f64b34ea25c08d6832"
-                title="Saweria Milestone"
-                loading="eager"
-                referrerpolicy="strict-origin-when-cross-origin">
-              </iframe>
+            <div class="saweriaMonitor">
+              <div class="saweriaProgressTop">
+                <span>Progress dukungan terdeteksi</span>
+                <strong id="saweriaProgressValue">Memuat…</strong>
+              </div>
+              <div class="saweriaProgressTrack"><i id="saweriaProgressBar"></i></div>
+              <div class="saweriaProgressMeta">
+                <span id="saweriaProgressDate">Hari ini</span>
+                <span id="saweriaProgressStatus">Menunggu data Saweria</span>
+              </div>
+              <div class="saweriaLatest">
+                <span>Terakhir terdeteksi</span>
+                <b id="saweriaLatestDonation">Belum ada dukungan baru di sesi ini.</b>
+              </div>
             </div>
-            <div class="saweriaWidgetNote">Widget memuat data dukungan dari Saweria. Saat ada saweran masuk, milestone mengikuti data pada akun Saweria.</div>
+            <div class="saweriaWidgetNote">Koneksi realtime menggunakan event stream Saweria. Progress milestone dibaca dari endpoint widget Saweria.</div>
           </article>
 
           <article class="saweriaWidgetCard">
             <div class="saweriaWidgetHead">
               <div>
                 <b>📡 Running Text Dukungan</b>
-                <small>Menampilkan dukungan terbaru secara realtime dari Saweria.</small>
+                <small>Dukungan baru akan muncul otomatis saat Saweria mengirim event realtime.</small>
               </div>
-              <span class="saweriaWidgetLive">● LIVE</span>
+              <span class="saweriaWidgetLive" id="saweriaRecentBadge">● LIVE</span>
             </div>
-            <div class="saweriaWidgetFrame saweriaRecentFrame">
-              <iframe
-                src="https://saweria.co/widgets/recent?streamKey=a37eeea944ee57f64b34ea25c08d6832"
-                title="Saweria Recent Donations"
-                loading="eager"
-                referrerpolicy="strict-origin-when-cross-origin">
-              </iframe>
+            <div class="saweriaTicker" id="saweriaTicker">
+              <div class="saweriaTickerEmpty" id="saweriaTickerEmpty">Menunggu saweran/support baru…</div>
             </div>
-            <div class="saweriaWidgetNote">Running text mengikuti daftar dukungan terbaru yang disediakan Saweria untuk stream key ini.</div>
+            <div class="saweriaTickerActions">
+              <a href="https://saweria.co/widgets/recent?streamKey=a37eeea944ee57f64b34ea25c08d6832" target="_blank" rel="noopener noreferrer">Buka widget Running Text ↗</a>
+              <a href="https://saweria.co/widgets/milestone?streamKey=a37eeea944ee57f64b34ea25c08d6832" target="_blank" rel="noopener noreferrer">Buka widget Milestone ↗</a>
+            </div>
           </article>
         </section>
 
@@ -879,6 +886,44 @@ if(document.getElementById('view-dashboard')?.classList.contains('active')){
  document.querySelectorAll('.novaFeature').forEach(b=>b.addEventListener('click',()=>{view('chat');const input=document.getElementById('stageMessage');if(input){input.value=b.dataset.prompt;input.focus();}}));
 })();
 
+// Saweria realtime support monitor
+const SAWERIA_STREAM_KEY='a37eeea944ee57f64b34ea25c08d6832';
+const SAWERIA_WS_URL='wss://events.saweria.co/stream?streamKey='+encodeURIComponent(SAWERIA_STREAM_KEY);
+let saweriaSocket=null;
+let saweriaReconnectTimer=null;
+let saweriaMonitorStarted=false;
+let saweriaTickerItems=[];
+function fmtRupiah(v){const n=Number(v)||0;return 'Rp '+new Intl.NumberFormat('id-ID').format(n);}
+function saweriaToday(){const d=new Date();const dd=String(d.getDate()).padStart(2,'0');const mm=String(d.getMonth()+1).padStart(2,'0');return dd+'-'+mm+'-'+d.getFullYear();}
+function setSaweriaBadge(id,text,kind){const el=$(id);if(!el)return;el.textContent=text;el.className='saweriaWidgetLive '+(kind||'');}
+function renderSaweriaTicker(){const box=$('saweriaTicker'),empty=$('saweriaTickerEmpty');if(!box)return;if(!saweriaTickerItems.length){if(empty)empty.style.display='flex';return;}if(empty)empty.style.display='none';box.innerHTML=saweriaTickerItems.map(x=>'<div class="saweriaTickerItem"><b>💙 '+esc(x.donator||'Pendukung')+' • '+fmtRupiah(x.amount)+'</b><span>'+esc(x.message||'Terima kasih atas dukungannya!')+'</span></div>').join('');}
+function addSaweriaDonation(d){const item={donator:d?.donator||d?.name||'Pendukung',amount:d?.amount||0,message:d?.message||''};saweriaTickerItems.unshift(item);saweriaTickerItems=saweriaTickerItems.slice(0,7);$('saweriaLatestDonation').textContent=item.donator+' mendukung '+fmtRupiah(item.amount)+(item.message?' — '+item.message:'');renderSaweriaTicker();}
+async function loadSaweriaMilestone(){
+ try{
+  const key=$('key')?.value.trim();if(!key)return;
+  const r=await fetch('/api/nova-notifications',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'saweria',startDate:saweriaToday()})});
+  const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Progress Saweria gagal dimuat');
+  const p=Number(d.progress)||0;
+  $('saweriaProgressValue').textContent=fmtRupiah(p);
+  $('saweriaProgressDate').textContent='Mulai '+saweriaToday();
+  $('saweriaProgressStatus').textContent='Data Saweria terhubung';
+  $('saweriaProgressBar').style.width=Math.min(100,Math.max(0,(p>0?100:0)))+'%';
+ }catch(e){
+  $('saweriaProgressValue').textContent='—';
+  $('saweriaProgressStatus').textContent=e.message||'Saweria tidak tersedia';
+ }
+}
+function connectSaweriaSocket(){
+ if(saweriaSocket){try{saweriaSocket.close()}catch{}saweriaSocket=null;}
+ setSaweriaBadge('saweriaLiveBadge','● MENGHUBUNGKAN','saweriaWaiting');setSaweriaBadge('saweriaRecentBadge','● MENGHUBUNGKAN','saweriaWaiting');
+ try{saweriaSocket=new WebSocket(SAWERIA_WS_URL);}catch(e){setSaweriaBadge('saweriaLiveBadge','● ERROR','saweriaError');setSaweriaBadge('saweriaRecentBadge','● ERROR','saweriaError');return;}
+ saweriaSocket.onopen=()=>{setSaweriaBadge('saweriaLiveBadge','● LIVE','saweriaConnected');setSaweriaBadge('saweriaRecentBadge','● LIVE','saweriaConnected');$('saweriaProgressStatus').textContent='Realtime Saweria aktif';};
+ saweriaSocket.onmessage=e=>{try{const data=JSON.parse(e.data);if(data?.type==='donation'){const list=Array.isArray(data.data)?data.data:[data.data];list.filter(Boolean).forEach(addSaweriaDonation);loadSaweriaMilestone();}}catch{}};
+ saweriaSocket.onerror=()=>{setSaweriaBadge('saweriaLiveBadge','● ERROR','saweriaError');setSaweriaBadge('saweriaRecentBadge','● ERROR','saweriaError');};
+ saweriaSocket.onclose=()=>{setSaweriaBadge('saweriaLiveBadge','● RECONNECTING','saweriaWaiting');setSaweriaBadge('saweriaRecentBadge','● RECONNECTING','saweriaWaiting');clearTimeout(saweriaReconnectTimer);saweriaReconnectTimer=setTimeout(connectSaweriaSocket,5000);};
+}
+function initSaweriaMonitor(){if(saweriaMonitorStarted)return;saweriaMonitorStarted=true;loadSaweriaMilestone();connectSaweriaSocket();}
+
 // Dashboard and comment actions
 function syncAdminKeyFromSession(){
   try{
@@ -974,6 +1019,7 @@ async function loadDashboard(){
   $('dashNotificationStatus').textContent=(nr.notifications||[]).length+' notifikasi tersedia';
   // Audit dasar selalu jalan tanpa OpenAI; AI analyzer tetap opsional.
   runCatalogHealth();
+  initSaweriaMonitor();
   const ns=Array.isArray(nr.notifications)?nr.notifications:[];
   $('dashNotifCount').textContent=ns.length+' notifikasi';
   $('dashNotifications').innerHTML=ns.slice(0,8).map(n=>'<div class="dashItem"><div class="dashIcon">'+esc(n.icon||'•')+'</div><div><b>'+esc(n.title||'Notifikasi')+'</b><div>'+esc(n.text||'')+'</div><small>'+esc(n.time||'')+'</small></div></div>').join('')||'<div class="muted">Tidak ada notifikasi.</div>';
