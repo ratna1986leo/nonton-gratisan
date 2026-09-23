@@ -3712,7 +3712,7 @@
             if (!state.libraryData || !stableId) return null;
             for (const raw of state.libraryData) {
                 const title = raw.Judul || 'Tanpa Judul';
-                const type = (title.toLowerCase().includes('season') || title.toLowerCase().includes('episode') || title.toLowerCase().includes('series') || title.toLowerCase().includes('bag')) ? 'tv' : 'movie';
+                const type = isLibrarySeries(raw) ? 'tv' : 'movie';
                 const link = raw.Link || '';
                 if (String(getStableLibraryMediaId(title, type, link)) === String(stableId)) {
                     const libraryEpisodes = type === 'tv' ? getLibraryEpisodes(title, state.libraryData) : [];
