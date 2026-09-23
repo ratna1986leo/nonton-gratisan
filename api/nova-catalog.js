@@ -32,10 +32,21 @@ export default async function handler(req,res){
     const titleKey=find('title','judul','name')||columns[0];
     const typeKey=find('type','tipe','kategori');
     const yearKey=find('year','tahun');
+    const linkKey=find('link','url','video','embed','source');
+    const descKey=find('description','deskripsi','sinopsis','overview');
+    const genreKey=find('genre');
+    const actorKey=find('actor','actors','aktor');
+    const titledYears=objects.map(x=>String(x[titleKey]||'').trim().toLowerCase()+'|'+String(yearKey?x[yearKey]||'':'').trim()).filter(Boolean);
     const stats={
       total:objects.length,
       withTitle:objects.filter(x=>x[titleKey]).length,
-      duplicates:objects.length-new Set(objects.map(x=>x[titleKey].toLowerCase()).filter(Boolean)).size,
+      playable:linkKey?objects.filter(x=>String(x[linkKey]||'').trim()).length:null,
+      unplayable:linkKey?objects.filter(x=>!String(x[linkKey]||'').trim()).length:null,
+      missingDescription:descKey?objects.filter(x=>!String(x[descKey]||'').trim()).length:null,
+      missingGenre:genreKey?objects.filter(x=>!String(x[genreKey]||'').trim()).length:null,
+      missingActor:actorKey?objects.filter(x=>!String(x[actorKey]||'').trim()).length:null,
+      missingYear:yearKey?objects.filter(x=>!String(x[yearKey]||'').trim()).length:null,
+      duplicates:objects.length-new Set(titledYears).size,
       movies:typeKey?objects.filter(x=>/movie|film/i.test(x[typeKey])).length:null,
       series:typeKey?objects.filter(x=>/tv|series/i.test(x[typeKey])).length:null,
       years:yearKey?[...new Set(objects.map(x=>x[yearKey]).filter(Boolean))].sort().reverse().slice(0,10):[]
