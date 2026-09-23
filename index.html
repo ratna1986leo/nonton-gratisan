@@ -1017,7 +1017,7 @@
                 <span class="font-bold text-cyan-300">TMDB Discovery:</span> Film/series ini ditemukan dari TMDB, tetapi belum tercatat di Pustaka website. Belum tersedia untuk diputar di sini. Trailer resmi tetap bisa diputar bila tersedia.
             </div>
             <div class="relative w-full aspect-video bg-zinc-950 rounded-xl sm:rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl video-container">
-                <iframe id="video-iframe" title="Pemutar video" class="w-full h-full border-0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="no-referrer" loading="eager"></iframe>
+                <iframe id="video-iframe" title="Pemutar video" class="w-full h-full border-0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" loading="eager"></iframe>
                 
                 <!-- Navigasi Episode Overlay -->
                 <button id="episode-prev-btn" onclick="navigateEpisode('prev')" class="episode-nav-overlay episode-nav-prev" aria-label="Episode Sebelumnya" disabled>
@@ -1086,6 +1086,21 @@
                     <div>
                         <h4 class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">Sinopsis Ringkas:</h4>
                         <p id="detail-overview" class="text-xs sm:text-sm text-zinc-300 leading-relaxed max-h-28 sm:max-h-36 overflow-y-auto pr-2">Deskripsi film...</p>
+                    </div>
+
+                    <div id="watch-providers-section" class="hidden space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/50 p-3 sm:p-4">
+                        <div class="flex items-center justify-between gap-2 flex-wrap">
+                            <h4 class="text-xs sm:text-sm font-bold text-white">📺 Tersedia di Layanan Resmi</h4>
+                            <span class="text-[9px] sm:text-[10px] text-zinc-500">TMDB / JustWatch</span>
+                        </div>
+                        <div id="watch-providers-list" class="flex flex-wrap gap-2"></div>
+                        <a id="watch-providers-link" href="#" target="_blank" rel="noopener noreferrer"
+                           class="hidden inline-flex items-center text-[10px] sm:text-xs font-semibold text-brand-400 hover:text-brand-300">
+                            Lihat detail penyedia di TMDB ↗
+                        </a>
+                        <p class="text-[9px] sm:text-[10px] text-zinc-500 leading-relaxed">
+                            Informasi ketersediaan streaming berasal dari TMDB melalui data JustWatch.
+                        </p>
                     </div>
                     <div class="space-y-1 sm:space-y-2">
                         <h4 class="text-xs sm:text-sm font-bold text-white">Beri rating film ini:</h4>
@@ -2621,6 +2636,122 @@
             return Boolean(getPlayablePlayerLink(item));
         }
 
+        function renderWatchProviders(data) {
+            const section = document.getElementById('watch-providers-section');
+            const list = document.getElementById('watch-providers-list');
+            const link = document.getElementById('watch-providers-link');
+            if (!section || !list || !link) return;
+
+            const results = data?.results || {};
+            const region = results.ID || results.id || null;
+
+            if (!region) {
+                section.classList.add('hidden');
+                list.innerHTML = '';
+                link.classList.add('hidden');
+                link.removeAttribute('href');
+                return;
+            }
+
+            const buckets = [
+                ['flatrate', 'Langganan'],
+                ['free', 'Gratis'],
+                ['ads', 'Gratis + Iklan'],
+                ['rent', 'Sewa'],
+                ['buy', 'Beli']
+            ];
+
+            const providers = [];
+            const seen = new Set();
+
+            buckets.forEach(([key, label]) => {
+                const entries = Array.isArray(region[key]) ? region[key] : [];
+                entries.forEach(provider => {
+                    const providerId = String(provider?.provider_id ?? '');
+                    const dedupeKey = providerId || String(provider?.provider_name || '');
+                    if (!dedupeKey || seen.has(dedupeKey)) return;
+                    seen.add(dedupeKey);
+                    providers.push({
+                        id: providerId,
+                        name: provider.provider_name || 'Penyedia',
+                        logo: provider.logo_path ? `https://image.tmdb.org/t/p/w92${provider.logo_path}` : '',
+                        label
+                    });
+                });
+            });
+
+            if (!providers.length) {
+                section.classList.add('hidden');
+                list.innerHTML = '';
+                link.classList.add('hidden');
+                link.removeAttribute('href');
+                return;
+            }
+
+            list.innerHTML = providers.slice(0, 10).map(provider => `
+                <div class="flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900 px-2 py-1.5">
+                    ${provider.logo
+                        ? `<img src="${escapeHtml(provider.logo)}" alt="${escapeHtml(provider.name)}" loading="lazy" class="w-6 h-6 rounded-md object-cover bg-zinc-800">`
+                        : '<span class="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center text-[9px] text-zinc-400">TV</span>'}
+                    <div class="min-w-0">
+                        <div class="text-[10px] sm:text-xs font-semibold text-zinc-200 truncate max-w-[150px]">${escapeHtml(provider.name)}</div>
+                        <div class="text-[9px] text-zinc-500">${escapeHtml(provider.label)}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            if (region.link) {
+                link.href = region.link;
+                link.classList.remove('hidden');
+            } else {
+                link.classList.add('hidden');
+                link.removeAttribute('href');
+            }
+            section.classList.remove('hidden');
+        }
+
+        async function loadWatchProviders(item) {
+            const section = document.getElementById('watch-providers-section');
+            const list = document.getElementById('watch-providers-list');
+            const link = document.getElementById('watch-providers-link');
+            if (!section || !list || !link || !item || item.isLibraryItem || !item.id) {
+                if (section) section.classList.add('hidden');
+                return;
+            }
+
+            const cacheKey = `tmdb_watch_providers_${item.type}_${item.id}_ID`;
+            const cached = safeStorageJsonGet(cacheKey, null);
+            if (cached?.timestamp && cached?.data && Date.now() - cached.timestamp < 6 * 60 * 60 * 1000) {
+                renderWatchProviders(cached.data);
+                return;
+            }
+
+            section.classList.remove('hidden');
+            list.innerHTML = '<span class="text-[10px] sm:text-xs text-zinc-500">Memuat layanan resmi...</span>';
+            link.classList.add('hidden');
+
+            try {
+                const endpointType = item.type === 'tv' ? 'tv' : 'movie';
+                const url = `https://api.themoviedb.org/3/${endpointType}/${encodeURIComponent(item.id)}/watch/providers?api_key=${DEFAULT_API_KEY}`;
+                const res = await fetchWithRetry(url, 2, 10000);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+
+                safeStorageSet(cacheKey, JSON.stringify({
+                    timestamp: Date.now(),
+                    data
+                }));
+
+                renderWatchProviders(data);
+            } catch (error) {
+                console.warn('Watch providers TMDB gagal dimuat:', error);
+                section.classList.add('hidden');
+                list.innerHTML = '';
+                link.classList.add('hidden');
+                link.removeAttribute('href');
+            }
+        }
+
         function updateDetailSourceStatus(item) {
             const badge = document.getElementById('detail-source-status');
             const notice = document.getElementById('detail-discovery-notice');
@@ -2703,6 +2834,7 @@
                 } catch(e) {}
             }
             loadDetailInteractions(item.id);
+            loadWatchProviders(item);
             window.scrollTo({ top: 0, behavior: 'smooth' });
             startAdInterval();
         }
