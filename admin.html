@@ -607,7 +607,7 @@ $('findPlayer').onclick=async()=>{
  if(!key||!q){box.innerHTML='<div class="statusWarn">Isi Admin Key dan judul terlebih dahulu.</div>';return}
  box.innerHTML='<div class="muted">Mencari URL di Pustaka...</div>';
  try{
-  const r=await fetch('/api/nova-find-player?q='+encodeURIComponent(q)+'&year='+encodeURIComponent(year),{headers:{'x-nova-key':key}});
+  const r=await fetch('/api/nova-add-film',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({action:'find-player',title:q,year,adminKey:key})});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Pencarian URL gagal');
   if(!d.results?.length){box.innerHTML='<div class="muted">Tidak ada URL player yang cocok di Pustaka.</div>';return}
   box.innerHTML=d.results.map(item=>'<div class="playerSearchItem"><b>'+esc(item.title)+'</b><div class="candidateMeta">'+esc(item.year||'-')+' • '+esc(item.type||'-')+' • baris '+esc(item.rowNumber)+'</div>'+item.urls.map(u=>'<div class="playerUrl"><code>'+esc(u)+'</code><button class="tinyBtn useSearchUrl" data-url="'+esc(u)+'">Pakai</button></div>').join('')+'</div>').join('');
