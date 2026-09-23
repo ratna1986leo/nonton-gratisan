@@ -744,6 +744,7 @@
                     <a href="/" onclick="event.preventDefault(); navigateTo('home')" id="nav-home" class="focusable px-3 py-2 rounded-lg text-white bg-zinc-800/80 hover:text-brand-500 transition-colors focus:outline-none">Beranda</a>
                     <a href="/movies" onclick="event.preventDefault(); navigateTo('movies')" id="nav-movies" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors focus:outline-none">Film Bioskop</a>
                     <a href="/tv" onclick="event.preventDefault(); navigateTo('tv')" id="nav-tv" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors focus:outline-none">TV Series</a>
+                    <a href="/search" id="nav-search" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors focus:outline-none">🔎 Cari</a>
                     
                     <div class="relative dropdown" id="desktop-dropdown">
                         <button onclick="toggleDesktopDropdown()" class="focusable px-3 py-2 rounded-lg text-zinc-300 hover:text-brand-500 hover:bg-zinc-900/80 transition-colors flex items-center gap-1 focus:outline-none">
@@ -812,7 +813,7 @@
                     </button>
 
                     <div class="relative hidden sm:block w-32 md:w-56">
-                        <input type="text" id="search-input" oninput="handleSearchInput(event)" placeholder="Cari film..." 
+                        <input type="text" id="search-input" oninput="handleSearchInput(event)" onkeydown="if(event.key==='Enter'){event.preventDefault();openDedicatedSearch(this.value)}" placeholder="Cari film..." 
                                class="focusable w-full bg-zinc-900 border border-zinc-800 rounded-full py-2 pl-9 pr-8 text-xs sm:text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500 transition-all"
                                autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                                aria-label="Cari film">
@@ -832,7 +833,7 @@
 
             <div id="mobile-search-bar" class="sm:hidden hidden pb-3 fade-in">
                 <div class="relative">
-                    <input type="text" id="mobile-search-input" oninput="handleMobileSearchInput(event)" placeholder="Cari film..." 
+                    <input type="text" id="mobile-search-input" oninput="handleMobileSearchInput(event)" onkeydown="if(event.key==='Enter'){event.preventDefault();openDedicatedSearch(this.value)}" placeholder="Cari film..." 
                            class="focusable w-full bg-zinc-900 border border-zinc-800 rounded-full py-2.5 pl-9 pr-8 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-brand-500"
                            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
                            aria-label="Cari film di mobile">
@@ -2113,6 +2114,10 @@
             if (query) clearBtn.classList.remove('hidden');
             else { clearBtn.classList.add('hidden'); document.getElementById('search-section').classList.add('hidden'); return; }
             searchDebounce = setTimeout(() => executeSearch(query), 500);
+        }
+        function openDedicatedSearch(query = '') {
+            const value = String(query || '').trim();
+            window.location.href = value ? `/search?q=${encodeURIComponent(value)}` : '/search';
         }
         function handleMobileSearchInput(e) { document.getElementById('search-input').value = e.target.value; handleSearchInput({target:{value:e.target.value}}); }
         function toggleMobileSearch() { const bar = document.getElementById('mobile-search-bar'); if (bar) { bar.classList.toggle('hidden'); if (!bar.classList.contains('hidden')) document.getElementById('mobile-search-input').focus(); } }
