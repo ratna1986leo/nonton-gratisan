@@ -2517,8 +2517,6 @@
 
         function enrichTMDBWithLibraryPlayer(item, libraryData = null) {
             if (!item || item.isLibraryItem) return item;
-            const rawExisting = item.link || item.Link || item.playerLink || item.playerUrl || item.player_url || '';
-            if (String(rawExisting || '').trim()) return item;
 
             const rows = Array.isArray(libraryData)
                 ? libraryData
@@ -2535,8 +2533,26 @@
                 return Math.abs(tmdbYear - rowYear) <= 1;
             });
 
-            const link = match?.Link || match?.link || match?.playerLink || match?.playerUrl || match?.player_url || '';
-            return String(link || '').trim() ? { ...item, link: String(link).trim() } : item;
+            if (!match) return item;
+
+            const link = match.Link || match.link || match.playerLink || match.playerUrl || match.player_url || '';
+            const description = match.Deskripsi || match.deskripsi || match.Description || match.description || '';
+            const actors = match.Aktor || match.aktor || match.Actors || match.actors || '';
+            const genre = match.Genre || match.genre || '';
+            const sheetRating = match.Rating || match.rating || '';
+            const sheetYear = match.Tahun || match.tahun || match.Year || match.year || '';
+
+            // TMDB tetap menjadi sumber discovery. Google Sheets melengkapi metadata
+            // yang memang diisi admin, terutama sinopsis/deskripsi dan link player.
+            return {
+                ...item,
+                ...(String(link).trim() ? { link: String(link).trim() } : {}),
+                ...(String(description).trim() ? { overview: String(description).trim() } : {}),
+                ...(String(actors).trim() ? { actors: String(actors).trim() } : {}),
+                ...(String(genre).trim() ? { genre: String(genre).trim() } : {}),
+                ...(String(sheetRating).trim() ? { rating: String(sheetRating).trim().replace(',', '.') } : {}),
+                ...(String(sheetYear).trim() ? { year: String(sheetYear).trim() } : {})
+            };
         }
 
         function getTMDBPlayerUrl(item, sourceIndex = null) {
