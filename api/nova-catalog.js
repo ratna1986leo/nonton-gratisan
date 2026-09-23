@@ -31,6 +31,7 @@ export default async function handler(req,res){
     const find=(...names)=>{const n=names.map(x=>x.toLowerCase()); return columns.find(c=>n.includes(c.toLowerCase()))};
     const titleKey=find('title','judul','name')||columns[0];
     const typeKey=find('type','tipe','kategori');
+    const genreKey=find('genre');
     const inferType=(o)=>{
       const title=String(o[titleKey]||'').toLowerCase();
       const genre=String(genreKey?o[genreKey]||'':'').toLowerCase();
@@ -43,7 +44,6 @@ export default async function handler(req,res){
     const yearKey=find('year','tahun');
     const linkKey=find('link','url','video','embed','source');
     const descKey=find('description','deskripsi','sinopsis','overview');
-    const genreKey=find('genre');
     const actorKey=find('actor','actors','aktor');
     const titledYears=objects.map(x=>String(x[titleKey]||'').trim().toLowerCase()+'|'+String(yearKey?x[yearKey]||'':'').trim()).filter(Boolean);
     const stats={
