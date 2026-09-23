@@ -2825,13 +2825,11 @@
             else clearDiscoveryPlayer();
             if (!item.isLibraryItem) {
                 try {
-                    const res = await fetchWithRetry(`https://api.themoviedb.org/3/${item.type}/${item.id}/videos?language=id-ID`, 2, 10000);
-                    if (res.ok) {
-                        const data = await res.json();
-                        const officialTrailer = data.results?.find(v => v.type === 'Trailer' && v.site === 'YouTube') || data.results?.find(v => v.site === 'YouTube');
-                        if (officialTrailer) store.setState({ trailerKey: officialTrailer.key });
-                    }
-                } catch(e) {}
+                    await loadTMDBTrailer(item);
+                } catch (e) {
+                    console.warn('Trailer TMDB gagal dimuat:', e);
+                    store.setState({ trailerKey: '' });
+                }
             }
             loadDetailInteractions(item.id);
             loadWatchProviders(item);
@@ -2913,90 +2911,91 @@
             const state = store.getState();
             const item = state.currentMedia;
             if (!item) return;
+
             const iframe = document.getElementById('video-iframe');
             if (!iframe) return;
-            if (state.currentServer < 1 || state.currentServer > 3) store.setState({ currentServer: 1 });
-            if (!item.isLibraryItem) {
-                const playerUrl = getPlayablePlayerLink(item);
-                if (!playerUrl) {
-                    clearDiscoveryPlayer();
-                    updateServerButtons();
-                    updateTMDBFallbackButton();
-                    updateEpisodeNavButtons(item.type === 'tv', state.currentEpisode || 1, item.type === 'tv' ? 10 : 1);
-                    return;
-                }
-                if (state.currentServer !== 1) store.setState({ currentServer: 1 });
-                currentVideoUrl = playerUrl;
-                prepareIframe(currentVideoUrl);
-                updateServerButtons();
-                updateTMDBFallbackButton();
-                updateEpisodeNavButtons(false, 1, 1);
-                return;
+
+            const server = Number(state.currentServer || 1);
+            if (![1, 2, 3].includes(server)) {
+                store.setState({ currentServer: 1 });
+                return updateIframeSource();
             }
-            currentVideoUrl = getPustakaVideoUrl(state.currentServer, item);
-            prepareIframe(currentVideoUrl);
+
+            if (server === 1) {
+                if (item.isLibraryItem) {
+                    currentVideoUrl = getPustakaVideoUrl(1, item);
+                    prepareIframe(currentVideoUrl);
+                } else {
+                    const playerUrl = getTMDBPlayerUrl(item, state.currentTMDBPlayerSource || 0);
+                    if (!playerUrl) {
+                        clearDiscoveryPlayer();
+                        updateServerButtons();
+                        updateTMDBFallbackButton();
+                        return;
+                    }
+                    currentVideoUrl = playerUrl;
+                    prepareIframe(currentVideoUrl);
+                    updateTMDBFallbackButton();
+                }
+            } else {
+                // Server 2/3 tetap menggunakan endpoint Pustaka yang sama.
+                currentVideoUrl = getPustakaVideoUrl(server, item);
+                prepareIframe(currentVideoUrl);
+            }
+
             updateServerButtons();
+            updateEpisodeNavButtons(
+                item.type === 'tv',
+                state.currentEpisode || 1,
+                item.type === 'tv'
+                    ? (item.isLibraryItem && item.libraryEpisodes?.length ? item.libraryEpisodes.length : 10)
+                    : 1
+            );
         }
 
         function updateServerButtons() {
             const state = store.getState();
+            const item = state.currentMedia;
             const serverNames = ['Server 1 · Vidsrc', 'Server 2 · Pustaka', 'Server 3 · Live'];
+
             updateTMDBFallbackButton();
+
             for (let i = 1; i <= 3; i++) {
                 const btn = document.getElementById(`server-btn-${i}`);
-                if (btn) {
-                    if (!state.currentMedia?.isLibraryItem && hasPlayablePlayerLink(state.currentMedia)) {
-                        const enabled = i === 1;
-                        btn.disabled = !enabled;
-                        btn.setAttribute('aria-disabled', enabled ? 'false' : 'true');
-                        btn.className = enabled
-                            ? "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-emerald-600 text-white transition-all touch-target"
-                            : "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-600 cursor-not-allowed touch-target";
-                        const sourceName = state.currentMedia?.isLibraryItem
-                            ? 'Server 1 · Vidsrc'
-                            : (TMDB_PLAYER_SOURCES[state.currentTMDBPlayerSource || 0]?.name || 'Vidsrc');
-                        btn.innerHTML = enabled ? `Server 1 · ${sourceName}` : serverNames[i-1] + ' · Pustaka saja';
-                    } else if (!state.currentMedia?.isLibraryItem) {
-                        btn.disabled = true;
-                        btn.setAttribute('aria-disabled', 'true');
-                        btn.className = "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-600 cursor-not-allowed touch-target";
-                        btn.innerHTML = serverNames[i-1] + " · belum tersedia";
-                    } else if (i === state.currentServer) {
-                        btn.disabled = false;
-                        btn.setAttribute('aria-disabled', 'false');
-                        btn.className = "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-brand-500 text-white transition-all touch-target";
-                        btn.innerHTML = serverNames[i-1];
-                    } else {
-                        btn.disabled = false;
-                        btn.setAttribute('aria-disabled', 'false');
-                        btn.className = "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-all touch-target";
-                        btn.innerHTML = serverNames[i-1];
-                    }
-                }
+                if (!btn) continue;
+
+                const active = i === state.currentServer;
+                const label = i === 1 && !item?.isLibraryItem
+                    ? `Server 1 · ${TMDB_PLAYER_SOURCES[state.currentTMDBPlayerSource || 0]?.name || 'Vidsrc'}`
+                    : serverNames[i - 1];
+
+                btn.disabled = false;
+                btn.setAttribute('aria-disabled', 'false');
+                btn.className = active
+                    ? "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-brand-500 text-white transition-all touch-target"
+                    : "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-all touch-target";
+                btn.innerHTML = label;
             }
         }
 
         function switchServer(serverNum) {
             const item = store.getState().currentMedia;
             if (!item) return;
-            if (serverNum < 1 || serverNum > 3) { showToast('Server tidak tersedia', '⚠️'); return; }
-            if (!item.isLibraryItem) {
-                if (!hasPlayablePlayerLink(item)) {
-                    showToast('Film ini masih TMDB Discovery dan belum memiliki link player.', 'ℹ️');
-                    return;
-                }
-                if (serverNum !== 1) {
-                    showToast('TMDB dengan player link hanya menggunakan Player Link.', 'ℹ️');
-                    return;
-                }
+
+            serverNum = Number(serverNum);
+            if (![1, 2, 3].includes(serverNum)) {
+                showToast('Server tidak tersedia', '⚠️');
+                return;
             }
-            if (!item.isLibraryItem && serverNum === 1) {
-                store.setState({ currentServer: 1, currentTMDBPlayerSource: 0 });
-            } else {
-                store.setState({ currentServer: serverNum });
-            }
+
+            store.setState({ currentServer: serverNum });
             updateIframeSource();
-            showToast(`Server ${serverNum} dipilih`, '🔄');
+
+            const state = store.getState();
+            const label = serverNum === 1 && !item.isLibraryItem
+                ? (TMDB_PLAYER_SOURCES[state.currentTMDBPlayerSource || 0]?.name || 'Vidsrc')
+                : `Server ${serverNum}`;
+            showToast(`${label} dipilih`, '🔄');
         }
 
         function switchEpisode(epNum) {
@@ -3039,14 +3038,59 @@
             }
         }
 
+        async function loadTMDBTrailer(item) {
+            if (!item || item.isLibraryItem || !item.id) return null;
+            store.setState({ trailerKey: '' });
+
+            const languages = ['id-ID', 'en-US', null];
+            const preferredTypes = ['Trailer', 'Teaser', 'Clip', 'Featurette'];
+
+            for (const language of languages) {
+                let endpoint = `https://api.themoviedb.org/3/${item.type}/${encodeURIComponent(item.id)}/videos`;
+                if (language) endpoint += `?language=${language}`;
+
+                try {
+                    const res = await fetchWithRetry(endpoint, 2, 10000);
+                    if (!res?.ok) continue;
+
+                    const data = await res.json();
+                    const youtube = (Array.isArray(data?.results) ? data.results : [])
+                        .filter(v => v && v.site === 'YouTube' && v.key);
+
+                    if (!youtube.length) continue;
+
+                    let selected = null;
+                    for (const type of preferredTypes) {
+                        selected =
+                            youtube.find(v => v.type === type && v.official === true) ||
+                            youtube.find(v => v.type === type);
+                        if (selected) break;
+                    }
+
+                    selected = selected || youtube.find(v => v.official === true) || youtube[0];
+
+                    if (selected?.key) {
+                        store.setState({ trailerKey: selected.key });
+                        return selected;
+                    }
+                } catch (e) {
+                    console.warn('TMDB videos request gagal:', language || 'default', e);
+                }
+            }
+
+            return null;
+        }
+
         function playTrailer() {
             const state = store.getState();
             const iframe = document.getElementById('video-iframe');
             if (!iframe) return;
 
             if (state.trailerKey) {
+                const key = String(state.trailerKey).trim();
                 const origin = encodeURIComponent(window.location.origin);
-                currentVideoUrl = `https://www.youtube.com/embed/${encodeURIComponent(state.trailerKey)}?autoplay=1&playsinline=1&origin=${origin}`;
+                currentVideoUrl =
+                    `https://www.youtube-nocookie.com/embed/${encodeURIComponent(key)}?autoplay=1&playsinline=1&rel=0&modestbranding=1&origin=${origin}`;
                 prepareIframe(currentVideoUrl);
                 showToast('Memutar Trailer Resmi YouTube', '🎬');
             } else {
