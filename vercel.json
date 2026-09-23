@@ -4,22 +4,6 @@
       "source": "/api/nova-catalog-fix-preview",
       "destination": "/api/nova-catalog-actions?mode=fix-preview"
     },
-    {
-      "source": "/sitemap.xml",
-      "destination": "/api/catalog?format=sitemap"
-    },
-    {
-      "source": "/sitemap-bing.xml",
-      "destination": "/api/catalog?format=sitemap"
-    },
-    {
-      "source": "/sitemap-bing.txt",
-      "destination": "/api/catalog?format=sitemap-text"
-    },
-    {
-      "source": "/sitemap-yandex.xml",
-      "destination": "/api/catalog?format=sitemap"
-    },
 
     {
       "source": "/search",
