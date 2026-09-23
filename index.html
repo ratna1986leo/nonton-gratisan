@@ -1041,6 +1041,7 @@
                 <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
                     <span class="text-[10px] sm:text-xs font-bold text-zinc-400 uppercase tracking-wider">Server:</span>
                     <button id="server-btn-1" onclick="switchServer(1)" class="focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-brand-500 text-white transition-all touch-target">Server 1 · Vidsrc</button>
+                    <button id="tmdb-fallback-btn" onclick="switchTMDBPlayerSource()" class="focusable hidden px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 transition-all touch-target" type="button">Coba Sumber Cadangan</button>
                     <button id="server-btn-2" onclick="switchServer(2)" class="focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-all touch-target">Server 2 · Pustaka</button>
                     <button id="server-btn-3" onclick="switchServer(3)" class="focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-all touch-target">Server 3 · Live</button>
                 </div>
@@ -1241,6 +1242,33 @@
             { name: 'Server 3', movie: () => PUSTAKA_SERVER_3, tv: () => PUSTAKA_SERVER_3 }
         ];
 
+        // Hanya dipakai untuk film/series yang datang dari TMDB.
+        // Server 2 dan Server 3 tetap khusus untuk konten Pustaka seperti sebelumnya.
+        // Format provider pihak ketiga bisa berubah sewaktu-waktu, jadi mudah diperluas
+        // tanpa menyentuh alur Pustaka.
+        const TMDB_PLAYER_SOURCES = [
+            {
+                name: 'Vidsrc',
+                movie: (id) => `https://vidsrc.to/embed/movie/${id}`,
+                tv: (id, season, episode) => `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`
+            },
+            {
+                name: 'Vidsrc.me',
+                movie: (id) => `https://vidsrc.me/embed/movie/${id}`,
+                tv: (id, season, episode) => `https://vidsrc.me/embed/tv/${id}/${season}/${episode}`
+            },
+            {
+                name: 'Vidsrc.cc',
+                movie: (id) => `https://vidsrc.cc/v2/embed/movie/${id}`,
+                tv: (id, season, episode) => `https://vidsrc.cc/v2/embed/tv/${id}/${season}/${episode}`
+            },
+            {
+                name: 'VidSrc.pro',
+                movie: (id) => `https://vidsrc.pro/embed/movie/${id}`,
+                tv: (id, season, episode) => `https://vidsrc.pro/embed/tv/${id}/${season}/${episode}`
+            }
+        ];
+
         const FALLBACK_MOVIES = [];
         const FALLBACK_SERIES = [];
 
@@ -1287,6 +1315,7 @@
             currentServer: 1,
             currentSeason: 1,
             currentEpisode: 1,
+            currentTMDBPlayerSource: 0,
             trailerKey: '',
             libraryData: [],
             isLibraryLoaded: false,
@@ -2495,6 +2524,27 @@
             return String(link || '').trim() ? { ...item, link: String(link).trim() } : item;
         }
 
+        function getTMDBPlayerUrl(item, sourceIndex = null) {
+            if (!item || item.isLibraryItem) return '';
+
+            const state = store.getState();
+            const index = Number.isInteger(sourceIndex)
+                ? sourceIndex
+                : (Number.isInteger(state.currentTMDBPlayerSource) ? state.currentTMDBPlayerSource : 0);
+            const safeIndex = Math.max(0, Math.min(index, TMDB_PLAYER_SOURCES.length - 1));
+            const source = TMDB_PLAYER_SOURCES[safeIndex];
+            if (!source) return '';
+
+            const rawUrl = item.type === 'tv'
+                ? source.tv(item.id, state.currentSeason || 1, state.currentEpisode || 1)
+                : source.movie(item.id);
+
+            const safeUrl = formatEmbedUrl(rawUrl);
+            return safeUrl && safeUrl !== 'about:blank'
+                ? safeUrl
+                : '';
+        }
+
         function getPlayablePlayerLink(item) {
             if (!item) return '';
 
@@ -2503,18 +2553,68 @@
             const safeRaw = formatEmbedUrl(raw);
             if (safeRaw && safeRaw !== 'about:blank') return safeRaw;
 
-            // 2) Kalau item TMDB belum punya link dari pustaka, gunakan sumber
-            //    player yang sama dengan ReviewFilm21: Vidsrc sebagai fallback.
-            if (!item.isLibraryItem && VIDEO_PROVIDERS?.[0]) {
-                const provider = VIDEO_PROVIDERS[0];
-                const fallbackUrl = item.type === 'tv'
-                    ? provider.tv(item.id, store.getState().currentSeason || 1, store.getState().currentEpisode || 1)
-                    : provider.movie(item.id);
-                const safeFallback = formatEmbedUrl(fallbackUrl);
-                if (safeFallback && safeFallback !== 'about:blank') return safeFallback;
-            }
+            // 2) Untuk TMDB, mulai dari Vidsrc lalu sediakan beberapa sumber cadangan
+            //    pada Server 1 tanpa mengubah Server 2/3 Pustaka.
+            if (!item.isLibraryItem) return getTMDBPlayerUrl(item);
 
             return '';
+        }
+
+        function updateTMDBFallbackButton() {
+            const btn = document.getElementById('tmdb-fallback-btn');
+            const item = store.getState().currentMedia;
+            if (!btn) return;
+
+            const isTMDB = Boolean(item && !item.isLibraryItem);
+            if (!isTMDB) {
+                btn.classList.add('hidden');
+                return;
+            }
+
+            const state = store.getState();
+            const currentIndex = Number.isInteger(state.currentTMDBPlayerSource) ? state.currentTMDBPlayerSource : 0;
+            const nextIndex = (currentIndex + 1) % TMDB_PLAYER_SOURCES.length;
+            const nextSource = TMDB_PLAYER_SOURCES[nextIndex];
+
+            btn.classList.remove('hidden');
+            btn.textContent = `Coba ${nextSource?.name || 'Sumber Cadangan'}`;
+            btn.title = `Ganti sumber player TMDB ke ${nextSource?.name || 'sumber cadangan'}`;
+        }
+
+        function switchTMDBPlayerSource() {
+            const state = store.getState();
+            const item = state.currentMedia;
+            if (!item || item.isLibraryItem) return;
+
+            const currentIndex = Number.isInteger(state.currentTMDBPlayerSource) ? state.currentTMDBPlayerSource : 0;
+            const nextIndex = (currentIndex + 1) % TMDB_PLAYER_SOURCES.length;
+            store.setState({
+                currentTMDBPlayerSource: nextIndex,
+                currentServer: 1
+            });
+
+            const nextSource = TMDB_PLAYER_SOURCES[nextIndex];
+            const url = getTMDBPlayerUrl(item, nextIndex);
+            if (!url) {
+                showToast(`${nextSource?.name || 'Sumber'} tidak tersedia, mencoba sumber berikutnya.`, '⚠️');
+                const fallbackIndex = (nextIndex + 1) % TMDB_PLAYER_SOURCES.length;
+                store.setState({ currentTMDBPlayerSource: fallbackIndex });
+                const fallbackUrl = getTMDBPlayerUrl(item, fallbackIndex);
+                if (fallbackUrl) {
+                    prepareIframe(fallbackUrl);
+                }
+                updateTMDBFallbackButton();
+                return;
+            }
+
+            currentVideoUrl = url;
+            prepareIframe(url);
+            updateTMDBFallbackButton();
+            showToast(`Sumber TMDB diganti ke ${nextSource.name}`, '🔄');
+        }
+
+        function hasPlayablePlayerLink(item) {
+            return Boolean(getPlayablePlayerLink(item));
         }
 
         function hasPlayablePlayerLink(item) {
@@ -2552,7 +2652,7 @@
 
         async function openDetailPage(item) {
             item = enrichTMDBWithLibraryPlayer(item);
-            store.setState({ currentMedia: item, currentServer: 1, currentSeason: 1, currentEpisode: 1, trailerKey: '', libraryEpisodes: item.libraryEpisodes || [], currentLibraryEpisodeIndex: 0 });
+            store.setState({ currentMedia: item, currentServer: 1, currentSeason: 1, currentEpisode: 1, currentTMDBPlayerSource: 0, trailerKey: '', libraryEpisodes: item.libraryEpisodes || [], currentLibraryEpisodeIndex: 0 });
             updateDetailSourceStatus(item);
             updatePageSEO(item);
             document.getElementById('detail-title').textContent = item.title;
@@ -2619,6 +2719,7 @@
                 const url = getPlayablePlayerLink(item);
                 currentVideoUrl = url;
                 prepareIframe(url);
+                updateTMDBFallbackButton();
             }
         }
 
@@ -2645,7 +2746,7 @@
                 // Tambahkan domain milik sendiri atau provider yang memberi izin embed.
                 const allowedHosts = new Set([
                     'youtube.com', 'youtu.be', 'youtube-nocookie.com',
-                    'mxdrop.sx','vidsrc.to','vinovo.to','vidsrc.me'
+                    'mxdrop.sx','vidsrc.to','vinovo.to','vidsrc.me','vidsrc.cc','vidsrc.pro'
                     // 'player.domain-resmi-kamu.com'
                 ]);
                 if (!allowedHosts.has(host)) {
@@ -2688,13 +2789,15 @@
                 if (!playerUrl) {
                     clearDiscoveryPlayer();
                     updateServerButtons();
-                    updateEpisodeNavButtons(false, 1, 1);
+                    updateTMDBFallbackButton();
+                    updateEpisodeNavButtons(item.type === 'tv', state.currentEpisode || 1, item.type === 'tv' ? 10 : 1);
                     return;
                 }
                 if (state.currentServer !== 1) store.setState({ currentServer: 1 });
                 currentVideoUrl = playerUrl;
                 prepareIframe(currentVideoUrl);
                 updateServerButtons();
+                updateTMDBFallbackButton();
                 updateEpisodeNavButtons(false, 1, 1);
                 return;
             }
@@ -2706,6 +2809,7 @@
         function updateServerButtons() {
             const state = store.getState();
             const serverNames = ['Server 1 · Vidsrc', 'Server 2 · Pustaka', 'Server 3 · Live'];
+            updateTMDBFallbackButton();
             for (let i = 1; i <= 3; i++) {
                 const btn = document.getElementById(`server-btn-${i}`);
                 if (btn) {
@@ -2716,7 +2820,10 @@
                         btn.className = enabled
                             ? "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-emerald-600 text-white transition-all touch-target"
                             : "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-600 cursor-not-allowed touch-target";
-                        btn.innerHTML = enabled ? 'Server 1 · Vidsrc' : serverNames[i-1] + ' · Pustaka saja';
+                        const sourceName = state.currentMedia?.isLibraryItem
+                            ? 'Server 1 · Vidsrc'
+                            : (TMDB_PLAYER_SOURCES[state.currentTMDBPlayerSource || 0]?.name || 'Vidsrc');
+                        btn.innerHTML = enabled ? `Server 1 · ${sourceName}` : serverNames[i-1] + ' · Pustaka saja';
                     } else if (!state.currentMedia?.isLibraryItem) {
                         btn.disabled = true;
                         btn.setAttribute('aria-disabled', 'true');
@@ -2751,7 +2858,11 @@
                     return;
                 }
             }
-            store.setState({ currentServer: serverNum });
+            if (!item.isLibraryItem && serverNum === 1) {
+                store.setState({ currentServer: 1, currentTMDBPlayerSource: 0 });
+            } else {
+                store.setState({ currentServer: serverNum });
+            }
             updateIframeSource();
             showToast(`Server ${serverNum} dipilih`, '🔄');
         }
