@@ -312,12 +312,12 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 @media(max-width:700px){.formGrid{grid-template-columns:1fr}.candidateGrid{grid-template-columns:1fr}.featureHead{display:block}.playerBox{padding:11px}.playerUrl{align-items:flex-start}.chatBubble{max-width:94%;font-size:12px}}
 
 /* Dashboard */
-#view-dashboard{padding:0!important;min-height:calc(100vh - 58px)!important;background:#06101c!important;color:#e8f0ff!important}
-.novaDashboard{min-height:calc(100vh - 58px);padding:28px 30px 42px;background:
+#view-dashboard{padding:0!important;min-height:calc(100vh - 58px)!important;background:#06101c!important;color:#e8f0ff!important;scroll-margin-top:58px}
+.novaDashboard{min-height:calc(100vh - 58px);padding:36px 30px 42px;position:relative;z-index:1;background:
  radial-gradient(circle at 78% 0%,rgba(38,111,255,.15),transparent 28%),
  radial-gradient(circle at 20% 38%,rgba(124,58,237,.10),transparent 30%),
  linear-gradient(180deg,#07111d,#08111b 52%,#050d16)}
-.dashHero{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}.dashKicker{font-size:9px;letter-spacing:.18em;color:#7291b7;font-weight:700}.dashHero h1{margin:5px 0 7px;font-size:27px;letter-spacing:-.02em;color:#f7fbff}.dashHero p{margin:0;color:#8ca2bc;font-size:12px}.dashHeroActions{display:flex;gap:9px;align-items:center}.dashReadonly,.dashLive,.dashPill{font-size:8px;letter-spacing:.1em;padding:6px 9px;border:1px solid rgba(98,232,255,.18);border-radius:999px;background:rgba(98,232,255,.06);color:#83e9ff}.dashRefresh{height:34px;padding:0 12px;border:1px solid #23405f;border-radius:8px;background:#0d1927;color:#cfe0f5}.dashRefresh:hover{background:#122236}
+.dashHero{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}.dashKicker{font-size:9px;letter-spacing:.18em;color:#7291b7;font-weight:700}.dashHero h1{margin:0 0 7px;font-size:29px;letter-spacing:-.02em;color:#f7fbff}.dashHero p{margin:0;color:#8ca2bc;font-size:12px}.dashHeroActions{display:flex;gap:9px;align-items:center}.dashReadonly,.dashLive,.dashPill{font-size:8px;letter-spacing:.1em;padding:6px 9px;border:1px solid rgba(98,232,255,.18);border-radius:999px;background:rgba(98,232,255,.06);color:#83e9ff}.dashRefresh{height:34px;padding:0 12px;border:1px solid #23405f;border-radius:8px;background:#0d1927;color:#cfe0f5}.dashRefresh:hover{background:#122236}
 .dashStatsGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:12px}.dashMetric{min-height:106px;padding:15px;border:1px solid #1b334d;border-radius:13px;background:linear-gradient(180deg,rgba(13,28,45,.96),rgba(8,20,34,.92));box-shadow:0 10px 30px rgba(0,0,0,.18)}.dashMetric span{font-size:10px;color:#7f96ae}.dashMetric strong{display:block;font-size:26px;line-height:1;margin-top:11px;color:#f7fbff}.dashMetric small{display:block;font-size:8px;color:#68819e;margin-top:8px}.dashMetricGood{border-color:rgba(16,185,129,.35);box-shadow:inset 0 1px rgba(16,185,129,.10)}.dashMetricGood strong{color:#6ee7b7}.dashMetricWarn{border-color:rgba(245,158,11,.35)}.dashMetricWarn strong{color:#fbbf24}
 .dashGridMain{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:12px;margin-top:12px}.dashGridEqual{grid-template-columns:1fr 1fr}.dashCard{border:1px solid #1b334d;border-radius:13px;background:linear-gradient(180deg,rgba(10,25,41,.96),rgba(8,18,30,.94));padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.17)}.dashCardHead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid #152b42}.dashCardHead b{display:block;font-size:12px;color:#eff7ff}.dashCardHead small{display:block;margin-top:3px;color:#68819e;font-size:8px}.dashLinkBtn{border:0;background:transparent;color:#72b8ff;font-size:9px}.dashFootNote{margin-top:11px;color:#506b86;font-size:8px}
 .dashBars{padding-top:13px}.dashBarRow{display:grid;grid-template-columns:70px 1fr 54px;gap:10px;align-items:center;margin:12px 0}.dashBarRow>span{font-size:9px;color:#91a8bf}.dashBarRow>div{height:10px;border-radius:999px;background:#0b1826;overflow:hidden;border:1px solid #17314a}.dashBarRow>div i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,#5b7cff,#7c3aed);box-shadow:0 0 18px rgba(99,102,241,.35)}.dashBarRow:nth-child(2)>div i{background:linear-gradient(90deg,#a855f7,#38bdf8)}.dashBarRow:nth-child(3)>div i{background:linear-gradient(90deg,#10b981,#34d399)}.dashBarRow>b{text-align:right;font-size:9px;color:#d9e7f4}
@@ -327,6 +327,8 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
 .healthChips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.healthChips span{padding:6px 8px;border:1px solid #21405c;border-radius:999px;background:#0b1a29;font-size:8px;color:#96aac0}.healthChips b{color:#fff}.healthPreview{max-height:320px;overflow:auto;border:1px solid #17314a;border-radius:8px;background:#071522}.healthPreview pre{white-space:pre-wrap;word-break:break-word;padding:10px;margin:0;font:9px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:#9bb2c9}
 @media(max-width:1100px){.dashStatsGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.dashGridMain,.dashGridEqual{grid-template-columns:1fr}}
 @media(max-width:700px){.novaDashboard{padding:18px 12px 34px}.dashHero{display:block}.dashHeroActions{margin-top:12px}.dashStatsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashMetric{min-height:95px}.dashHero h1{font-size:22px}.dashQuick{grid-template-columns:1fr 1fr}.dashQuick>div{grid-column:1/-1}}
+
+.dashEmpty{min-height:120px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:5px;color:#7890aa;font-size:10px}.dashEmpty b{font-size:12px;color:#dce9f7}.dashEmpty span{line-height:1.45}.dashFocusKey{margin-top:8px;height:31px;padding:0 10px;border:1px solid #294866;border-radius:8px;background:#0c1e31;color:#bcd2e7;font-size:9px}.dashFocusKey:hover{background:#12304a}.novaDashboard button{font-family:inherit}
 </style></head>
 <body class="novaApp">
 <div class="novaLayout">
@@ -787,7 +789,8 @@ async function loadDashboard(){
  if(!key){
    $('dashCatalogStatus').textContent='Admin Key diperlukan';
    $('dashNotificationStatus').textContent='Admin Key diperlukan';
-   $('dashNotifications').innerHTML='<div class="muted">Masukkan Admin Key di sidebar untuk memuat data dashboard.</div>';
+   $('dashNotifications').innerHTML='<div class="dashEmpty"><b>Dashboard siap.</b><span>Masukkan Admin Key di sidebar, lalu tekan Enter untuk memuat data.</span><button type="button" class="dashFocusKey" id="dashFocusKey">Fokus ke Admin Key</button></div>';
+   $('dashHealth').innerHTML='<div class="dashEmpty"><span>Audit katalog akan aktif setelah Admin Key dimasukkan.</span></div>';
    return;
  }
  $('dashNotifications').textContent='Memuat notifikasi...';
@@ -849,6 +852,9 @@ async function runCatalogAI(){
  }catch(e){box.innerHTML='<div class="statusErr">Error: '+esc(e.message)+'</div>'}
 }
 $('refreshDashboard')?.addEventListener('click',loadDashboard);
+$('key')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();loadDashboard();}});
+$('key')?.addEventListener('change',()=>{if($('view-dashboard')?.classList.contains('active'))loadDashboard();});
+document.addEventListener('click',e=>{if(e.target.id==='dashFocusKey'){$('key')?.focus();$('key')?.scrollIntoView({behavior:'smooth',block:'center'});}});
 $('runCatalogHealth')?.addEventListener('click',runCatalogHealth);
 $('runCatalogAI')?.addEventListener('click',runCatalogAI);
 
