@@ -5,3 +5,5 @@ Sitemap: https://nonton-gratisan.vercel.app/sitemap.xml
 Sitemap: https://nonton-gratisan.vercel.app/sitemap-bing.xml
 Sitemap: https://nonton-gratisan.vercel.app/sitemap-bing.txt
 Sitemap: https://nonton-gratisan.vercel.app/sitemap-yandex.xml
+Sitemap: https://nonton-gratisan.vercel.app/sitemap-google.xml
+Sitemap: https://nonton-gratisan.vercel.app/sitemap-yandex-live.xml
