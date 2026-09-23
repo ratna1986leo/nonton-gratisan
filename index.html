@@ -2495,9 +2495,24 @@
 
         function getPlayablePlayerLink(item) {
             if (!item) return '';
+
+            // 1) Prioritaskan link player yang sudah dicatat di Google Sheets.
             const raw = item.link || item.Link || item.playerLink || item.playerUrl || item.player_url || '';
-            const safe = formatEmbedUrl(raw);
-            return safe && safe !== 'about:blank' ? safe : '';
+            const safeRaw = formatEmbedUrl(raw);
+            if (safeRaw && safeRaw !== 'about:blank') return safeRaw;
+
+            // 2) Kalau item TMDB belum punya link dari pustaka, gunakan sumber
+            //    player yang sama dengan ReviewFilm21: Vidsrc sebagai fallback.
+            if (!item.isLibraryItem && VIDEO_PROVIDERS?.[0]) {
+                const provider = VIDEO_PROVIDERS[0];
+                const fallbackUrl = item.type === 'tv'
+                    ? provider.tv(item.id, store.getState().currentSeason || 1, store.getState().currentEpisode || 1)
+                    : provider.movie(item.id);
+                const safeFallback = formatEmbedUrl(fallbackUrl);
+                if (safeFallback && safeFallback !== 'about:blank') return safeFallback;
+            }
+
+            return '';
         }
 
         function hasPlayablePlayerLink(item) {
@@ -2523,7 +2538,7 @@
             }
             if (notice) {
                 notice.classList.toggle('hidden', isLibrary || hasPlayer);
-                notice.innerHTML = '<span class="font-bold text-cyan-300">TMDB Discovery:</span> Film/series ini ditemukan dari TMDB, belum tercatat di Pustaka website, dan belum memiliki link player yang bisa diputar di sini. Trailer resmi tetap bisa diputar bila tersedia.';
+                notice.innerHTML = '<span class="font-bold text-cyan-300">TMDB Discovery:</span> Film/series ini belum punya link khusus di Pustaka, jadi player Vidsrc digunakan sebagai fallback.';
             }
         }
 
@@ -2699,7 +2714,7 @@
                         btn.className = enabled
                             ? "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-bold bg-emerald-600 text-white transition-all touch-target"
                             : "focusable px-2.5 sm:px-3.5 py-1.5 sm:py-1.5 rounded-lg text-[10px] sm:text-xs font-medium bg-zinc-800 text-zinc-600 cursor-not-allowed touch-target";
-                        btn.innerHTML = enabled ? 'Player Link' : serverNames[i-1] + ' · Pustaka saja';
+                        btn.innerHTML = enabled ? 'Server 1 · Vidsrc' : serverNames[i-1] + ' · Pustaka saja';
                     } else if (!state.currentMedia?.isLibraryItem) {
                         btn.disabled = true;
                         btn.setAttribute('aria-disabled', 'true');
