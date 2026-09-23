@@ -988,7 +988,7 @@ async function runCatalogHealth(){
  if(!key){box.innerHTML='<div class="statusWarn">Isi Admin Key terlebih dahulu.</div>';return}
  box.textContent='Memeriksa katalog...';
  try{
-  const r=await fetch('/api/nova-catalog-actions?mode=fix-preview',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({adminKey:key})});
+  const r=await fetch('/api/nova-catalog-actions',{method:'POST',headers:{'Content-Type':'application/json','x-nova-key':key},body:JSON.stringify({adminKey:key})});
   const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Audit katalog gagal');
   const c=d.counts||{};
   box.innerHTML='<div class="healthChips">'+Object.entries(c).map(([k,v])=>'<span>'+esc(k)+': <b>'+fmtNum(v)+'</b></span>').join('')+'</div><div class="healthPreview"><pre>'+esc(String(d.preview||''))+'</pre></div>';
