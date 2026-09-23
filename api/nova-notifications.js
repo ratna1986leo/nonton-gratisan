@@ -2,13 +2,29 @@ const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.goo
 const SHEET_CSV_URL=process.env.GOOGLE_SHEETS_CSV_URL||'https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
 function auth(req){const e=process.env.NOVA_ADMIN_KEY;if(!e)throw Object.assign(new Error('NOVA_ADMIN_KEY belum disetel di Vercel'),{status:503});if((req.headers['x-nova-key']||'')!==e)throw Object.assign(new Error('Admin key salah'),{status:401});}
 function parseCSV(t){const rows=[];let row=[],cell='',q=false;for(let i=0;i<t.length;i++){const c=t[i],n=t[i+1];if(q){if(c==='"'&&n==='"'){cell+='"';i++;}else if(c==='"')q=false;else cell+=c;}else if(c==='"')q=true;else if(c===','){row.push(cell);cell='';}else if(c==='\n'){row.push(cell);rows.push(row);row=[];cell='';}else if(c!=='\r')cell+=c;}if(cell!==''||row.length){row.push(cell);rows.push(row);}return rows;}
-async function getComments(){const u=new URL(COMMENTS_API_URL);u.searchParams.set('action','recent');u.searchParams.set('limit','60');u.searchParams.set('_',Date.now());const r=await fetch(u,{cache:'no-store'});const d=await r.json();if(!r.ok||d?.ok===false)throw new Error(d?.error||'Komentar gagal dimuat');return Array.isArray(d)?d:(d.comments||d.items||[]);}
+async function getComments(req){
+ const params={action:'recent',limit:'60',_:Date.now()};
+ const u=new URL(COMMENTS_API_URL);Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,String(v)));
+ const r=await fetch(u.toString(),{cache:'no-store',redirect:'follow'});
+ const text=await r.text();let d;
+ try{d=JSON.parse(text)}catch{
+   const proto=String(req?.headers?.['x-forwarded-proto']||'https');
+   const host=String(req?.headers?.host||'nonton-gratisan.vercel.app').split(',')[0].trim();
+   const fallback=new URL(proto+'://'+host+'/api/comments');
+   Object.entries(params).forEach(([k,v])=>fallback.searchParams.set(k,String(v)));
+   const fr=await fetch(fallback.toString(),{cache:'no-store'});const ft=await fr.text();
+   try{d=JSON.parse(ft)}catch{throw new Error('Server komentar tidak mengembalikan JSON');}
+ }
+ if(!r.ok&&!d?.ok)throw new Error(d?.error||'Komentar gagal dimuat');
+ if(d?.ok===false)throw new Error(d?.error||'Komentar gagal dimuat');
+ return Array.isArray(d)?d:(Array.isArray(d.comments)?d.comments:(Array.isArray(d.items)?d.items:[]));
+}
 async function getCatalog(){const r=await fetch(SHEET_CSV_URL,{headers:{accept:'text/csv'},cache:'no-store'});if(!r.ok)throw new Error('Katalog gagal dimuat');const rows=parseCSV(await r.text());if(!rows.length)return [];const cols=rows[0].map(x=>String(x||'').trim());const find=(...n)=>cols.find(c=>n.includes(c.toLowerCase()));const title=find('title','judul','name')||cols[0],link=find('link','url','video','embed','source'),time=find('timestamp','tanggal','date','created at','created_at');return rows.slice(1).filter(r=>r.some(v=>String(v||'').trim())).map(r=>{const o=Object.fromEntries(cols.map((c,i)=>[c,String(r[i]??'').trim()]));return {title:o[title]||'',playable:Boolean(link&&o[link]),timestamp:time?o[time]||'':''};}).filter(x=>x.title);}
 function norm(s){return String(s||'').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
 function likelyRequest(s){return /(?:minta|request|req|carikan|tolong.*(?:film|movie|series)|ada.*(?:film|movie)|kapan.*(?:film|movie)|ingin.*(?:film|movie)|mau.*(?:film|movie))/i.test(String(s||''));}
 function findRequestedTitle(comment,catalog){const text=norm(comment);return catalog.filter(x=>x.playable).sort((a,b)=>norm(b.title).length-norm(a.title).length).find(x=>{const t=norm(x.title);return t.length>=3&&text.includes(t);})||null;}
 function newest(a){return a.slice().sort((x,y)=>new Date(y.timestamp||y.replyTimestamp||0)-new Date(x.timestamp||x.replyTimestamp||0));}
-export default async function handler(req,res){if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});try{auth(req);const [comments,catalog]=await Promise.all([getComments(),getCatalog()]);const n=[];
+export default async function handler(req,res){if(req.method!=='POST')return res.status(405).json({error:'Method not allowed'});try{auth(req);const [comments,catalog]=await Promise.all([getComments(req),getCatalog()]);const n=[];
 newest(comments).filter(c=>String(c.reply||c.replyText||c.balasan||'').trim()).slice(0,12).forEach(c=>n.push({id:'reply-'+(c.commentId||c.id||c.timestamp),type:'reply',icon:'💬',title:'Komentar dibalas NOVA',text:(c.name||'Pengunjung')+' mendapat balasan NOVA'+(c.title?' di “'+c.title+'”':'')+'.',time:c.replyTimestamp||c.timestamp||''}));
 newest(comments).filter(c=>likelyRequest(c.text||c.comment||c.komentar||'')).forEach(c=>{const hit=findRequestedTitle(c.text||c.comment||c.komentar||'',catalog);if(hit)n.push({id:'request-'+(c.commentId||c.id||c.timestamp),type:'request',icon:'🎬',title:'Film request sudah tersedia',text:'“'+hit.title+'” sudah tercatat dan memiliki player. Request dari '+(c.name||'pengunjung')+'.',time:c.timestamp||''});});
 catalog.filter(x=>x.playable&&x.timestamp).slice(0,10).forEach(x=>n.push({id:'film-'+norm(x.title)+'-'+x.timestamp,type:'film',icon:'✨',title:'Film baru di pustaka',text:'“'+x.title+'” tercatat di pustaka dan memiliki player.',time:x.timestamp}));
