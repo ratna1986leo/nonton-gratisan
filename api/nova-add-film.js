@@ -30,15 +30,41 @@ function auth(req){
 }
 function norm(s){return String(s??'').trim().toLowerCase().replace(/[ _-]+/g,'');}
 function decodeHtml(s){return String(s||'').replace(/&amp;/gi,'&').replace(/&quot;/gi,'"').replace(/&#39;|&#x27;/gi,"'");}
-function extractPlayerUrl(input){
+function extractPlayerUrls(input){
   const text=decodeHtml(input);
+  const out=[]; const add=(u)=>{const x=String(u||'').trim().replace(/^['"]|['"]$/g,'');if(/^https?:\/\//i.test(x)&&!out.includes(x))out.push(x);};
   let m;
-  const attr=/(?:src|href|data-src|data-url|content)=\s*["']([^"']+)["']/i;
-  m=attr.exec(text);
-  if(m&&/^https?:\/\//i.test(m[1].trim()))return m[1].trim();
-  const plain=/(https?:\/\/[^\s"'<>]+)/i;
-  m=plain.exec(text);
-  return m?m[1].replace(/[),;]+$/,'').trim():'';
+  const attr=/(?:src|href|data-src|data-url|content)=\s*["']([^"']+)["']/gi;
+  while((m=attr.exec(text)))add(m[1]);
+  const plain=/(https?:\/\/[^\s"'<>]+)/gi;
+  while((m=plain.exec(text)))add(m[1].replace(/[),;]+$/,''));
+  return out.slice(0,10);
+}
+function extractPlayerUrl(input){return extractPlayerUrls(input)[0]||'';}
+function findHeaderByNames(headers,names){const wanted=names.map(norm);return headers.find(h=>wanted.includes(norm(h)))||'';}
+function findCatalogPlayers(rows,q,year){
+  if(!rows.length)return [];
+  const headers=rows[0]||[];
+  const titleHeader=findHeaderByNames(headers,['judul','title','name'])||headers[0];
+  const yearHeader=findHeaderByNames(headers,['tahun','year']);
+  const typeHeader=findHeaderByNames(headers,['tipe','type','jenis','kategori']);
+  const linkHeader=findHeaderByNames(headers,['link','url','video','embed','source','player','embedurl']);
+  if(!linkHeader)return [];
+  const nq=norm(q),ny=String(year||'').slice(0,4);
+  const scored=rows.slice(1).map((row,index)=>{
+    const o=Object.fromEntries(headers.map((h,j)=>[h,String(row?.[j]??'').trim()]));
+    const title=norm(o[titleHeader]); if(!title)return null;
+    const urls=extractPlayerUrls(o[linkHeader]); if(!urls.length)return null;
+    let score=0;
+    if(title===nq)score+=1000;
+    if(title.includes(nq))score+=500;
+    if(nq.includes(title)&&title.length>=3)score+=250;
+    const y=yearHeader?String(o[yearHeader]||'').slice(0,4):'';
+    if(ny&&y===ny)score+=200;
+    score+=100;
+    return {rowNumber:index+2,title:o[titleHeader]||'',year:yearHeader?o[yearHeader]||'':'',type:typeHeader?o[typeHeader]||'':'',urls,score};
+  }).filter(Boolean).filter(x=>x.score>0).sort((a,b)=>b.score-a.score).slice(0,15);
+  return scored.map(({score,...x})=>x);
 }
 
 function parseHeaders(values){return values[0]||[];}
@@ -118,6 +144,13 @@ export default async function handler(req,res){
     const title=String(req.body?.title||'').trim();
     const year=String(req.body?.year||'').trim();
     const requestedTMDBId=String(req.body?.tmdbId||'').trim();
+
+    if(action==='find-player'){
+      if(title.length<2)return res.status(400).json({error:'Query judul minimal 2 karakter'});
+      const rows=await sheetsGet(SHEET_RANGE);
+      const results=findCatalogPlayers(rows,title,year);
+      return res.status(200).json({ok:true,results});
+    }
     const rawLink=String(req.body?.link||'').trim();
     const playerLink=rawLink?extractPlayerUrl(rawLink):'';
     if(rawLink&&!playerLink)return res.status(400).json({error:'URL player/embed tidak dikenali. Gunakan URL http(s) atau kode iframe/embed yang memiliki src/href.'});
