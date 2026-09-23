@@ -2276,7 +2276,9 @@
             }
 
             currentVideoUrl = safeUrl;
-            iframe.referrerPolicy = 'no-referrer';
+            // YouTube Embedded Player membutuhkan HTTP Referer pada banyak kondisi.
+            // Jangan suppress Referer dari iframe; gunakan kebijakan yang direkomendasikan Google.
+            iframe.referrerPolicy = 'strict-origin-when-cross-origin';
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
             iframe.setAttribute('title', 'Pemutar video');
@@ -2798,8 +2800,15 @@
             const state = store.getState();
             const iframe = document.getElementById('video-iframe');
             if (!iframe) return;
-            if (state.trailerKey) { currentVideoUrl = `https://www.youtube.com/embed/${state.trailerKey}?autoplay=1`; prepareIframe(currentVideoUrl); showToast('Memutar Trailer Resmi YouTube', '🎬'); }
-            else showToast('Maaf, trailer resmi tidak tersedia untuk film ini', '⚠️');
+
+            if (state.trailerKey) {
+                const origin = encodeURIComponent(window.location.origin);
+                currentVideoUrl = `https://www.youtube.com/embed/${encodeURIComponent(state.trailerKey)}?autoplay=1&playsinline=1&origin=${origin}`;
+                prepareIframe(currentVideoUrl);
+                showToast('Memutar Trailer Resmi YouTube', '🎬');
+            } else {
+                showToast('Maaf, trailer resmi tidak tersedia untuk film ini', '⚠️');
+            }
         }
 
         function openExternalPlayer() {
