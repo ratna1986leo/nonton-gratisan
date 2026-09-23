@@ -3547,17 +3547,25 @@
             if (!queue.length) return;
 
             commentsSyncRunning = true;
+            let sentAny = false;
             try {
                 for (const comment of queue) {
                     if (navigator.onLine === false) break;
                     const sent = await sendQueuedComment(comment);
                     if (!sent) break;
                     removeQueuedComment(comment.clientId);
+                    sentAny = true;
                 }
             } finally {
                 commentsSyncRunning = false;
                 const state = store.getState();
-                if (state.currentMedia) renderPendingComments(state.currentMedia.id);
+                if (state.currentMedia) {
+                    renderPendingComments(state.currentMedia.id);
+                    // Setelah berhasil masuk ke Google Sheets, ambil ulang dari server
+                    // agar komentar langsung muncul sebagai komentar online, bukan hanya
+                    // sebagai "menunggu sinkronisasi".
+                    if (sentAny) loadCommentsOnline(state.currentMedia.id);
+                }
             }
         }
 
