@@ -29,6 +29,18 @@ function auth(req){
   if(supplied!==expected)throw Object.assign(new Error('Admin key salah'),{status:401});
 }
 function norm(s){return String(s??'').trim().toLowerCase().replace(/[ _-]+/g,'');}
+function decodeHtml(s){return String(s||'').replace(/&amp;/gi,'&').replace(/&quot;/gi,'"').replace(/&#39;|&#x27;/gi,"'");}
+function extractPlayerUrl(input){
+  const text=decodeHtml(input);
+  let m;
+  const attr=/(?:src|href|data-src|data-url|content)=\s*["']([^"']+)["']/i;
+  m=attr.exec(text);
+  if(m&&/^https?:\/\//i.test(m[1].trim()))return m[1].trim();
+  const plain=/(https?:\/\/[^\s"'<>]+)/i;
+  m=plain.exec(text);
+  return m?m[1].replace(/[),;]+$/,'').trim():'';
+}
+
 function parseHeaders(values){return values[0]||[];}
 async function sheetsGet(range){
   const authClient=await googleAuth();
@@ -106,8 +118,12 @@ export default async function handler(req,res){
     const title=String(req.body?.title||'').trim();
     const year=String(req.body?.year||'').trim();
     const requestedTMDBId=String(req.body?.tmdbId||'').trim();
+    const rawLink=String(req.body?.link||'').trim();
+    const playerLink=rawLink?extractPlayerUrl(rawLink):'';
+    if(rawLink&&!playerLink)return res.status(400).json({error:'URL player/embed tidak dikenali. Gunakan URL http(s) atau kode iframe/embed yang memiliki src/href.'});
     if(!title)return res.status(400).json({error:'Judul film wajib diisi'});
     const lookup=await tmdbLookup(title,year,requestedTMDBId); const data=lookup.data;
+    data.link=playerLink;
     const authorizedDomains=String(process.env.AUTHORIZED_EMBED_DOMAINS||'').split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);
     if(action==='preview')return res.status(200).json({ok:true,readOnly:true,data,candidates:lookup.candidates,authorizedDomains,selectedTMDBId:requestedTMDBId||String(data.tmdbId||'')});
     if(action!=='save')return res.status(400).json({error:'Action tidak dikenal'});
