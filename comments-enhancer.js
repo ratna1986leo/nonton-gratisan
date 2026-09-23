@@ -12,6 +12,14 @@
   const db = () => { const all = read(); const k = media(); all[k] ||= {}; all[k].likes ||= {}; all[k].spoilers ||= {}; all[k].replies ||= {}; return { all, data: all[k] }; };
   function capture() {
     const list = document.getElementById('comments-list'); if (!list) return;
+    const currentMedia = media();
+    // Saat pindah film, buang cache komentar film sebelumnya.
+    // Tanpa ini komentar dari film A bisa ikut tampil di film B.
+    if (state.mediaId !== currentMedia) {
+      state.mediaId = currentMedia;
+      state.comments = [];
+      state.page = 1;
+    }
     const nodes = [...list.querySelectorAll('.comment-item')].filter(n => !n.dataset.uiEnhanced && !n.textContent.includes('Menunggu sinkronisasi'));
     if (!nodes.length) return;
     const existing = new Map(state.comments.map(c => [c.key, c]));
@@ -26,7 +34,7 @@
       existing.set(c.key, c);
     });
     state.comments = [...existing.values()];
-    state.mediaId = media();
+    state.mediaId = currentMedia;
     render();
   }
   function ensureToolbar() {
