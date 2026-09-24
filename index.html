@@ -29,7 +29,7 @@
     <!-- Open Graph / Facebook SEO -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="NontonGratisan - Nonton Film Sub Indo Gratis">
-    <meta property="og:description" content="Nonton film sub indo gratis, streaming movie terbaru 2026. Layarkaca21, indoxxi alternatif.">
+    <meta property="og:description" content="NontonGratisan menyediakan informasi film dan series subtitle Indonesia, lengkap dengan detail, rating, genre, dan pilihan tontonan.">
     <meta property="og:site_name" content="NontonGratisan">
     <meta property="og:locale" content="id_ID">
     <meta property="og:image" content="https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg">
@@ -1859,6 +1859,50 @@
             switchTab(tab);
         }
 
+        function setSectionSEO(tab) {
+            const baseUrl = 'https://nonton-gratisan.vercel.app';
+            const meta = {
+                home: {
+                    title: 'NontonGratisan - Nonton Film Sub Indo Gratis',
+                    description: 'NontonGratisan menyediakan informasi film dan series subtitle Indonesia, lengkap dengan detail, rating, genre, dan pilihan tontonan.',
+                    path: '/'
+                },
+                movies: {
+                    title: 'Nonton Film Bioskop Sub Indo Gratis - NontonGratisan',
+                    description: 'Jelajahi koleksi film bioskop dan film terbaru subtitle Indonesia di NontonGratisan, lengkap dengan rating, genre, dan detail film.',
+                    path: '/movies'
+                },
+                tv: {
+                    title: 'Nonton TV Series & Drakor Sub Indo Gratis - NontonGratisan',
+                    description: 'Jelajahi koleksi TV series dan drama Korea subtitle Indonesia di NontonGratisan, lengkap dengan rating, genre, dan detail series.',
+                    path: '/tv'
+                },
+                watchlist: {
+                    title: 'Daftar Favorit Saya - NontonGratisan',
+                    description: 'Daftar film dan TV series yang disimpan sebagai favorit di NontonGratisan.',
+                    path: '/watchlist'
+                }
+            };
+            const current = meta[tab] || meta.home;
+            document.title = current.title;
+            const canonical = document.querySelector('link[rel="canonical"]');
+            if (canonical) canonical.href = baseUrl + current.path;
+            const description = document.querySelector('meta[name="description"]');
+            if (description) description.content = current.description;
+            const ogTitle = document.querySelector('meta[property="og:title"]');
+            if (ogTitle) ogTitle.content = current.title;
+            const ogDescription = document.querySelector('meta[property="og:description"]');
+            if (ogDescription) ogDescription.content = current.description;
+            const ogUrl = document.querySelector('meta[property="og:url"]');
+            if (ogUrl) ogUrl.content = baseUrl + current.path;
+            const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+            if (twitterTitle) twitterTitle.content = current.title;
+            const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+            if (twitterDescription) twitterDescription.content = current.description;
+            const hreflang = document.querySelector('link[hreflang="id-ID"]');
+            if (hreflang) hreflang.href = baseUrl + current.path;
+        }
+
         function switchTab(tab) {
             store.setState({ activeTab: tab });
             document.getElementById('detail-section').classList.add('hidden');
@@ -1877,8 +1921,7 @@
             else if (tab === 'movies') { sections.movies.classList.remove('hidden'); document.getElementById('breadcrumb-current').textContent = 'Film Bioskop'; }
             else if (tab === 'tv') { sections.series.classList.remove('hidden'); document.getElementById('breadcrumb-current').textContent = 'TV Series'; }
             else { sections.hero.classList.remove('hidden'); sections.trending.classList.remove('hidden'); sections.movies.classList.remove('hidden'); sections.series.classList.remove('hidden'); sections.thriller.classList.remove('hidden'); document.getElementById('breadcrumb-current').textContent = 'Semua Film'; renderAllSections(); }
-            const titleMap = { home: 'NontonGratisan - Nonton Film Sub Indo Gratis', movies: 'Nonton Film Bioskop Sub Indo Gratis - NontonGratisan', tv: 'Nonton TV Series & Drakor Sub Indo Gratis - NontonGratisan', watchlist: 'Daftar Favorit Saya - NontonGratisan' };
-            document.title = titleMap[tab] || titleMap.home;
+            setSectionSEO(tab);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
