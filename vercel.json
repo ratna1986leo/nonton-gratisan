@@ -9,10 +9,6 @@
       "destination": "/api/catalog?format=sitemap"
     },
     {
-      "source": "/sitemap.xml",
-      "destination": "/api/catalog?format=sitemap"
-    },
-    {
       "source": "/sitemap-yandex-live.xml",
       "destination": "/api/catalog?format=sitemap"
     },
@@ -29,12 +25,12 @@
       "destination": "/admin.html"
     },
     {
-      "source": "/movie/:id/:slug",
-      "destination": "/api/seo-page?type=movie&id=:id&slug=:slug"
+      "source": "/movie/:path*",
+      "destination": "/"
     },
     {
-      "source": "/tv/:id/:slug",
-      "destination": "/api/seo-page?type=tv&id=:id&slug=:slug"
+      "source": "/tv/:path*",
+      "destination": "/"
     },
     {
       "source": "/collection/:path*",
