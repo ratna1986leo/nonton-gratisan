@@ -3095,18 +3095,8 @@
             const epNum = epMatch ? parseInt(epMatch[1]) : index + 1;
             showToast(`Episode ${epNum} dimuat`, '📺');
             if (currentEpisode) {
-                const baseTitle = String(item.title || currentEpisode.Judul || 'NontonGratisan')
-                    .replace(/^Nonton\s*/i, '')
-                    .replace(/\(\s*\d{4}\s*\)|\[\s*\d{4}\s*\]/g, '')
-                    .replace(/Sub\s*Indo(?:nesia)?/i, '')
-                    .replace(/\[\s*\d+\s*\]/g, '')
-                    .replace(/\b(?:Ep|Episode)\s*\d+\b/gi, '')
-                    .replace(/\s{2,}/g, ' ')
-                    .trim();
-                const displayTitle = epNum > 1
-                    ? `Nonton ${baseTitle} Episode ${epNum} Sub Indo`
-                    : `Nonton ${baseTitle} Sub Indo`;
-                document.getElementById('detail-title').textContent = displayTitle;
+                const cleanedTitle = currentEpisode.Judul.replace(/^Nonton\s*/i, '').replace(/Sub\s*Indo(?:nesia)?/i, '').trim();
+                document.getElementById('detail-title').textContent = cleanedTitle;
                 const epDescription = currentEpisode.Deskripsi || currentEpisode.DESKRIPSI || currentEpisode.deskripsi || currentEpisode.Description || currentEpisode.description || '';
                 const epActors = currentEpisode.Aktor || currentEpisode.AKTOR || currentEpisode.aktor || currentEpisode.Actors || currentEpisode.actors || '';
                 const overviewEl = document.getElementById('detail-overview');
