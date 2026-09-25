@@ -12,7 +12,10 @@
       "source": "/sitemap-yandex-live.xml",
       "destination": "/api/catalog?format=sitemap"
     },
-
+    {
+      "source": "/pustaka",
+      "destination": "/api/catalog?format=seo-hub"
+    },
     {
       "source": "/search",
       "destination": "/search.html"
