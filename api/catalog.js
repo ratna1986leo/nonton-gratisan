@@ -30,20 +30,22 @@ function slugify(s){
     .replace(/^-+|-+$/g,'')||'film';
 }
 function isSeries(row){
-  const title=String(row.Judul||row.judul||'').toLowerCase();
-  const genre=String(row.Genre||row.genre||'').toLowerCase();
-  const type=String(row.Tipe||row.Type||row.Jenis||'').toLowerCase();
-  return /series|tv|serial|drakor/.test(type) ||
-    /series|tv series|tv-series|drakor|k-drama|k drama|drama korea|series korea|series asia|series indonesia|series barat|series india|tv korea|tv asia|tv indonesia|tv barat|tv india/.test(genre) ||
-    /\b(?:season|series|episode|ep)\s*\d*\b/i.test(title) ||
-    /\bbag(?:ian)?\s*\d+\b/i.test(title) ||
-    /\[\s*\d{1,3}\s*\]/.test(title);
+  const title=String(row.Judul||row.judul||'').trim();
+  const genre=String(row.Genre||row.genre||'').trim();
+  const type=String(row.Tipe||row.Type||row.Jenis||'').trim();
+  const explicitType=/^(series|tv|serial|drakor)$/i.test(type);
+  const seriesGenre=/\b(?:series|tv series|tv-series|drakor|k-drama|k drama|drama korea|series korea|series asia|series indonesia|series barat|series india|tv korea|tv asia|tv indonesia|tv barat|tv india)\b/i.test(genre);
+  const seriesMarker=/\b(?:season|series|episode|ep)\s*\d*\b/i.test(title);
+  const episodeMarker=/\b(?:episode|ep)\s*\d+\b|\bbag(?:ian)?\s*\d+\b|\[\s*\d{1,3}\s*\]/i.test(title);
+  return explicitType || seriesGenre || seriesMarker || episodeMarker;
 }
 function episodeNumber(title){
-  const m=String(title||'').match(/\[\s*(\d{1,3})\s*\]/) ||
-    String(title||'').match(/Ep(?:isode)?\s*(\d+)/i) ||
-    String(title||'').match(/\bBag(?:ian)?\s*(\d+)\b/i);
-  return m?Number(m[1]):1;
+  const text=String(title||'');
+  const bracket=text.match(/\[\s*(\d{1,3})\s*\]/);
+  const episode=text.match(/\b(?:Ep|Episode)\s*(\d+)\b/i);
+  const part=text.match(/\bBag(?:ian)?\s*(\d+)\b/i);
+  const number=bracket?.[1] || episode?.[1] || part?.[1];
+  return number ? Number(number) : 1;
 }
 function cleanTitle(title){
   return String(title||'')
