@@ -4173,21 +4173,22 @@
             return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '') ? 'mobile' : 'desktop';
         }
 
-        async function trackPage(force) {
+        async function sendAnalytics(eventType, force) {
             const path = location.pathname + location.search;
             const sid = sessionId();
-            const key = sid + '|' + path;
-            if (!force && key === lastSent) return;
+            const key = eventType + '|' + sid + '|' + path;
+            if (eventType === 'page_view' && !force && key === lastSent) return;
 
             try {
                 const saved = JSON.parse(localStorage.getItem(LAST_PAGE_KEY) || '{}');
-                if (!force && saved.key === key && Date.now() - Number(saved.at || 0) < 10 * 60 * 1000) return;
-                localStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ key, at: Date.now() }));
+                if (eventType === 'page_view' && !force && saved.key === key && Date.now() - Number(saved.at || 0) < 10 * 60 * 1000) return;
+                if (eventType === 'page_view') localStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ key, at: Date.now() }));
             } catch (_) {}
 
-            lastSent = key;
+            if (eventType === 'page_view') lastSent = key;
             const info = routeInfo();
             const payload = {
+                event_type: eventType,
                 session_id: sid,
                 path,
                 page_title: document.title || '',
@@ -4212,7 +4213,7 @@
         const replace = history.replaceState;
         history.pushState = function() {
             const result = push.apply(this, arguments);
-            setTimeout(() => trackPage(false), 0);
+            setTimeout(() => sendAnalytics('page_view', false), 0);
             return result;
         };
         history.replaceState = function() {
@@ -4220,8 +4221,26 @@
             setTimeout(() => trackPage(false), 0);
             return result;
         };
-        window.addEventListener('popstate', () => setTimeout(() => trackPage(false), 0));
-        setTimeout(() => trackPage(false), 1200);
+        window.addEventListener('popstate', () => setTimeout(() => sendAnalytics('page_view', false), 0));
+        setTimeout(() => sendAnalytics('page_view', false), 1200);
+
+        // Heartbeat terpisah: dipakai hanya untuk menentukan "Aktif Sekarang".
+        // Jadi pindah film tidak menambah page view, dan user yang menutup halaman
+        // akan hilang dari status aktif maksimal sekitar 2 menit.
+        let heartbeatTimer = null;
+        function startHeartbeat() {
+            if (heartbeatTimer) clearInterval(heartbeatTimer);
+            heartbeatTimer = setInterval(() => {
+                if (document.visibilityState === 'visible') sendAnalytics('heartbeat', true);
+            }, 45000);
+        }
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') sendAnalytics('heartbeat', true);
+        });
+        window.addEventListener('pagehide', () => {
+            sendAnalytics('heartbeat', true);
+        });
+        startHeartbeat();
     })();
     </script>
 
