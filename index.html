@@ -3831,6 +3831,55 @@
             return null;
         }
 
+        function findLibraryItemByLegacyRoute(type, slug) {
+            const state = store.getState();
+            if (!state.libraryData || !slug) return null;
+            const incoming = slugify(slug);
+            const candidates = [];
+
+            for (const raw of state.libraryData) {
+                const title = raw.Judul || 'Tanpa Judul';
+                const itemType = isLibrarySeries(raw) ? 'tv' : 'movie';
+                if (itemType !== type) continue;
+
+                const clean = title.replace(/^Nonton\\s*/i, '').replace(/Sub\\s*Indo(?:nesia)?/i, '').trim();
+                const expectedSlug = slugify(clean);
+                let score = -1;
+
+                if (expectedSlug === incoming) score = 3;
+                else if (expectedSlug.startsWith(incoming + '-')) score = 2;
+                else if (incoming.startsWith(expectedSlug + '-')) score = 1;
+
+                if (score >= 0) {
+                    candidates.push({ raw, score, expectedSlug });
+                }
+            }
+
+            candidates.sort((a, b) => b.score - a.score);
+            const match = candidates[0];
+            if (!match) return null;
+
+            const raw = match.raw;
+            const link = raw.Link || '';
+            const libraryEpisodes = type === 'tv' ? getLibraryEpisodes(raw.Judul || 'Tanpa Judul', state.libraryData) : [];
+            return {
+                id: getStableLibraryMediaId(raw.Judul || 'Tanpa Judul', type, link),
+                title: raw.Judul || 'Tanpa Judul',
+                type,
+                rating: raw.Rating || '8.0',
+                year: raw.Tahun || new Date().getFullYear().toString(),
+                genre: raw.Genre || (type === 'tv' ? 'TV Series' : 'Movie'),
+                overview: raw.Deskripsi || 'Tidak ada deskripsi tersedia.',
+                poster_path: enforceHttps(raw.Poster) || 'https://placehold.co/400x600/18181b/ff5c00?text=No+Poster',
+                backdrop_path: enforceHttps(raw.Poster) || 'https://placehold.co/1200x600/18181b/ff5c00?text=No+Cover',
+                link,
+                actors: raw.Aktor || '',
+                isLibraryItem: true,
+                popularity: 0,
+                libraryEpisodes
+            };
+        }
+
         async function openSharedRoute() {
             const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
             if (pathname === '/' || pathname === '/index.html') return false;
@@ -3867,7 +3916,22 @@
                 }
             }
 
-            // 2) Coba item TMDB yang sudah masuk cache.
+            // 2) Kompatibilitas URL lama: jika ID stabil berubah karena link katalog
+            // berubah, cari item yang sama berdasarkan slug + tipe agar URL yang sudah
+            // diindeks Google tetap membuka player aktif.
+            const legacyLibraryItem = findLibraryItemByLegacyRoute(type, slug);
+            if (legacyLibraryItem) {
+                const key = getMediaKey(legacyLibraryItem.type, legacyLibraryItem.id);
+                mediaCache.set(key, legacyLibraryItem);
+                document.getElementById('breadcrumb-current').textContent = legacyLibraryItem.title;
+                await openDetailPage(legacyLibraryItem);
+                const expectedSlug = slugify(legacyLibraryItem.title.replace(/^Nonton\\s*/i, '').replace(/Sub\\s*Indo(?:nesia)?/i, '').trim());
+                const canonicalPath = `/${legacyLibraryItem.type}/${encodeURIComponent(String(legacyLibraryItem.id))}/${expectedSlug}`;
+                window.history.replaceState({}, '', canonicalPath);
+                return true;
+            }
+
+            // 3) Coba item TMDB yang sudah masuk cache.
             const numericId = Number(rawId);
             if (Number.isFinite(numericId)) {
                 const key = getMediaKey(type, numericId);
