@@ -44,6 +44,39 @@
     <meta property="og:image:alt" content="NontonGratisan">
     <link rel="alternate" hreflang="id-ID" href="https://nonton-gratisan.vercel.app/">
 
+    <!-- Early deep-link SEO: update URL signals before the main app loads -->
+    <script>
+    (function () {
+        try {
+            var m = window.location.pathname.match(/^\/(movie|tv)\/([^/]+)(?:\/([^/]+))?\/?$/i);
+            if (!m) return;
+            var type = m[1].toLowerCase();
+            var id = m[2];
+            var slug = decodeURIComponent(m[3] || '').replace(/[-_]+/g, ' ').replace(/\b\w/g, function (x) { return x.toUpperCase(); }).trim();
+            if (!/^\d+$/.test(id) || !slug) return;
+            var base = 'https://nonton-gratisan.vercel.app';
+            var canonical = base + '/' + type + '/' + encodeURIComponent(id) + '/' + encodeURIComponent(m[3]);
+            var media = type === 'tv' ? 'TV Series' : 'Film';
+            var pageTitle = ('Nonton ' + slug + ' Subtitle Indonesia - NontonGratisan').slice(0, 58).replace(/\s+\S*$/, '').trim();
+            var desc = media + ' ' + slug + ' subtitle Indonesia di NontonGratisan. Lihat informasi, rating, genre, pemain, dan detail ' + media.toLowerCase() + '.';
+            document.title = pageTitle;
+            var set = function (selector, attr, value) {
+                var el = document.querySelector(selector);
+                if (el) el.setAttribute(attr, value);
+            };
+            set('link[rel="canonical"]', 'href', canonical);
+            set('link[hreflang="id-ID"]', 'href', canonical);
+            set('meta[name="description"]', 'content', desc.slice(0, 155).replace(/\s+\S*$/, '').trim());
+            set('meta[property="og:url"]', 'content', canonical);
+            set('meta[property="og:title"]', 'content', pageTitle);
+            set('meta[property="og:description"]', 'content', desc.slice(0, 155).replace(/\s+\S*$/, '').trim());
+            set('meta[property="og:type"]', 'content', type === 'tv' ? 'video.tv_show' : 'video.movie');
+            set('meta[name="twitter:title"]', 'content', pageTitle);
+            set('meta[name="twitter:description"]', 'content', desc.slice(0, 155).replace(/\s+\S*$/, '').trim());
+        } catch (e) {}
+    })();
+    </script>
+
     <!-- Structured Data - JSON-LD untuk SEO -->
     <script type="application/ld+json">
     {
