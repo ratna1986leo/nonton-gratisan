@@ -103,7 +103,13 @@ export default async function handler(req,res){
         const link=row.Link||row.link||'';
         if(!title || (isSeries(row)&&episodeNumber(title)>1)) continue;
         const type=isSeries(row)?'tv':'movie';
-        const clean=cleanTitle(title);
+        // Samakan slug sitemap dengan URL canonical yang dibuat index.html:
+        // buang prefix "Nonton" dan label "Sub Indo", tetapi pertahankan tahun
+        // agar tidak terjadi sitemap -> canonical mismatch (contoh: colony-2026).
+        const clean=String(title)
+          .replace(/^Nonton\s*/i,'')
+          .replace(/Sub\s*Indo(?:nesia)?/i,'')
+          .trim() || title;
         const loc=BASE_URL+'/'+type+'/'+hashStable(title,type,link)+'/'+slugify(clean);
         if(!seen.has(loc)){seen.add(loc);urls.push({loc,changefreq:'weekly',priority:'0.8'})}
       }
