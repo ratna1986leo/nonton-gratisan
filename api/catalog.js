@@ -122,7 +122,7 @@ export default async function handler(req,res){
       return res.status(200).send(xml);
     }
 
-    res.setHeader('Cache-Control','no-store, no-cache, max-age=0, s-maxage=0, stale-while-revalidate=0, must-revalidate');
+    res.setHeader('Cache-Control','public, max-age=60, s-maxage=300, stale-while-revalidate=900');
     res.setHeader('Content-Type','text/csv; charset=utf-8');
     return res.status(r.status).send(body);
   }catch(e){
