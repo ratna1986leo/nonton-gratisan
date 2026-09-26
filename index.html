@@ -1075,9 +1075,6 @@
                     <button onclick="playTrailer()" class="focusable text-[10px] sm:text-xs bg-amber-500 hover:bg-amber-600 text-zinc-950 font-bold px-3 sm:px-4 py-2 sm:py-2 rounded-lg flex items-center gap-1 sm:gap-1.5 shadow-md touch-target">
                         <span>🎬</span> Trailer
                     </button>
-                    <button onclick="openExternalPlayer()" class="focusable text-[10px] sm:text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 sm:px-3 py-2 sm:py-2 rounded-lg flex items-center gap-1 touch-target">
-                        <span>↗ Tab</span>
-                    </button>
                     <button id="player-fullscreen-btn" onclick="togglePlayerFullscreen()" class="focusable player-fullscreen-btn text-[10px] sm:text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-2.5 sm:px-3 py-2 rounded-lg flex items-center gap-1 touch-target" aria-label="Layar penuh" title="Layar penuh">
                         <span id="player-fullscreen-icon">⛶</span><span class="hidden sm:inline" id="player-fullscreen-text">Layar Penuh</span>
                     </button>
@@ -3199,16 +3196,6 @@
             } else {
                 showToast('Maaf, trailer resmi tidak tersedia untuk film ini', '⚠️');
             }
-        }
-
-        function openExternalPlayer() {
-            const item = store.getState().currentMedia;
-            if (!item) return;
-            if (!item.isLibraryItem && !hasPlayablePlayerLink(item)) {
-                showToast('Film TMDB Discovery belum memiliki link player.', 'ℹ️');
-                return;
-            }
-            openCurrentPlayerInNewTab();
         }
 
         async function togglePlayerFullscreen() {
