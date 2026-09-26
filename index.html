@@ -4125,6 +4125,106 @@
             hideLoading();
 };
     </script>
+
+    <script>
+    /* Lightweight visitor analytics — isolated from player/catalog logic. */
+    (() => {
+        'use strict';
+        const SESSION_KEY = 'ng_analytics_session_v1';
+        const LAST_PAGE_KEY = 'ng_analytics_last_page_v1';
+        const SESSION_TTL = 30 * 60 * 1000;
+        let lastSent = '';
+
+        function sessionId() {
+            try {
+                const raw = localStorage.getItem(SESSION_KEY);
+                const data = raw ? JSON.parse(raw) : null;
+                if (data && data.id && Date.now() - Number(data.at || 0) < SESSION_TTL) {
+                    data.at = Date.now();
+                    localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+                    return data.id;
+                }
+                const id = (window.crypto && crypto.randomUUID)
+                    ? crypto.randomUUID()
+                    : 'ng-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+                localStorage.setItem(SESSION_KEY, JSON.stringify({ id, at: Date.now() }));
+                return id;
+            } catch (_) {
+                return 'ng-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+            }
+        }
+
+        function routeInfo() {
+            const m = location.pathname.match(/^\/(movie|tv)\/([^/]+)(?:\/[^/]*)?$/i);
+            return { media_type: m ? m[1].toLowerCase() : '', media_id: m ? m[2] : '' };
+        }
+
+        function browserName() {
+            const ua = navigator.userAgent || '';
+            if (/Edg\//i.test(ua)) return 'Edge';
+            if (/OPR\//i.test(ua)) return 'Opera';
+            if (/Chrome\//i.test(ua)) return 'Chrome';
+            if (/Firefox\//i.test(ua)) return 'Firefox';
+            if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) return 'Safari';
+            return 'Other';
+        }
+
+        function deviceType() {
+            return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '') ? 'mobile' : 'desktop';
+        }
+
+        async function trackPage(force) {
+            const path = location.pathname + location.search;
+            const sid = sessionId();
+            const key = sid + '|' + path;
+            if (!force && key === lastSent) return;
+
+            try {
+                const saved = JSON.parse(localStorage.getItem(LAST_PAGE_KEY) || '{}');
+                if (!force && saved.key === key && Date.now() - Number(saved.at || 0) < 10 * 60 * 1000) return;
+                localStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ key, at: Date.now() }));
+            } catch (_) {}
+
+            lastSent = key;
+            const info = routeInfo();
+            const payload = {
+                session_id: sid,
+                path,
+                page_title: document.title || '',
+                media_type: info.media_type,
+                media_id: info.media_id,
+                referrer: document.referrer || '',
+                device_type: deviceType(),
+                browser: browserName()
+            };
+
+            try {
+                await fetch('/api/catalog', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                    keepalive: true
+                });
+            } catch (_) {}
+        }
+
+        const push = history.pushState;
+        const replace = history.replaceState;
+        history.pushState = function() {
+            const result = push.apply(this, arguments);
+            setTimeout(() => trackPage(false), 0);
+            return result;
+        };
+        history.replaceState = function() {
+            const result = replace.apply(this, arguments);
+            setTimeout(() => trackPage(false), 0);
+            return result;
+        };
+        window.addEventListener('popstate', () => setTimeout(() => trackPage(false), 0));
+        setTimeout(() => trackPage(false), 1200);
+    })();
+    </script>
+
 </body>
 <!-- stable production restore 2026-09-23 -->
 </html>
