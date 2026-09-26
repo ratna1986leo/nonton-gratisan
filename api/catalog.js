@@ -112,7 +112,7 @@ async function handler(req,res){
         {'@type':'ListItem',position:2,name:mediaLabel,item:BASE_URL+'/'+detailType},
         {'@type':'ListItem',position:3,name:title,item:canonical}
       ]};
-      const shell=await fetch(BASE_URL+'/',{cache:'no-store'});
+      const shell=await fetch('https://raw.githubusercontent.com/ratna1986leo/nonton-gratisan/main/index.html',{cache:'no-store'});
       if(!shell.ok)return res.status(502).send('Site shell unavailable');
       let html=await shell.text();
       html=html.replace(/<title>[\\s\\S]*?<\\/title>/i,'<title>'+escHtml(pageTitle)+'</title>');
