@@ -73,7 +73,7 @@ function xmlEscape(v){
   return String(v||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 }
 
-export default async function handler(req,res){
+async function handler(req,res){
   if(req.method!=='GET') return res.status(405).json({error:'Method not allowed'});
   try{
     const source=String(process.env.GOOGLE_SHEETS_CSV_URL||DEFAULT_CSV).trim();
@@ -200,3 +200,5 @@ export default async function handler(req,res){
     return res.status(502).json({error:e.message||'Catalog proxy gagal'});
   }
 }
+
+module.exports = handler;
