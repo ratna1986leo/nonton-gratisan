@@ -61,6 +61,40 @@ function xmlEscape(v){
 }
 
 export default async function handler(req,res){
+  if(req.method==='POST'){
+    try{
+      const body=req.body||{};
+      const clean=(value,max)=>String(value??'').trim().slice(0,max);
+      const sessionId=clean(body.session_id,80);
+      const path=clean(body.path||'/',500);
+      if(sessionId.length<16||!path) return res.status(400).json({error:'Invalid analytics payload'});
+      const payload={
+        session_id:sessionId,
+        path,
+        page_title:clean(body.page_title,300),
+        media_type:clean(body.media_type,20),
+        media_id:clean(body.media_id,80),
+        referrer:clean(body.referrer,500),
+        device_type:clean(body.device_type,30),
+        browser:clean(body.browser,80),
+        country:clean(req.headers['x-vercel-ip-country']||'',80),
+        city:clean(req.headers['x-vercel-ip-city']||'',120),
+        user_agent:clean(req.headers['user-agent']||'',500)
+      };
+      const supabaseUrl='https://pxybcjmrkenkzmaavuxm.supabase.co';
+      const supabaseKey='sb_publishable_P4xAbhb76YJcuhSMrUSXkg_IZYNFWdW';
+      const r=await fetch(supabaseUrl+'/rest/v1/visitor_events',{
+        method:'POST',
+        headers:{apikey:supabaseKey,Authorization:'Bearer '+supabaseKey,'Content-Type':'application/json',Prefer:'return=minimal'},
+        body:JSON.stringify(payload)
+      });
+      if(!r.ok){console.error('analytics insert failed',r.status,await r.text());return res.status(502).json({error:'Analytics storage unavailable'});}
+      return res.status(204).end();
+    }catch(e){
+      console.error('analytics collector error',e);
+      return res.status(500).json({error:'Analytics collector failed'});
+    }
+  }
   if(req.method!=='GET') return res.status(405).json({error:'Method not allowed'});
   try{
     const source=String(process.env.GOOGLE_SHEETS_CSV_URL||DEFAULT_CSV).trim();
