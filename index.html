@@ -3850,6 +3850,22 @@
                 else if (expectedSlug.startsWith(incoming + '-')) score = 2;
                 else if (incoming.startsWith(expectedSlug + '-')) score = 1;
 
+                // Kompatibilitas URL seri lama: Google kadang menyimpan route
+                // seri umum seperti "lanterns-2026-series", sementara Pustaka
+                // menyimpan episode pertama sebagai "lanterns-episode-1-2026-series".
+                // Cocokkan juga setelah penanda episode dihapus, tetapi hanya
+                // untuk TV agar tidak mengganggu route film.
+                if (score < 0 && type === 'tv') {
+                    const stripEpisode = (value) => slugify(value)
+                        .replace(/-episode-\d+(?:-season-\d+)?(?=-|$)/g, '')
+                        .replace(/-season-\d+(?=-|$)/g, '');
+                    const incomingSeriesSlug = stripEpisode(incoming);
+                    const expectedSeriesSlug = stripEpisode(expectedSlug);
+                    if (incomingSeriesSlug && incomingSeriesSlug === expectedSeriesSlug) {
+                        score = 2.5;
+                    }
+                }
+
                 if (score >= 0) {
                     candidates.push({ raw, score, expectedSlug });
                 }
