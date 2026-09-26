@@ -69,6 +69,7 @@ export default async function handler(req,res){
       const path=clean(body.path||'/',500);
       if(sessionId.length<16||!path) return res.status(400).json({error:'Invalid analytics payload'});
       const payload={
+        event_type:['page_view','heartbeat'].includes(String(body.event_type||'')) ? String(body.event_type) : 'page_view',
         session_id:sessionId,
         path,
         page_title:clean(body.page_title,300),
