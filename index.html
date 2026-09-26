@@ -3866,6 +3866,18 @@
                     }
                 }
 
+                // Kompatibilitas typo ringan: URL lama yang tersimpan Google
+                // kadang berbeda 1 karakter dari slug Pustaka. Batasi hanya
+                // satu perubahan karakter agar tidak mengubah pencocokan umum.
+                if (score < 0 && incoming.length === expectedSlug.length) {
+                    let differences = 0;
+                    for (let i = 0; i < incoming.length; i++) {
+                        if (incoming[i] !== expectedSlug[i]) differences++;
+                        if (differences > 1) break;
+                    }
+                    if (differences === 1) score = 2.25;
+                }
+
                 if (score >= 0) {
                     candidates.push({ raw, score, expectedSlug });
                 }
