@@ -200,5 +200,3 @@ async function handler(req,res){
     return res.status(502).json({error:e.message||'Catalog proxy gagal'});
   }
 }
-
-module.exports = handler;
