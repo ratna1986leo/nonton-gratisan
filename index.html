@@ -3857,12 +3857,46 @@
                 // untuk TV agar tidak mengganggu route film.
                 if (score < 0 && type === 'tv') {
                     const stripEpisode = (value) => slugify(value)
-                        .replace(/-episode-\d+(?:-season-\d+)?(?=-|$)/g, '')
+                        .replace(/-(?:episode|ep)-\d+(?:-season-\d+)?(?=-|$)/g, '')
                         .replace(/-season-\d+(?=-|$)/g, '');
                     const incomingSeriesSlug = stripEpisode(incoming);
                     const expectedSeriesSlug = stripEpisode(expectedSlug);
                     if (incomingSeriesSlug && incomingSeriesSlug === expectedSeriesSlug) {
                         score = 2.5;
+                    }
+
+                    // Kompatibilitas URL TV dari judul episode TMDB yang lebih panjang.
+                    // Contoh: "fightland-fightland-season-1-the-only-round..."
+                    // tetap dapat dipetakan ke item Pustaka "Fightland EP 1 Sub Indo".
+                    if (score < 0) {
+                        const normalizeTVCore = (value) => {
+                            const tokens = slugify(value)
+                                .replace(/-(?:episode|ep)-\d+/g, '')
+                                .replace(/-season-\d+/g, '')
+                                .replace(/-(?:19|20)\d{2}(?=-|$)/g, '')
+                                .replace(/-(?:sub-indo|sub-indonesia|indonesia|indo|nesia|series)(?=-|$)/g, '')
+                                .split('-')
+                                .filter(Boolean);
+                            const collapsed = [];
+                            for (const token of tokens) {
+                                if (collapsed[collapsed.length - 1] !== token) collapsed.push(token);
+                            }
+                            return collapsed.join('-');
+                        };
+                        const incomingCore = normalizeTVCore(incoming);
+                        const expectedCore = normalizeTVCore(expectedSlug);
+                        const incomingBeforeSeason = incomingCore.split('-season-')[0];
+                        const expectedBeforeSeason = expectedCore.split('-season-')[0];
+                        if (
+                            incomingCore &&
+                            expectedCore &&
+                            (
+                                incomingCore === expectedCore ||
+                                incomingBeforeSeason === expectedBeforeSeason
+                            )
+                        ) {
+                            score = 2.4;
+                        }
                     }
                 }
 
