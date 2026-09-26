@@ -3842,7 +3842,7 @@
                 const itemType = isLibrarySeries(raw) ? 'tv' : 'movie';
                 if (itemType !== type) continue;
 
-                const clean = title.replace(/^Nonton\\s*/i, '').replace(/Sub\\s*Indo(?:nesia)?/i, '').trim();
+                const clean = title.replace(/^Nonton\s*/i, '').replace(/Sub\s*Indo(?:nesia)?/i, '').trim();
                 const expectedSlug = slugify(clean);
                 let score = -1;
 
@@ -3925,7 +3925,7 @@
                 mediaCache.set(key, legacyLibraryItem);
                 document.getElementById('breadcrumb-current').textContent = legacyLibraryItem.title;
                 await openDetailPage(legacyLibraryItem);
-                const expectedSlug = slugify(legacyLibraryItem.title.replace(/^Nonton\\s*/i, '').replace(/Sub\\s*Indo(?:nesia)?/i, '').trim());
+                const expectedSlug = slugify(legacyLibraryItem.title.replace(/^Nonton\s*/i, '').replace(/Sub\s*Indo(?:nesia)?/i, '').trim());
                 const canonicalPath = `/${legacyLibraryItem.type}/${encodeURIComponent(String(legacyLibraryItem.id))}/${expectedSlug}`;
                 window.history.replaceState({}, '', canonicalPath);
                 return true;
