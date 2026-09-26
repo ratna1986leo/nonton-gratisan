@@ -3892,7 +3892,9 @@
                             expectedCore &&
                             (
                                 incomingCore === expectedCore ||
-                                incomingBeforeSeason === expectedBeforeSeason
+                                incomingBeforeSeason === expectedBeforeSeason ||
+                                incomingCore.startsWith(expectedCore + '-') ||
+                                incomingCore.startsWith(expectedCore + '-' + expectedCore + '-')
                             )
                         ) {
                             score = 2.4;
