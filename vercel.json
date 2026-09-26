@@ -30,11 +30,11 @@
     },
     {
       "source": "/movie/:id/:slug",
-      "destination": "/api/seo-page?type=movie&id=:id&slug=:slug"
+      "destination": "/api/catalog?type=movie&id=:id&slug=:slug"
     },
     {
       "source": "/tv/:id/:slug",
-      "destination": "/api/seo-page?type=tv&id=:id&slug=:slug"
+      "destination": "/api/catalog?type=tv&id=:id&slug=:slug"
     },
     {
       "source": "/collection/:path*",
