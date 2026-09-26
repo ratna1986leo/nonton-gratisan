@@ -1832,7 +1832,7 @@
                 if (!displayTitle) displayTitle = title;
 
                 return {
-                    id: Math.abs(hashCode(title + (item.Link || ''))),
+                    id: getStableLibraryMediaId(title, isSeries ? 'tv' : 'movie', item.Link || item.LINK || item.link || ''),
                     title: displayTitle,
                     type: isSeries ? 'tv' : 'movie',
                     rating: rating.toFixed(1), year,
@@ -2169,7 +2169,7 @@
             if (!displayTitle) displayTitle = title;
             const episodeBadge = isSeries ? `<div class="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 bg-brand-500/90 text-white text-[7px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded">EP 1</div>` : '';
             const slug = slugify(displayTitle);
-            const itemId = Math.abs(hashCode(title + link));
+            const itemId = getStableLibraryMediaId(title, type, link);
             const cacheKey = String(itemId);
             libraryCardCache.set(cacheKey, { link, title, poster, rating, year, description, actors, type });
             return `<a href="/${type}/${itemId}/${slug}" data-library-card-id="${cacheKey}" title="Buka halaman detail film" aria-label="Buka detail film" class="focusable poster-card shrink-0 bg-zinc-900 rounded-lg sm:rounded-xl overflow-hidden border border-zinc-800/80 group cursor-pointer relative snap-start block"><div class="relative aspect-[2/3] overflow-hidden bg-zinc-950"><img src="${escapeHtml(poster)}" alt="Poster ${escapeHtml(displayTitle)}" loading="lazy" onerror="this.src='https://placehold.co/400x600/18181b/ff5c00?text=Gambar+N/A'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"><div class="absolute top-1 sm:top-2 left-1 sm:left-2 bg-black/70 backdrop-blur-md text-amber-400 font-extrabold text-[8px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded border border-amber-500/20">★ ${escapeHtml(rating)}</div>${isSeries ? `<div class="absolute top-1 sm:top-2 right-1 sm:right-2 bg-brand-500/80 text-white text-[7px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded">Series</div>` : ''}${episodeBadge}<div class="absolute inset-0 bg-brand-600/40 backdrop-blur-[2px] play-overlay flex flex-col items-center justify-center p-1 sm:p-3 text-center"><div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-xl shadow-brand-500/50 mb-1 sm:mb-2"><svg class="w-4 h-4 sm:w-6 sm:h-6 fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><span class="text-white text-[8px] sm:text-xs font-black tracking-wide drop-shadow">TONTON</span></div></div><div class="p-2 sm:p-3 space-y-0.5 sm:space-y-1"><h3 class="text-[10px] sm:text-sm font-bold text-white truncate group-hover:text-brand-500 transition-colors">${escapeHtml(displayTitle)}</h3><div class="flex items-center justify-between text-[8px] sm:text-[10px] text-zinc-400"><span>${escapeHtml(year)}</span><span class="uppercase border border-zinc-700 px-0.5 sm:px-1 rounded text-[7px] sm:text-[9px]">${type === 'tv' ? 'EP 1' : 'HD'}</span></div>${actors ? `<div class="text-[7px] sm:text-[9px] text-zinc-500 truncate">${escapeHtml(actors)}</div>` : ''}</div></a>`;
