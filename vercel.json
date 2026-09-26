@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/catalog?format=sitemap"
+    },
+    {
       "source": "/api/nova-catalog-fix-preview",
       "destination": "/api/nova-catalog-actions?mode=fix-preview"
     },
