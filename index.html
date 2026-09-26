@@ -3878,6 +3878,22 @@
                     if (differences === 1) score = 2.25;
                 }
 
+                // Kompatibilitas slug lama yang memotong nama bahasa, misalnya
+                // "supergirl-nesia" untuk item Pustaka "Supergirl (2026) sub indonesia".
+                // Normalisasi hanya membuang penanda tahun/bahasa di ujung agar
+                // judul inti tetap menjadi penentu pencocokan.
+                if (score < 0 && type === 'movie') {
+                    const normalizeMovieCore = (value) => slugify(value)
+                        .replace(/-(?:19|20)\d{2}(?=-|$)/g, '')
+                        .replace(/-(?:sub-indo|sub-indonesia|indonesia|indo|nesia)(?=-|$)/g, '')
+                        .replace(/-+$/g, '');
+                    const incomingCore = normalizeMovieCore(incoming);
+                    const expectedCore = normalizeMovieCore(expectedSlug);
+                    if (incomingCore && expectedCore && incomingCore === expectedCore) {
+                        score = 2.15;
+                    }
+                }
+
                 if (score >= 0) {
                     candidates.push({ raw, score, expectedSlug });
                 }
