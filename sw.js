@@ -1,9 +1,8 @@
-const CACHE = 'nontongratisan-pwa-v7';
+const CACHE = 'nontongratisan-pwa-v8';
 const STATIC = [
   '/',
   '/manifest.webmanifest',
   '/favicon.svg',
-  '/phase1-ux.js',
   '/phase2-ux.js',
   '/phase3-ux.js',
   '/phase4-ux.js',
@@ -17,7 +16,6 @@ const STATIC = [
 ];
 
 const FRESH_MODULES = new Set([
-  '/phase1-ux.js',
   '/phase2-ux.js',
   '/phase3-ux.js',
   '/phase4-ux.js',
