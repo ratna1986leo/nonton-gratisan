@@ -502,9 +502,9 @@ body.novaApp{min-height:100vh;font-family:Inter,ui-sans-serif,system-ui,-apple-s
             <span class="dashLive" id="visitorStatsStatus">MEMUAT…</span>
           </div>
           <div class="visitorStatsGrid">
-            <div class="visitorMetric"><span>Pengunjung Hari Ini</span><strong id="visitorToday">—</strong><small id="visitorTodayUnique">— visitor unik</small></div>
+            <div class="visitorMetric"><span>Pengunjung Hari Ini</span><strong id="visitorToday">—</strong><small id="visitorTodayUnique">visitor unik • sesi</small></div>
             <div class="visitorMetric"><span>Aktif Sekarang</span><strong id="visitorActive">—</strong><small>30 menit terakhir</small></div>
-            <div class="visitorMetric"><span>Total Kunjungan</span><strong id="visitorTotal">—</strong><small>seluruh event</small></div>
+            <div class="visitorMetric"><span>Page Views</span><strong id="visitorTotal">—</strong><small>perpindahan halaman/video</small></div>
             <div class="visitorMetric"><span>Visitor Unik</span><strong id="visitorUnique">—</strong><small>berdasarkan sesi</small></div>
             <div class="visitorMetric"><span>Terakhir Masuk</span><strong id="visitorLast">—</strong><small>WIB</small></div>
           </div>
@@ -1018,8 +1018,8 @@ async function loadVisitorStats(){
   if(!r.ok)throw new Error(rows?.message||'Statistik pengunjung gagal dimuat');
   const s=Array.isArray(rows)?rows[0]:rows;
   if(!s)throw new Error('Belum ada data pengunjung');
-  $('visitorToday').textContent=fmtNum(s.today_visits);
-  $('visitorTodayUnique').textContent=fmtNum(s.today_unique)+' visitor unik';
+  $('visitorToday').textContent=fmtNum(s.today_unique);
+  $('visitorTodayUnique').textContent='visitor unik • sesi';
   $('visitorActive').textContent=fmtNum(s.active_visitors);
   $('visitorTotal').textContent=fmtNum(s.total_visits);
   $('visitorUnique').textContent=fmtNum(s.unique_visitors);
