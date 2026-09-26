@@ -1310,8 +1310,8 @@
         const TMDB_PLAYER_SOURCES = [
             {
                 name: 'Vidsrc',
-                movie: (id) => `https://vidsrc.to/embed/movie/${id}`,
-                tv: (id, season, episode) => `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`
+                movie: (id) => `https://vidsrc.sh/embed/movie/${id}`,
+                tv: (id, season, episode) => `https://vidsrc.sh/embed/tv/${id}/${season}/${episode}`
             },
             {
                 name: 'Vidsrc.me',
@@ -2971,7 +2971,7 @@
                 // Tambahkan domain milik sendiri atau provider yang memberi izin embed.
                 const allowedHosts = new Set([
                     'youtube.com', 'youtu.be', 'youtube-nocookie.com',
-                    'mxdrop.sx','vidsrc.to','vinovo.to','vidsrc.me','vidsrc.cc','vidsrc.pro'
+                    'mxdrop.sx','vidsrc.sh','vidsrc.to','vinovo.to','vidsrc.me','vidsrc.cc','vidsrc.pro'
                     // 'player.domain-resmi-kamu.com'
                 ]);
                 if (!allowedHosts.has(host)) {
