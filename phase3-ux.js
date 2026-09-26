@@ -76,3 +76,106 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(boot, 0));
   else setTimeout(boot, 0);
 })();
+
+
+/* Lightweight visitor analytics — additive only, no player changes. */
+(() => {
+  'use strict';
+  const SESSION_KEY = 'ng_analytics_session_v1';
+  const LAST_PAGE_KEY = 'ng_analytics_last_page_v1';
+  const SESSION_TTL = 30 * 60 * 1000;
+
+  function getSessionId() {
+    try {
+      const raw = localStorage.getItem(SESSION_KEY);
+      const data = raw ? JSON.parse(raw) : null;
+      if (data && data.id && Date.now() - Number(data.at || 0) < SESSION_TTL) {
+        data.at = Date.now();
+        localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+        return data.id;
+      }
+      const id = (crypto.randomUUID ? crypto.randomUUID() : 'ng-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ id, at: Date.now() }));
+      return id;
+    } catch (_) {
+      return 'ng-' + Date.now() + '-' + Math.random().toString(36).slice(2);
+    }
+  }
+
+  function browserName() {
+    const ua = navigator.userAgent || '';
+    if (/Edg\//i.test(ua)) return 'Edge';
+    if (/OPR\//i.test(ua)) return 'Opera';
+    if (/Chrome\//i.test(ua)) return 'Chrome';
+    if (/Firefox\//i.test(ua)) return 'Firefox';
+    if (/Safari\//i.test(ua) && !/Chrome\//i.test(ua)) return 'Safari';
+    return 'Other';
+  }
+
+  function deviceType() {
+    return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent || '') ? 'mobile' : 'desktop';
+  }
+
+  function routeInfo() {
+    const m = location.pathname.match(/^\/(movie|tv)\/([^/]+)(?:\/[^/]*)?$/i);
+    return {
+      media_type: m ? m[1].toLowerCase() : '',
+      media_id: m ? m[2] : ''
+    };
+  }
+
+  let lastSent = '';
+  async function trackPage(force) {
+    const path = location.pathname + location.search;
+    const sessionId = getSessionId();
+    const key = sessionId + '|' + path;
+    if (!force && key === lastSent) return;
+
+    try {
+      const saved = JSON.parse(localStorage.getItem(LAST_PAGE_KEY) || '{}');
+      if (!force && saved.key === key && Date.now() - Number(saved.at || 0) < 10 * 60 * 1000) return;
+    } catch (_) {}
+
+    lastSent = key;
+    try {
+      localStorage.setItem(LAST_PAGE_KEY, JSON.stringify({ key, at: Date.now() }));
+    } catch (_) {}
+
+    const info = routeInfo();
+    const payload = {
+      session_id: sessionId,
+      path,
+      page_title: document.title,
+      media_type: info.media_type,
+      media_id: info.media_id,
+      referrer: document.referrer || '',
+      device_type: deviceType(),
+      browser: browserName()
+    };
+
+    try {
+      await fetch('/api/analytics', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true
+      });
+    } catch (_) {}
+  }
+
+  const originalPushState = history.pushState;
+  const originalReplaceState = history.replaceState;
+  history.pushState = function() {
+    const result = originalPushState.apply(this, arguments);
+    setTimeout(() => trackPage(false), 0);
+    return result;
+  };
+  history.replaceState = function() {
+    const result = originalReplaceState.apply(this, arguments);
+    setTimeout(() => trackPage(false), 0);
+    return result;
+  };
+  window.addEventListener('popstate', () => setTimeout(() => trackPage(false), 0));
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => setTimeout(() => trackPage(false), 800));
+  else setTimeout(() => trackPage(false), 800);
+})();
