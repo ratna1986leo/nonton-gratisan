@@ -2499,15 +2499,17 @@
             const year = item?.year ? String(item.year) : '';
             const mediaLabel = safeType === 'tv' ? 'TV Series' : 'Film';
             const titleBase = item?.title
-                ? `Nonton ${cleanTitle} Subtitle Indonesia - NontonGratisan`
+                ? `Nonton ${cleanTitle} Sub Indo | NontonGratisan`
                 : 'NontonGratisan - Nonton Film Sub Indo Gratis';
-            const title = titleBase.length > 58
-                ? titleBase.slice(0, 58).replace(/\s+\S*$/, '').trim()
+            const title = titleBase.length > 60
+                ? titleBase.slice(0, 60).replace(/[|\\-–—:;,]+\\s*$/, '').replace(/\\s+\\S*$/, '').trim()
                 : titleBase;
 
-            const fallbackDescription = `${mediaLabel} ${cleanTitle} subtitle Indonesia di NontonGratisan. Lihat informasi, rating, genre, pemain, dan detail ${mediaLabel.toLowerCase()}.`;
-            const descriptionSource = item?.overview ? String(item.overview).replace(/\s+/g, ' ').trim() : fallbackDescription;
-            const description = descriptionSource.slice(0, 155).replace(/\s+\S*$/, '').trim() || fallbackDescription.slice(0, 155);
+            const fallbackDescription = `${cleanTitle}${year ? ` (${year})` : ''} - nonton ${mediaLabel.toLowerCase()} subtitle Indonesia (sub Indo) di NontonGratisan. Lihat rating, genre, pemain, dan sinopsis.`;
+            const descriptionSource = item?.overview
+                ? `${cleanTitle}${year ? ` (${year})` : ''} - nonton ${mediaLabel.toLowerCase()} subtitle Indonesia (sub Indo) di NontonGratisan. ${String(item.overview).replace(/\\s+/g, ' ').trim()}`
+                : fallbackDescription;
+            const description = descriptionSource.slice(0, 155).replace(/\\s+\\S*$/, '').trim() || fallbackDescription.slice(0, 155);
 
 
             const imageUrl = item?.poster_path ? getOptimizedImage(item.poster_path, 500) : 'https://image.tmdb.org/t/p/w1280/t6HIqrRAclMCA60NsSmeqe9RmNV.jpg';
