@@ -138,5 +138,12 @@
         }
       ]
     }
+  ],
+  "redirects": [
+    {
+      "source": "/tv/272307/neagley",
+      "destination": "/tv/651848596/neagley-episode-1-2026",
+      "permanent": true
+    }
   ]
 }
