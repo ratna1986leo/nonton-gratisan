@@ -2865,23 +2865,17 @@
         function updateDetailSourceStatus(item) {
             const badge = document.getElementById('detail-source-status');
             const notice = document.getElementById('detail-discovery-notice');
-            const isLibrary = Boolean(item?.isLibraryItem);
-            const hasPlayer = hasPlayablePlayerLink(item);
+            // Badge sumber sengaja disembunyikan; status player tetap diproses oleh logic di bawahnya.
             if (badge) {
-                badge.textContent = isLibrary
-                    ? 'PUSTAKA • TERSEDIA'
-                    : hasPlayer
-                        ? 'TMDB • PLAYER TERSEDIA'
-                        : 'TMDB • DISCOVERY';
-                badge.className = isLibrary
-                    ? 'text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-purple-500/30 bg-purple-500/10 text-purple-300'
-                    : hasPlayer
-                        ? 'text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
-                        : 'text-[9px] sm:text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-300';
+                badge.textContent = '';
+                badge.className = 'hidden';
+                badge.setAttribute('aria-hidden', 'true');
             }
             if (notice) {
+                const isLibrary = Boolean(item?.isLibraryItem);
+                const hasPlayer = hasPlayablePlayerLink(item);
                 notice.classList.toggle('hidden', isLibrary || hasPlayer);
-                notice.innerHTML = '<span class="font-bold text-cyan-300">TMDB Discovery:</span> Film/series ini belum punya link khusus di Pustaka, jadi player Vidsrc digunakan sebagai fallback.';
+                notice.innerHTML = '<span class="font-bold text-cyan-300">TMDB Discovery:</span> Film/series ini belum punya link khusus di Pustaka website. Belum tersedia untuk diputar di sini. Trailer resmi tetap bisa diputar bila tersedia.';
             }
         }
 
