@@ -3947,6 +3947,43 @@
             if (pathname === '/' || pathname === '/index.html') return false;
 
             const parts = pathname.split('/').filter(Boolean);
+
+            // Kompatibilitas URL lama satu-segmen yang masih dapat muncul di Google,
+            // misalnya "/neagley". Route lama ini sebelumnya jatuh ke homepage
+            // sehingga Google bisa melihat title generik. Jika slug cocok dengan
+            // Pustaka, buka detail yang sama lalu arahkan ke URL stabil.
+            if (parts.length === 1) {
+                let legacySlug = '';
+                try {
+                    legacySlug = decodeURIComponent(parts[0] || '');
+                } catch (error) {
+                    return false;
+                }
+
+                const legacyMatches = ['movie', 'tv']
+                    .map(type => findLibraryItemByLegacyRoute(type, legacySlug))
+                    .filter(Boolean);
+
+                if (legacyMatches.length) {
+                    const legacyItem = legacyMatches[0];
+                    const key = getMediaKey(legacyItem.type, legacyItem.id);
+                    mediaCache.set(key, legacyItem);
+                    document.getElementById('breadcrumb-current').textContent = legacyItem.title;
+                    await openDetailPage(legacyItem);
+                    const expectedSlug = slugify(
+                        legacyItem.title
+                            .replace(/^Nonton\s*/i, '')
+                            .replace(/Sub\s*Indo(?:nesia)?/i, '')
+                            .trim()
+                    );
+                    const canonicalPath = '/' + legacyItem.type + '/' + encodeURIComponent(String(legacyItem.id)) + '/' + expectedSlug;
+                    window.history.replaceState({}, '', canonicalPath);
+                    return true;
+                }
+
+                return false;
+            }
+
             if (parts.length < 2) return false;
 
             const type = parts[0].toLowerCase();
