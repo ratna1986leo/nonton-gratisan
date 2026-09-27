@@ -2940,10 +2940,10 @@
                 epContainer.classList.add('hidden');
                 updateEpisodeNavButtons(false, 1, 1);
             }
-            document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
-            document.getElementById('detail-section').classList.remove('hidden');
             if (item.isLibraryItem || hasPlayablePlayerLink(item)) setupVideoSource(item);
             else clearDiscoveryPlayer();
+            document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
+            document.getElementById('detail-section').classList.remove('hidden');
             if (!item.isLibraryItem) {
                 try {
                     await loadTMDBTrailer(item);
