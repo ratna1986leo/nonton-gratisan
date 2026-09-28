@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/artikel/:slug",
+      "destination": "/artikel/:slug.html"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/catalog?format=sitemap"
     },
