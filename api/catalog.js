@@ -112,6 +112,7 @@ export default async function handler(req,res){
       }):[];
       const urls=[
         {loc:BASE_URL+'/',changefreq:'daily',priority:'1.0'},
+        {loc:BASE_URL+'/artikel/neagley-2026',changefreq:'weekly',priority:'0.7'},
         {loc:BASE_URL+'/movies',changefreq:'daily',priority:'0.9'},
         {loc:BASE_URL+'/tv',changefreq:'daily',priority:'0.9'},
         {loc:BASE_URL+'/search',changefreq:'weekly',priority:'0.6'},
