@@ -771,6 +771,14 @@
 #nova-push-btn.enabled .p-dot{background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,.8)}
 @media(max-width:640px){#nova-push-btn{right:12px;bottom:78px;padding:9px 11px;font-size:10px}body:has(#phase5-bottom-nav) #nova-push-btn{bottom:calc(76px + env(safe-area-inset-bottom))}}
 </style>
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#09090b">
+  <meta name="mobile-web-app-capable" content="yes">
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+    }
+  </script>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-16 lg:pb-0">
 
