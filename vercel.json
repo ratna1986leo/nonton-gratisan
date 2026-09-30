@@ -37,10 +37,6 @@
       "destination": "/"
     },
     {
-      "source": "/tv/:path*",
-      "destination": "/"
-    },
-    {
       "source": "/collection/:path*",
       "destination": "/"
     },
