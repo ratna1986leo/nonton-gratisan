@@ -469,6 +469,10 @@
         .site-native-banner ins, .site-native-banner iframe, .site-native-banner > div {
             max-width: 100% !important;
         }
+        .detail-social-bar { position: sticky; bottom: max(.5rem, env(safe-area-inset-bottom)); z-index: 40; display: flex; align-items: center; justify-content: center; gap: .5rem; width: fit-content; max-width: calc(100vw - 1rem); margin: .25rem auto; padding: .45rem .6rem; background: rgba(9,9,11,.94); border: 1px solid #27272a; border-radius: 999px; box-shadow: 0 10px 30px rgba(0,0,0,.35); backdrop-filter: blur(12px); }
+        .detail-social-bar a, .detail-social-bar button { min-height: 36px; display: inline-flex; align-items: center; justify-content: center; gap: .35rem; padding: .45rem .7rem; border-radius: 999px; color: #d4d4d8; background: #18181b; border: 1px solid #27272a; font-size: 11px; font-weight: 700; }
+        .detail-social-bar a:hover, .detail-social-bar button:hover { color: #fff; border-color: #2563eb; }
+        @media (max-width: 640px) { .detail-social-bar { width: calc(100vw - 1rem); overflow-x: auto; justify-content: flex-start; } }
         .ad-popup-box {
             width: min(94vw, 560px);
             max-height: min(90vh, 760px);
@@ -1087,6 +1091,23 @@
                 <div id="episode-info" class="absolute top-3 left-1/2 transform -translate-x-1/2 bg-black/70 backdrop-blur-md text-white text-xs sm:text-sm font-bold px-3 py-1.5 rounded-full border border-brand-500/50 hidden">
                     Episode 1
                 </div>
+            </div>
+
+            <!-- DETAIL NATIVE BANNER: tampil langsung di halaman episode -->
+            <div class="site-native-banner" aria-label="Iklan native banner halaman tontonan">
+                <div class="native-ad-inner" id="native-ad-detail">
+                    <script async="async" data-cfasync="false" src="https://thrillingdeepcutlery.com/bfbcd7bcd4c8089720ba8ae9aa28ffa0/invoke.js"></script>
+                    <div id="container-bfbcd7bcd4c8089720ba8ae9aa28ffa0-detail"></div>
+                </div>
+            </div>
+
+            <!-- SOCIAL BAR: share bar di halaman episode -->
+            <div class="detail-social-bar no-print" id="detail-social-bar" aria-label="Bagikan halaman">
+                <span class="text-[10px] sm:text-xs font-bold text-zinc-500 px-1">Bagikan</span>
+                <button type="button" onclick="shareCurrentPage()">↗ Bagikan</button>
+                <a id="share-whatsapp" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+                <a id="share-facebook" href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+                <button type="button" onclick="copyCurrentPage()">Salin Link</button>
             </div>
 
             <div class="flex flex-wrap items-center justify-between gap-2 sm:gap-4 bg-zinc-900/80 p-3 sm:p-4 rounded-xl sm:rounded-2xl border border-zinc-800">
@@ -3950,6 +3971,10 @@
             };
         }
 
+        async function shareCurrentPage() { const title = document.getElementById('detail-title')?.textContent || document.title; const url = window.location.href; try { if (navigator.share) await navigator.share({ title, url }); else await copyCurrentPage(); } catch (_) {} }
+        async function copyCurrentPage() { try { await navigator.clipboard.writeText(window.location.href); showToast('Link berhasil disalin.', '🔗'); } catch (_) { showToast('Gagal menyalin link.', '⚠️'); } }
+        function updateDetailSocialBar() { const url = encodeURIComponent(window.location.href); const wa = document.getElementById('share-whatsapp'); const fb = document.getElementById('share-facebook'); if (wa) wa.href = 'https://wa.me/?text=' + encodeURIComponent((document.getElementById('detail-title')?.textContent || document.title) + ' ' + window.location.href); if (fb) fb.href = 'https://www.facebook.com/sharer/sharer.php?u=' + url; }
+
         async function openSharedRoute() {
             const pathname = window.location.pathname.replace(/\/+$/, '') || '/';
             if (pathname === '/' || pathname === '/index.html') return false;
@@ -4135,6 +4160,7 @@
             }
 
             const handledSharedRoute = await openSharedRoute();
+            updateDetailSocialBar();
             if (!handledSharedRoute && !/^\/(movie|tv)\//i.test(window.location.pathname)) {
                 renderAllSections();
             }
