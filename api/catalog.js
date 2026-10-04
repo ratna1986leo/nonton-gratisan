@@ -117,6 +117,7 @@ export default async function handler(req,res){
         {loc:BASE_URL+'/artikel/four-hands-two-sonatas-2026',changefreq:'weekly',priority:'0.7'},
         {loc:BASE_URL+'/artikel/one-high-school-heroes-2025',changefreq:'weekly',priority:'0.7'},
         {loc:BASE_URL+'/artikel/coven-academy-2026',changefreq:'weekly',priority:'0.7'},
+        {loc:BASE_URL+'/artikel/verity-2026',changefreq:'weekly',priority:'0.7'},
         {loc:BASE_URL+'/movies',changefreq:'daily',priority:'0.9'},
         {loc:BASE_URL+'/tv',changefreq:'daily',priority:'0.9'},
         {loc:BASE_URL+'/search',changefreq:'weekly',priority:'0.6'},
