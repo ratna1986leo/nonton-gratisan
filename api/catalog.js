@@ -119,6 +119,7 @@ export default async function handler(req,res){
         {loc:BASE_URL+'/artikel/coven-academy-2026',changefreq:'weekly',priority:'0.7'},
         {loc:BASE_URL+'/artikel/verity-2026',changefreq:'weekly',priority:'0.7'},
         {loc:BASE_URL+'/artikel/reacher-4-2026',changefreq:'weekly',priority:'0.7'},
+        {loc:BASE_URL+'/artikel/avengers-doomsday-2026',changefreq:'weekly',priority:'0.7'},
         {loc:BASE_URL+'/movies',changefreq:'daily',priority:'0.9'},
         {loc:BASE_URL+'/tv',changefreq:'daily',priority:'0.9'},
         {loc:BASE_URL+'/search',changefreq:'weekly',priority:'0.6'},
