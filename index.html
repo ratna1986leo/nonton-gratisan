@@ -2431,6 +2431,14 @@
         let imaLoader = null;
         let imaManager = null;
         let imaDisplayContainer = null;
+        let prerollLoadTimeout = null;
+
+        function clearPrerollLoadTimeout() {
+            if (prerollLoadTimeout) {
+                clearTimeout(prerollLoadTimeout);
+                prerollLoadTimeout = null;
+            }
+        }
 
         function updatePrerollSkipButton() {
             const button = document.getElementById('preroll-skip-button');
@@ -2445,6 +2453,8 @@
         }
 
         function finishPrerollAndLoadVideo(url) {
+            // Always release the ad overlay and restore the main player on failure.
+            clearPrerollLoadTimeout();
             const container = document.querySelector('.video-container');
             const layer = document.getElementById('preroll-layer');
             const skipButton = document.getElementById('preroll-skip-button');
@@ -2455,6 +2465,7 @@
             if (playButton) { playButton.style.display = 'none'; playButton.disabled = false; }
             pendingPrerollUrl = '';
             prerollBusy = false;
+            prerollStarted = false;
             try { if (imaManager) imaManager.destroy(); } catch (_) {}
             imaManager = null; imaLoader = null; imaDisplayContainer = null;
             prepareIframeDirect(url);
@@ -2508,6 +2519,7 @@
                 imaDisplayContainer.initialize();
                 imaLoader = new google.ima.AdsLoader(imaDisplayContainer);
                 imaLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (event) => {
+                    clearPrerollLoadTimeout();
                     try {
                         imaManager = event.getAdsManager(video);
                         imaManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, () => finishPrerollAndLoadVideo(url));
@@ -2539,6 +2551,14 @@
                         if (ad && ad.isSkippable && ad.isSkippable()) imaManager.skip();
                     } catch (e) { console.warn('Iklan belum bisa dilewati:', e); }
                 };
+                // If VAST hangs without returning an error event, release the overlay.
+                clearPrerollLoadTimeout();
+                prerollLoadTimeout = setTimeout(() => {
+                    if (prerollBusy && pendingPrerollUrl === url) {
+                        console.warn('Timeout memuat iklan; kembali ke player film.');
+                        finishPrerollAndLoadVideo(url);
+                    }
+                }, 12000);
                 imaLoader.requestAds(request);
             } catch (e) {
                 console.warn('Pre-roll tidak tersedia:', e);
