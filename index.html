@@ -357,7 +357,7 @@
         #preroll-layer.active { display:block; }
         #preroll-content-video { position:absolute; inset:0; width:100%; height:100%; background:#000; object-fit:contain; }
         #ima-ad-container { position:absolute; inset:0; z-index:2; width:100%; height:100%; }
-        #preroll-status { position:absolute; z-index:3; left:12px; top:12px; padding:6px 10px; border-radius:6px; background:rgba(0,0,0,.72); color:#fff; font-size:12px; pointer-events:none; }
+        #preroll-status { display:none !important; }
         #preroll-play-button { position:absolute; z-index:6; left:50%; top:50%; transform:translate(-50%,-50%); padding:13px 20px; border:0; border-radius:6px; background:#e11d48; color:#fff; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,.4); }
         #preroll-play-button:disabled { opacity:.65; cursor:wait; }
         #preroll-skip-button { display:none; position:absolute; z-index:5; right:12px; bottom:78px; padding:10px 14px; border:1px solid rgba(255,255,255,.85); border-radius:4px; background:rgba(20,20,20,.88); color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
@@ -2493,13 +2493,16 @@
             container.classList.add('preroll-active');
             layer.classList.add('active');
             adContainer.replaceChildren();
-            if (status) status.textContent = 'Tekan tombol untuk memulai iklan';
+            if (status) status.textContent = '';
             if (playButton) {
-                playButton.disabled = false;
-                playButton.style.display = 'block';
+                playButton.disabled = true;
+                playButton.style.display = 'none';
                 playButton.textContent = '▶ Putar Iklan';
-                playButton.onclick = startPrerollFromUserGesture;
+                playButton.onclick = null;
             }
+            // Coba putar iklan otomatis. Jika tidak tersedia atau tidak merespons,
+            // timeout akan membuka film tanpa menahan player.
+            startPrerollFromUserGesture();
         }
 
         function startPrerollFromUserGesture() {
@@ -2512,20 +2515,22 @@
             const video = document.getElementById('preroll-content-video');
             const status = document.getElementById('preroll-status');
             const playButton = document.getElementById('preroll-play-button');
-            if (playButton) { playButton.disabled = true; playButton.textContent = 'Memuat iklan…'; }
-            if (status) status.textContent = 'Iklan sedang dimuat…';
+            if (playButton) { playButton.disabled = true; playButton.style.display = 'none'; }
+            if (status) status.textContent = '';
             try {
                 imaDisplayContainer = new google.ima.AdDisplayContainer(adContainer, video);
                 imaDisplayContainer.initialize();
                 imaLoader = new google.ima.AdsLoader(imaDisplayContainer);
                 imaLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (event) => {
-                    clearPrerollLoadTimeout();
                     try {
                         imaManager = event.getAdsManager(video);
                         imaManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, () => finishPrerollAndLoadVideo(url));
                         imaManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, () => finishPrerollAndLoadVideo(url));
                         imaManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, () => finishPrerollAndLoadVideo(url));
-                        imaManager.addEventListener(google.ima.AdEvent.Type.STARTED, updatePrerollSkipButton);
+                        imaManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => {
+                            clearPrerollLoadTimeout();
+                            updatePrerollSkipButton();
+                        });
                         imaManager.addEventListener(google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED, updatePrerollSkipButton);
                         imaManager.addEventListener(google.ima.AdEvent.Type.AD_PROGRESS, updatePrerollSkipButton);
                         imaManager.init(container.clientWidth || 640, container.clientHeight || 360, google.ima.ViewMode.NORMAL);
