@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Tes Video VAST — NontonGratisan</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#0b1020;color:#f8fafc;font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;display:grid;min-height:100vh;place-items:center;padding:20px}.card{width:min(760px,100%);background:#151d31;border:1px solid #2b3853;border-radius:18px;padding:clamp(18px,4vw,32px)}h1{font-size:clamp(24px,4vw,34px);margin:0 0 8px}p{color:#cbd5e1}.stage{position:relative;aspect-ratio:16/9;background:#05070c;border-radius:12px;overflow:hidden;display:grid;place-items:center;margin:20px 0}.stage video{width:100%;height:100%;object-fit:contain}.stage #ad-container{position:absolute;inset:0}.btn{border:0;border-radius:10px;padding:12px 18px;font-weight:700;background:#38bdf8;color:#082f49;cursor:pointer}.btn:disabled{opacity:.55;cursor:wait}.status{min-height:48px;padding:12px;border-radius:10px;background:#0b1222;color:#dbeafe}.small{font-size:13px;color:#94a3b8}a{color:#7dd3fc}
+</style>
+<script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
+</head>
+<body>
+<main class="card">
+<h1>Tes iklan Video VAST</h1>
+<p>Halaman uji terpisah untuk memeriksa apakah URL VAST HilltopAds mengirim iklan yang bisa diputar. Player film utama tidak diubah.</p>
+<div class="stage" id="stage">
+  <video id="content-video" playsinline muted></video>
+  <div id="ad-container"></div>
+</div>
+<button class="btn" id="start-btn" type="button">Mulai tes iklan</button>
+<p class="status" id="status" role="status" aria-live="polite">Tekan tombol untuk memulai tes. Browser mungkin meminta interaksi pengguna.</p>
+<p class="small">Halaman ini hanya untuk pengujian. Jika berhasil, integrasi ke alur film akan dilakukan terpisah setelah kompatibilitasnya dipastikan.</p>
+<p><a href="/">Kembali ke situs utama</a></p>
+</main>
+<script>
+(function(){
+  const adTagUrl = 'https://enchantingboss.com/d/maF.z/dcG/N/vbZFGGUo/qefmO9Yu/Z/UxlvkLP_TVcu1/M/D/IJ0MOvDOkBtPNUzBUEwPMtjvQh5QM/wV';
+  const button = document.getElementById('start-btn');
+  const status = document.getElementById('status');
+  const video = document.getElementById('content-video');
+  const adContainer = document.getElementById('ad-container');
+  let loader, manager, displayContainer, started = false;
+  function say(message){ status.textContent = message; }
+  function fail(message){
+    say(message + ' Player utama tetap aman dan tidak diubah. Periksa URL/zone di dashboard HilltopAds.');
+    button.disabled = false;
+    button.textContent = 'Coba lagi';
+    started = false;
+    try { if(manager) manager.destroy(); } catch(e) {}
+    manager = null;
+  }
+  function start(){
+    if(started) return;
+    started = true;
+    button.disabled = true;
+    say('Menghubungkan ke iklan VAST…');
+    if(!window.google || !google.ima){
+      fail('Google IMA SDK tidak berhasil dimuat.');
+      return;
+    }
+    try {
+      displayContainer = new google.ima.AdDisplayContainer(adContainer, video);
+      displayContainer.initialize();
+      loader = new google.ima.AdsLoader(displayContainer);
+      loader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, onManagerLoaded, false);
+      loader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError, false);
+      const request = new google.ima.AdsRequest();
+      request.adTagUrl = adTagUrl;
+      request.linearAdSlotWidth = Math.max(320, document.getElementById('stage').clientWidth);
+      request.linearAdSlotHeight = Math.max(180, document.getElementById('stage').clientHeight);
+      request.nonLinearAdSlotWidth = request.linearAdSlotWidth;
+      request.nonLinearAdSlotHeight = Math.round(request.linearAdSlotHeight / 3);
+      loader.requestAds(request);
+    } catch(e) {
+      fail('Tes gagal dimulai: ' + (e && e.message ? e.message : 'kesalahan tidak diketahui') + '.');
+    }
+  }
+  function onManagerLoaded(event){
+    try {
+      manager = event.getAdsManager(video);
+      manager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, onAdError);
+      manager.addEventListener(google.ima.AdEvent.Type.CONTENT_PAUSE_REQUESTED, function(){ say('Iklan VAST sedang diputar…'); });
+      manager.addEventListener(google.ima.AdEvent.Type.STARTED, function(){ say('Berhasil: iklan VAST mulai diputar.'); });
+      manager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, function(){
+        say('Tes selesai: rangkaian iklan telah selesai. Player film utama belum diubah.');
+        button.disabled = false;
+        button.textContent = 'Tes selesai';
+        started = false;
+        try { manager.destroy(); } catch(e) {}
+        manager = null;
+      });
+      manager.addEventListener(google.ima.AdEvent.Type.SKIPPED, function(){
+        say('Iklan dilewati. Respons VAST berhasil diterima.');
+      });
+      manager.init(Math.max(320, document.getElementById('stage').clientWidth), Math.max(180, document.getElementById('stage').clientHeight), google.ima.ViewMode.NORMAL);
+      manager.start();
+    } catch(e) {
+      fail('Iklan diterima tetapi pemutar iklan gagal dimulai.');
+    }
+  }
+  function onAdError(event){
+    let message = 'Tidak ada iklan yang bisa diputar atau permintaan VAST gagal.';
+    try {
+      const err = event.getError && event.getError();
+      if(err && err.getMessage) message += ' Detail: ' + err.getMessage();
+    } catch(e) {}
+    fail(message);
+    try { if(loader) loader.contentComplete(); } catch(e) {}
+  }
+  button.addEventListener('click', start);
+  window.addEventListener('resize', function(){ try { if(manager) manager.resize(Math.max(320, document.getElementById('stage').clientWidth), Math.max(180, document.getElementById('stage').clientHeight), google.ima.ViewMode.NORMAL); } catch(e) {} });
+})();
+</script>
+</body>
+</html>
