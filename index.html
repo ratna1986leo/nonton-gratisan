@@ -358,6 +358,8 @@
         #preroll-content-video { position:absolute; inset:0; width:100%; height:100%; background:#000; object-fit:contain; }
         #ima-ad-container { position:absolute; inset:0; z-index:2; width:100%; height:100%; }
         #preroll-status { display:none !important; }
+        #preroll-timer { position:absolute; z-index:7; top:12px; left:12px; padding:7px 10px; border-radius:5px; background:rgba(0,0,0,.78); color:#fff; font-size:13px; font-weight:700; pointer-events:none; }
+        #preroll-timer[hidden] { display:none !important; }
         #preroll-play-button { position:absolute; z-index:6; left:50%; top:50%; transform:translate(-50%,-50%); padding:13px 20px; border:0; border-radius:6px; background:#e11d48; color:#fff; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,.4); }
         #preroll-play-button:disabled { opacity:.65; cursor:wait; }
         #preroll-skip-button { display:none; position:absolute; z-index:5; right:12px; bottom:78px; padding:10px 14px; border:1px solid rgba(255,255,255,.85); border-radius:4px; background:rgba(20,20,20,.88); color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
@@ -1089,6 +1091,7 @@
                     <video id="preroll-content-video" playsinline muted></video>
                     <div id="ima-ad-container"></div>
                     <div id="preroll-status">Tekan tombol untuk memulai iklan</div>
+                    <div id="preroll-timer" hidden>Iklan · --:--</div>
                     <button id="preroll-play-button" type="button">▶ Putar Iklan</button>
                     <button id="preroll-skip-button" type="button" aria-label="Lewati Iklan">Lewati Iklan</button>
                 </div>
@@ -2432,12 +2435,19 @@
         let imaManager = null;
         let imaDisplayContainer = null;
         let prerollLoadTimeout = null;
+        let prerollTimerInterval = null;
 
         function clearPrerollLoadTimeout() {
             if (prerollLoadTimeout) {
                 clearTimeout(prerollLoadTimeout);
                 prerollLoadTimeout = null;
             }
+        }
+
+        function clearPrerollTimer() {
+            if (prerollTimerInterval) { clearInterval(prerollTimerInterval); prerollTimerInterval = null; }
+            const timer = document.getElementById('preroll-timer');
+            if (timer) timer.hidden = true;
         }
 
         function updatePrerollSkipButton() {
@@ -2450,9 +2460,28 @@
             } catch (_) {}
             button.classList.toggle('visible', skippable);
             button.disabled = !skippable;
+            if (skippable) button.textContent = 'Lewati Iklan';
+        }
+
+        function updatePrerollTimer() {
+            const timer = document.getElementById('preroll-timer');
+            if (!timer) return;
+            let remaining = NaN;
+            try { if (imaManager) remaining = imaManager.getRemainingTime(); } catch (_) {}
+            if (Number.isFinite(remaining) && remaining >= 0) {
+                const seconds = Math.ceil(remaining);
+                const minutes = Math.floor(seconds / 60);
+                const rest = String(seconds % 60).padStart(2, '0');
+                timer.textContent = 'Iklan · ' + minutes + ':' + rest;
+                timer.hidden = false;
+            } else {
+                timer.textContent = 'Iklan sedang diputar';
+                timer.hidden = false;
+            }
         }
 
         function finishPrerollAndLoadVideo(url) {
+            clearPrerollTimer();
             // Always release the ad overlay and restore the main player on failure.
             clearPrerollLoadTimeout();
             const container = document.querySelector('.video-container');
@@ -2529,7 +2558,12 @@
                         imaManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, () => finishPrerollAndLoadVideo(url));
                         imaManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => {
                             clearPrerollLoadTimeout();
+                            const timer = document.getElementById('preroll-timer');
+                            if (timer) timer.hidden = false;
+                            updatePrerollTimer();
                             updatePrerollSkipButton();
+                            if (prerollTimerInterval) clearInterval(prerollTimerInterval);
+                            prerollTimerInterval = setInterval(updatePrerollTimer, 500);
                         });
                         imaManager.addEventListener(google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED, updatePrerollSkipButton);
                         imaManager.addEventListener(google.ima.AdEvent.Type.AD_PROGRESS, updatePrerollSkipButton);
