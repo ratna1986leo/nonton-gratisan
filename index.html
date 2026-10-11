@@ -2440,8 +2440,12 @@
         }
 
         // HilltopAds pre-roll via Google IMA; jika gagal, lanjut ke player asli.
-        const PREROLL_PRIMARY_VAST_TAG = "https://vast.yomeno.xyz/vast?spot_id=1503937";
-        const PREROLL_FALLBACK_VAST_TAG = "https://enchantingboss.com/dfmNFrz.dJGzNZvuZfGFUM/aeWm/9UupZEU/lhkZPoTrcu1rMHD/Ir0ROnDlk/tCNfzzUJwQMTjlQW5MMmygZRsnaAWJ1ApmdlDv0Tx-";
+        const PREROLL_VAST_TAGS = [
+            { name: "Yomeno utama", url: "https://vast.yomeno.xyz/vast?spot_id=1503937" },
+            { name: "Yomeno cadangan", url: "https://vast.yomeno.xyz/vast?spot_id=1503938" },
+            { name: "HilltopAds cadangan", url: "https://enchantingboss.com/dfmNFrz.dJGzNZvuZfGFUM/aeWm/9UupZEU/lhkZPoTrcu1rMHD/Ir0ROnDlk/tCNfzzUJwQMTjlQW5MMmygZRsnaAWJ1ApmdlDv0Tx-" }
+        ];
+        
         let prerollAttemptId = 0;
         let prerollAdHasStarted = false;
         let prerollConsumed = false;
@@ -2583,8 +2587,10 @@
             function tryProvider(providerIndex) {
                 if (!prerollBusy || pendingPrerollUrl !== videoUrl) return;
                 const attemptId = ++prerollAttemptId;
-                const tag = providerIndex === 0 ? PREROLL_PRIMARY_VAST_TAG : PREROLL_FALLBACK_VAST_TAG;
-                const providerName = providerIndex === 0 ? 'Yomeno' : 'HilltopAds';
+                const provider = PREROLL_VAST_TAGS[providerIndex];
+                if (!provider) { finishPrerollAndLoadVideo(videoUrl); return; }
+                const tag = provider.url;
+                const providerName = provider.name;
                 clearPrerollLoadTimeout();
                 try { if (imaManager) imaManager.destroy(); } catch (_) {}
                 imaManager = null;
@@ -2596,9 +2602,9 @@
                     const failAttempt = () => {
                         if (!isCurrentAttempt()) return;
                         clearPrerollLoadTimeout();
-                        if (providerIndex === 0 && !prerollAdHasStarted) {
-                            console.warn('Yomeno tidak tersedia; mencoba HilltopAds sebagai cadangan.');
-                            tryProvider(1);
+                        if (providerIndex + 1 < PREROLL_VAST_TAGS.length && !prerollAdHasStarted) {
+                            console.warn(providerName + ' tidak tersedia; mencoba ' + PREROLL_VAST_TAGS[providerIndex + 1].name + ' sebagai cadangan.');
+                            tryProvider(providerIndex + 1);
                         } else {
                             finishPrerollAndLoadVideo(videoUrl);
                         }
@@ -2660,7 +2666,7 @@
                     imaLoader.requestAds(request);
                 } catch (e) {
                     console.warn(providerName + ' pre-roll tidak tersedia:', e);
-                    if (providerIndex === 0 && !prerollAdHasStarted) tryProvider(1);
+                    if (providerIndex + 1 < PREROLL_VAST_TAGS.length && !prerollAdHasStarted) tryProvider(providerIndex + 1);
                     else finishPrerollAndLoadVideo(videoUrl);
                 }
             }
