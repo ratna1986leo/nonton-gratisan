@@ -2569,6 +2569,16 @@
             if (playButton) { playButton.disabled = true; playButton.style.display = 'none'; }
             if (status) status.textContent = '';
             clearPrerollLoadTimeout();
+            try {
+                // Initialize the display container once in the original user gesture;
+                // fallback requests reuse it so browsers don't block a second initialize().
+                imaDisplayContainer = new google.ima.AdDisplayContainer(adContainer, video);
+                imaDisplayContainer.initialize();
+            } catch (e) {
+                console.warn('IMA display container tidak tersedia:', e);
+                finishPrerollAndLoadVideo(videoUrl);
+                return;
+            }
 
             function tryProvider(providerIndex) {
                 if (!prerollBusy || pendingPrerollUrl !== videoUrl) return;
@@ -2579,11 +2589,8 @@
                 try { if (imaManager) imaManager.destroy(); } catch (_) {}
                 imaManager = null;
                 imaLoader = null;
-                imaDisplayContainer = null;
                 adContainer.replaceChildren();
                 try {
-                    imaDisplayContainer = new google.ima.AdDisplayContainer(adContainer, video);
-                    imaDisplayContainer.initialize();
                     imaLoader = new google.ima.AdsLoader(imaDisplayContainer);
                     const isCurrentAttempt = () => attemptId === prerollAttemptId && prerollBusy && pendingPrerollUrl === videoUrl;
                     const failAttempt = () => {
