@@ -1350,6 +1350,13 @@
         // tanpa menyentuh alur Pustaka.
         const TMDB_PLAYER_SOURCES = [
             {
+                // Utamakan domain .to yang sudah diizinkan oleh formatEmbedUrl.
+                // Domain mirror dapat berubah atau gagal; sumber cadangan tetap tersedia.
+                name: 'Vidsrc.to',
+                movie: (id) => `https://vidsrc.to/embed/movie/${id}`,
+                tv: (id, season, episode) => `https://vidsrc.to/embed/tv/${id}/${season}/${episode}`
+            },
+            {
                 name: 'Vidsrc',
                 movie: (id) => `https://vidsrc.sh/embed/movie/${id}`,
                 tv: (id, season, episode) => `https://vidsrc.sh/embed/tv/${id}/${season}/${episode}`
