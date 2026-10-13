@@ -2421,8 +2421,11 @@
             }
 
             currentVideoUrl = safeUrl;
-            // Restore original player behavior for TMDB and Pustaka.
-            iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+            // Samakan pemuatan Vidsrc dengan hosting InfinityFree yang berfungsi.
+            // Hanya Vidsrc yang memakai no-referrer; TMDB, Vinovo dan MaxDrop tetap.
+            const playerHost = new URL(safeUrl).hostname.toLowerCase();
+            const isVidsrc = /(^|\\.)vidsrc(?:\\.[a-z0-9-]+)+$/.test(playerHost);
+            iframe.referrerPolicy = isVidsrc ? 'no-referrer' : 'strict-origin-when-cross-origin';
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
             iframe.setAttribute('title', 'Pemutar video');
