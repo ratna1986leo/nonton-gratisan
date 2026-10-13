@@ -2518,7 +2518,8 @@
             prerollStarted = false;
             try { if (imaManager) imaManager.destroy(); } catch (_) {}
             imaManager = null; imaLoader = null; imaDisplayContainer = null;
-            prepareIframeDirect(url);
+            // Mulai memuat film segera setelah iklan selesai, tanpa menunggu frame berikutnya.
+            prepareIframeDirect(url, true);
         }
 
         function prepareIframe(url) {
@@ -2674,7 +2675,7 @@
             tryProvider(0);
         }
 
-        function prepareIframeDirect(url) {
+        function prepareIframeDirect(url, loadImmediately = false) {
             const iframe = document.getElementById('video-iframe');
             if (!iframe) return;
 
@@ -2733,8 +2734,9 @@
                 );
             };
 
-            // Navigasi setelah dokumen lama benar-benar dilepas.
-            requestAnimationFrame(() => {
+            // Saat iklan selesai, navigasikan iframe langsung; pemanggil lain tetap
+            // menunggu satu frame agar dokumen lama sempat dilepas.
+            const loadVideo = () => {
                 if (token !== iframeLoadToken) return;
                 iframe.src = safeUrl;
 
@@ -2744,7 +2746,9 @@
                     if (token !== iframeLoadToken) return;
                     setPlayerLoading(false);
                 }, 15000);
-            });
+            };
+            if (loadImmediately) loadVideo();
+            else requestAnimationFrame(loadVideo);
         }
 
         function retryCurrentPlayer() {
