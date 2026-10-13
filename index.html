@@ -2460,9 +2460,13 @@
             }
 
             currentVideoUrl = safeUrl;
-            // YouTube Embedded Player membutuhkan HTTP Referer pada banyak kondisi.
-            // Jangan suppress Referer dari iframe; gunakan kebijakan yang direkomendasikan Google.
-            iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+            // Samakan perilaku player TMDB dengan versi percobaan yang terbukti berjalan:
+            // provider Vidsrc dibuka tanpa Referer. Untuk item Pustaka, pertahankan
+            // kebijakan standar agar embed lain (mis. YouTube) tetap mendapat origin.
+            const activeMedia = store.getState().currentMedia;
+            iframe.referrerPolicy = activeMedia && !activeMedia.isLibraryItem
+                ? 'no-referrer'
+                : 'strict-origin-when-cross-origin';
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
             iframe.setAttribute('title', 'Pemutar video');
