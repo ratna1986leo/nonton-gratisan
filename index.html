@@ -2708,14 +2708,6 @@
             }
 
             currentVideoUrl = safeUrl;
-            // Batasi popup hanya pada Server 1; Server 2/3 tetap tanpa sandbox seperti sebelumnya.
-            // Ini mencegah klik Play di provider Server 1 membuka tab iklan.
-            const activeServer = Number(store.getState().currentServer || 1);
-            if (activeServer === 1) {
-                iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
-            } else {
-                iframe.removeAttribute('sandbox');
-            }
             // YouTube Embedded Player membutuhkan HTTP Referer pada banyak kondisi.
             // Jangan suppress Referer dari iframe; gunakan kebijakan yang direkomendasikan Google.
             iframe.referrerPolicy = 'strict-origin-when-cross-origin';
