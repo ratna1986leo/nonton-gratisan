@@ -2453,9 +2453,28 @@
             }
 
             currentVideoUrl = safeUrl;
-            // YouTube Embedded Player membutuhkan HTTP Referer pada banyak kondisi.
-            // Jangan suppress Referer dari iframe; gunakan kebijakan yang direkomendasikan Google.
-            iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+
+            // Link player dari Google Sheets/Pustaka perlu mengikuti perilaku versi
+            // InfinityFree yang sudah berfungsi: jangan kirim HTTP Referer ke provider.
+            // TMDB dan provider fallback tetap memakai kebijakan referer standar.
+            const currentMedia = store.getState().currentMedia;
+            const sheetPlayerLink = String(
+                currentMedia?.link || currentMedia?.Link || currentMedia?.playerLink ||
+                currentMedia?.playerUrl || currentMedia?.player_url || ''
+            ).trim();
+            const normalizedSheetPlayerLink = sheetPlayerLink
+                ? formatEmbedUrl(sheetPlayerLink)
+                : '';
+            const isLibraryPlayer = Boolean(currentMedia?.isLibraryItem) ||
+                safeUrl === PUSTAKA_SERVER_2 ||
+                safeUrl === PUSTAKA_SERVER_3 ||
+                (normalizedSheetPlayerLink &&
+                    normalizedSheetPlayerLink !== 'about:blank' &&
+                    normalizedSheetPlayerLink === safeUrl);
+
+            iframe.referrerPolicy = isLibraryPlayer
+                ? 'no-referrer'
+                : 'strict-origin-when-cross-origin';
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
             iframe.setAttribute('title', 'Pemutar video');
