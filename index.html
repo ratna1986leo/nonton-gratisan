@@ -1084,7 +1084,7 @@
                 <span class="font-bold text-cyan-300">TMDB Discovery:</span> Film/series ini ditemukan dari TMDB, tetapi belum tercatat di Pustaka website. Belum tersedia untuk diputar di sini. Trailer resmi tetap bisa diputar bila tersedia.
             </div>
             <div class="relative w-full aspect-video bg-zinc-950 rounded-xl sm:rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl video-container">
-                <iframe id="video-iframe" title="Pemutar video" class="w-full h-full border-0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" loading="eager"></iframe>
+                <iframe id="video-iframe" title="Pemutar video" class="w-full h-full border-0" sandbox="allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock allow-pointer-lock" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" loading="eager"></iframe>
                 
                 <!-- Navigasi Episode Overlay -->
                 <button id="episode-prev-btn" onclick="navigateEpisode('prev')" class="episode-nav-overlay episode-nav-prev" aria-label="Episode Sebelumnya" disabled>
@@ -2456,6 +2456,9 @@
             // YouTube Embedded Player membutuhkan HTTP Referer pada banyak kondisi.
             // Jangan suppress Referer dari iframe; gunakan kebijakan yang direkomendasikan Google.
             iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+            // Isolasi player dari direct-link/pop-under iklan: jangan izinkan popup
+            // atau navigasi yang mengambil alih tab utama. Script player dan media tetap diizinkan.
+            iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation allow-orientation-lock allow-pointer-lock');
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
             iframe.setAttribute('title', 'Pemutar video');
