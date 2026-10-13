@@ -2456,12 +2456,20 @@
         let imaManager = null;
         let imaDisplayContainer = null;
         let prerollLoadTimeout = null;
+        let prerollFailsafeTimer = null;
         let prerollTimerInterval = null;
 
         function clearPrerollLoadTimeout() {
             if (prerollLoadTimeout) {
                 clearTimeout(prerollLoadTimeout);
                 prerollLoadTimeout = null;
+            }
+        }
+
+        function clearPrerollFailsafe() {
+            if (prerollFailsafeTimer) {
+                clearTimeout(prerollFailsafeTimer);
+                prerollFailsafeTimer = null;
             }
         }
 
@@ -2502,9 +2510,12 @@
         }
 
         function finishPrerollAndLoadVideo(url) {
+            // Guard against duplicate IMA events or a timeout racing with ad completion.
+            if (!prerollBusy && !pendingPrerollUrl) return;
             clearPrerollTimer();
-            // Always release the ad overlay and restore the main player on failure.
             clearPrerollLoadTimeout();
+            clearPrerollFailsafe();
+            // Always release the ad overlay and restore the main player on failure.
             const container = document.querySelector('.video-container');
             const layer = document.getElementById('preroll-layer');
             const skipButton = document.getElementById('preroll-skip-button');
@@ -2562,6 +2573,15 @@
             prerollBusy = true;
             prerollAdHasStarted = false;
             const videoUrl = pendingPrerollUrl;
+            // Some ad providers load an ad UI but never send STARTED/COMPLETE events.
+            // Do not leave the player blocked forever if that happens.
+            clearPrerollFailsafe();
+            prerollFailsafeTimer = setTimeout(() => {
+                if (prerollBusy && pendingPrerollUrl === videoUrl) {
+                    console.warn('IMA pre-roll timeout; membuka film agar player tidak macet.');
+                    finishPrerollAndLoadVideo(videoUrl);
+                }
+            }, 35000);
             const container = document.querySelector('.video-container');
             const adContainer = document.getElementById('ima-ad-container');
             const video = document.getElementById('preroll-content-video');
