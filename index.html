@@ -792,8 +792,7 @@
     }
   </script>
 
-    <!-- WP Ad Manager -->
-    <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="467848"></script>
+    <!-- Ad manager removed while stabilizing the video player. -->
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-16 lg:pb-0">
 
@@ -1226,16 +1225,6 @@
     </div>
 
 
-    <!-- NATIVE BANNER GLOBAL: selalu berada di area paling bawah halaman -->
-    <div class="max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 pb-2">
-        <div class="site-native-banner site-native-banner-bottom" aria-label="Iklan native banner paling bawah halaman">
-            <div class="native-ad-inner" id="native-ad-global-bottom">
-                <!-- External ad script disabled to prevent unsolicited redirects during playback. -->
-                <div id="container-bfbcd7bcd4c8089720ba8ae9aa28ffa0"></div>
-            </div>
-        </div>
-    </div>
-
     <footer class="bg-zinc-950 border-t border-zinc-800 py-6 sm:py-8 mt-8 no-print">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 text-center space-y-3">
             <p class="text-xs sm:text-sm text-zinc-400">© 2026 <span class="text-white font-bold">NontonGratisan</span> - Nonton Film & TV Series Subtitle Indonesia Gratis</p>
@@ -1299,26 +1288,6 @@
                 <textarea id="req-note-input" rows="3" placeholder="Contoh: Mohon perbaiki server 1 error..." class="focusable w-full bg-zinc-950 border border-zinc-800 rounded-lg sm:rounded-xl p-3 text-xs sm:text-sm text-white focus:outline-none focus:border-brand-500 resize-none"></textarea>
             </div>
             <button onclick="submitRequest()" class="focusable w-full bg-brand-500 hover:bg-brand-600 text-white font-bold text-xs sm:text-sm py-3 rounded-lg sm:rounded-xl shadow-md touch-target">Kirim Request</button>
-        </div>
-    </div>
-
-    <div id="popup-overlay" aria-hidden="true" aria-live="polite">
-        <div class="ad-popup-box" role="dialog" aria-modal="true" aria-labelledby="support-ad-title">
-            <div class="ad-popup-icon">📢</div>
-            <h3 id="support-ad-title">Dukung Kami dengan Menonton Iklan</h3>
-            <p>Iklan membantu situs ini tetap gratis. Silakan tutup untuk melanjutkan menonton.</p>
-
-            <div id="popup-ad-slot" class="popup-ad-slot" aria-label="Iklan">
-                <div id="popup-ad-script-1" class="popup-ad-script"></div>
-                <div id="popup-ad-script-2" class="popup-ad-script"></div>
-                <div id="popup-ad-script-3" class="popup-ad-script"></div>
-                <div id="popup-ad-script-4" class="popup-ad-script"></div>
-            </div>
-
-            <div class="popup-ad-actions">
-                <button type="button" onclick="closePopup()" class="popup-secondary-btn">Tutup &amp; Lanjut</button>
-                <button type="button" onclick="goToAd()" class="popup-primary-btn">Kunjungi Iklan</button>
-            </div>
         </div>
     </div>
 
@@ -2337,7 +2306,6 @@
         function scrollCarousel(elementId, distance) { const container = document.getElementById(elementId); if (container) container.scrollBy({ left: distance, behavior: 'smooth' }); }
 
         // ================= DETAIL & PLAYER =================
-        let adPopupInterval = null;
         let currentVideoUrl = '';
         let iframeLoadTimer = null;
         let iframeLoadToken = 0;
@@ -2985,7 +2953,6 @@
             loadDetailInteractions(item.id);
             loadWatchProviders(item);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            startAdInterval();
         }
 
         function setupVideoSource(item) {
@@ -3408,7 +3375,6 @@
 
         function closeDetailPage() {
             document.getElementById('detail-section').classList.add('hidden');
-            if (adPopupInterval) { clearInterval(adPopupInterval); adPopupInterval = null; }
             const state = store.getState();
             const sections = { home: ['hero-section', 'trending-section', 'movies-section', 'series-section', 'thriller-section'], movies: ['movies-section'], tv: ['series-section'], watchlist: ['watchlist-section'] };
             const toShow = sections[state.activeTab] || sections.home;
@@ -3765,41 +3731,7 @@
             titleInput.value = ''; if (noteInput) noteInput.value = '';
             closeRequestModal();
         }
-        const SUPPORT_AD_URL = 'https://thrillingdeepcutlery.com/f3deengg?key=1acdf64065adc72ae8103d33ede9a49a';
-        let popupAdInitialized = false;
-
-        function initPopupAds() {
-            // External popup ad scripts are disabled to prevent click hijacking and tab redirects.
-            popupAdInitialized = false;
-        }
-
-        function showAdPopup() {
-            const detail = document.getElementById('detail-section');
-            const popup = document.getElementById('popup-overlay');
-            if (!popup || !detail || detail.classList.contains('hidden')) return;
-            initPopupAds();
-            popup.style.display = 'flex';
-            popup.setAttribute('aria-hidden', 'false');
-        }
-
-        function startAdInterval() {
-            if (adPopupInterval) clearInterval(adPopupInterval);
-            adPopupInterval = null;
-            // Do not launch timed popups or third-party ads over the player.
-        }
-
-        function closePopup() {
-            const popup = document.getElementById('popup-overlay');
-            if (!popup) return;
-            popup.style.display = 'none';
-            popup.setAttribute('aria-hidden', 'true');
-        }
-
-        function goToAd() {
-            const popup = document.getElementById('popup-overlay');
-            if (popup) { popup.style.display = 'none'; popup.setAttribute('aria-hidden', 'true'); }
-            window.open(SUPPORT_AD_URL, '_blank', 'noopener,noreferrer');
-        }
+        // Ads/pop-ups disabled during player stabilization.
         function toggleMobileMenu() { const menu = document.getElementById('mobile-menu'); if (menu) menu.classList.toggle('hidden'); }
         function toggleMobileDropdown() { const dropdown = document.getElementById('mobile-dropdown'); const arrow = document.getElementById('mobile-dropdown-arrow'); if (dropdown) { dropdown.classList.toggle('hidden'); if (arrow) arrow.textContent = dropdown.classList.contains('hidden') ? '▼' : '▲'; } }
         function toggleDesktopDropdown() { const dropdown = document.getElementById('desktop-dropdown'); if (dropdown) dropdown.classList.toggle('active'); }
