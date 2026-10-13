@@ -3232,9 +3232,10 @@
 
                 const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
 
-                // Link dari Google Sheets adalah sumber utama Pustaka.
-                // Provider pustaka bisa berbeda-beda, jadi jangan blokir host
-                // yang tidak ada di whitelist. Hanya URL HTTP(S) yang diterima.
+                // Link dari Google Sheets adalah sumber player utama pustaka.
+                // Jangan membatasi host dengan whitelist karena setiap item dapat
+                // memakai provider/embed host yang berbeda. Keamanan tetap dijaga
+                // dengan hanya menerima URL HTTP(S).
                 if (host === 'youtube.com') {
                     const videoId = parsed.searchParams.get('v');
                     if (videoId) return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
