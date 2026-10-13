@@ -2986,6 +2986,14 @@
 
                 const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
 
+                // Link Pustaka VidSrc yang memakai vidsrc.to dinormalisasi ke
+                // vidsrc.sh, yaitu host yang dipakai player TMDB di situs ini.
+                // Path, ID film, query, dan hash URL tetap dipertahankan.
+                if (host === 'vidsrc.to') {
+                    parsed.hostname = 'vidsrc.sh';
+                    return parsed.toString();
+                }
+
                 // Link dari Google Sheets adalah sumber player utama pustaka.
                 // Jangan membatasi host dengan whitelist karena setiap item dapat
                 // memakai provider/embed host yang berbeda. Keamanan tetap dijaga
