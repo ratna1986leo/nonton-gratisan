@@ -2519,38 +2519,10 @@
             prepareIframeDirect(url);
         }
 
+        // Mode stabilisasi: lewati semua iklan VAST/IMA dan muat player film langsung.
+        // Setelah player stabil, pre-roll bisa diaktifkan kembali dengan pengujian terpisah.
         function prepareIframe(url) {
-            if (!url || url === 'about:blank' || prerollConsumed || prerollBusy) {
-                prepareIframeDirect(url);
-                return;
-            }
-            prerollConsumed = true;
-            const container = document.querySelector('.video-container');
-            const layer = document.getElementById('preroll-layer');
-            const adContainer = document.getElementById('ima-ad-container');
-            const video = document.getElementById('preroll-content-video');
-            const status = document.getElementById('preroll-status');
-            const playButton = document.getElementById('preroll-play-button');
-            if (!container || !layer || !adContainer || !video || !window.google?.ima) {
-                prepareIframeDirect(url);
-                return;
-            }
-            pendingPrerollUrl = String(url).trim();
-            prerollStarted = false;
-            currentVideoUrl = pendingPrerollUrl;
-            container.classList.add('preroll-active');
-            layer.classList.add('active');
-            adContainer.replaceChildren();
-            if (status) status.textContent = '';
-            if (playButton) {
-                playButton.disabled = true;
-                playButton.style.display = 'none';
-                playButton.textContent = '▶ Putar Iklan';
-                playButton.onclick = null;
-            }
-            // Coba putar iklan otomatis. Jika tidak tersedia atau tidak merespons,
-            // timeout akan membuka film tanpa menahan player.
-            startPrerollFromUserGesture();
+            prepareIframeDirect(url);
         }
 
         function startPrerollFromUserGesture() {
