@@ -351,21 +351,6 @@
             border: 0;
         }
 
-        /* HilltopAds IMA pre-roll: overlay di dalam player */
-        .video-container.preroll-active #video-iframe { visibility: hidden; }
-        #preroll-layer { display:none; position:absolute; inset:0; z-index:30; background:#000; color:#fff; }
-        #preroll-layer.active { display:block; }
-        #preroll-content-video { position:absolute; inset:0; width:100%; height:100%; background:#000; object-fit:contain; }
-        #ima-ad-container { position:absolute; inset:0; z-index:2; width:100%; height:100%; }
-        #preroll-status { display:none !important; }
-        #preroll-timer { position:absolute; z-index:7; top:12px; left:12px; padding:7px 10px; border-radius:5px; background:rgba(0,0,0,.78); color:#fff; font-size:13px; font-weight:700; pointer-events:none; }
-        #preroll-timer[hidden] { display:none !important; }
-        #preroll-play-button { position:absolute; z-index:6; left:50%; top:50%; transform:translate(-50%,-50%); padding:13px 20px; border:0; border-radius:6px; background:#e11d48; color:#fff; font-size:15px; font-weight:700; cursor:pointer; box-shadow:0 4px 20px rgba(0,0,0,.4); }
-        #preroll-play-button:disabled { opacity:.65; cursor:wait; }
-        #preroll-skip-button { display:none; position:absolute; z-index:5; right:12px; bottom:78px; padding:10px 14px; border:1px solid rgba(255,255,255,.85); border-radius:4px; background:rgba(20,20,20,.88); color:#fff; font-size:14px; font-weight:600; cursor:pointer; }
-        #preroll-skip-button.visible { display:block; }
-        #preroll-skip-button:disabled { opacity:.75; cursor:default; }
-
         /* Navigasi Episode */
         .episode-nav-overlay {
             position: absolute;
@@ -806,7 +791,6 @@
       });
     }
   </script>
-    <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 
     <!-- WP Ad Manager -->
     <script async src="https://js.wpadmngr.com/static/adManager.js" data-admpid="467848"></script>
@@ -1101,14 +1085,6 @@
             </div>
             <div class="relative w-full aspect-video bg-zinc-950 rounded-xl sm:rounded-2xl overflow-hidden border border-zinc-800 shadow-2xl video-container">
                 <iframe id="video-iframe" title="Pemutar video" class="w-full h-full border-0" allowfullscreen allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" loading="eager"></iframe>
-                <div id="preroll-layer" aria-label="Iklan sebelum video">
-                    <video id="preroll-content-video" playsinline muted></video>
-                    <div id="ima-ad-container"></div>
-                    <div id="preroll-status">Tekan tombol untuk memulai iklan</div>
-                    <div id="preroll-timer" hidden>Iklan · --:--</div>
-                    <button id="preroll-play-button" type="button">▶ Putar Iklan</button>
-                    <button id="preroll-skip-button" type="button" aria-label="Lewati Iklan">Lewati Iklan</button>
-                </div>
                 
                 <!-- Navigasi Episode Overlay -->
                 <button id="episode-prev-btn" onclick="navigateEpisode('prev')" class="episode-nav-overlay episode-nav-prev" aria-label="Episode Sebelumnya" disabled>
@@ -2439,240 +2415,9 @@
                 </div>`;
         }
 
-        // HilltopAds pre-roll via Google IMA; jika gagal, lanjut ke player asli.
-        const PREROLL_VAST_TAGS = [
-            { name: "HilltopAds utama", url: "https://enchantingboss.com/dfmNFrz.dJGzNZvuZfGFUM/aeWm/9UupZEU/lhkZPoTrcu1rMHD/Ir0ROnDlk/tCNfzzUJwQMTjlQW5MMmygZRsnaAWJ1ApmdlDv0Tx-" },
-        ];
-        
-        let prerollAttemptId = 0;
-        let prerollAdHasStarted = false;
-        let prerollConsumed = false;
-        let prerollBusy = false;
-        let pendingPrerollUrl = '';
-        let prerollStarted = false;
-        let imaLoader = null;
-        let imaManager = null;
-        let imaDisplayContainer = null;
-        let prerollLoadTimeout = null;
-        let prerollTimerInterval = null;
-
-        function clearPrerollLoadTimeout() {
-            if (prerollLoadTimeout) {
-                clearTimeout(prerollLoadTimeout);
-                prerollLoadTimeout = null;
-            }
-        }
-
-        function clearPrerollTimer() {
-            if (prerollTimerInterval) { clearInterval(prerollTimerInterval); prerollTimerInterval = null; }
-            const timer = document.getElementById('preroll-timer');
-            if (timer) timer.hidden = true;
-        }
-
-        function updatePrerollSkipButton() {
-            const button = document.getElementById('preroll-skip-button');
-            if (!button) return;
-            let skippable = false;
-            try {
-                const ad = imaManager && imaManager.getCurrentAd();
-                skippable = !!(ad && ad.isSkippable && ad.isSkippable());
-            } catch (_) {}
-            button.classList.toggle('visible', skippable);
-            button.disabled = !skippable;
-            if (skippable) button.textContent = 'Lewati Iklan';
-        }
-
-        function updatePrerollTimer() {
-            const timer = document.getElementById('preroll-timer');
-            if (!timer) return;
-            let remaining = NaN;
-            try { if (imaManager) remaining = imaManager.getRemainingTime(); } catch (_) {}
-            if (Number.isFinite(remaining) && remaining >= 0) {
-                const seconds = Math.ceil(remaining);
-                const minutes = Math.floor(seconds / 60);
-                const rest = String(seconds % 60).padStart(2, '0');
-                timer.textContent = 'Iklan · ' + minutes + ':' + rest;
-                timer.hidden = false;
-            } else {
-                timer.textContent = 'Iklan sedang diputar';
-                timer.hidden = false;
-            }
-        }
-
-        function finishPrerollAndLoadVideo(url) {
-            clearPrerollTimer();
-            // Always release the ad overlay and restore the main player on failure.
-            clearPrerollLoadTimeout();
-            const container = document.querySelector('.video-container');
-            const layer = document.getElementById('preroll-layer');
-            const skipButton = document.getElementById('preroll-skip-button');
-            const playButton = document.getElementById('preroll-play-button');
-            if (container) container.classList.remove('preroll-active');
-            if (layer) layer.classList.remove('active');
-            if (skipButton) skipButton.classList.remove('visible');
-            if (playButton) { playButton.style.display = 'none'; playButton.disabled = false; }
-            pendingPrerollUrl = '';
-            prerollBusy = false;
-            prerollStarted = false;
-            try { if (imaManager) imaManager.destroy(); } catch (_) {}
-            imaManager = null; imaLoader = null; imaDisplayContainer = null;
-            prepareIframeDirect(url);
-        }
-
-        // Mode stabilisasi: lewati VAST/IMA, bersihkan seluruh overlay iklan,
-        // lalu muat URL player yang dipilih (termasuk link Server 1 dari Pustaka).
+        // Muat player langsung tanpa pre-roll/VAST eksternal.
         function prepareIframe(url) {
-            clearPrerollTimer();
-            clearPrerollLoadTimeout();
-            if (prerollTimerInterval) {
-                clearInterval(prerollTimerInterval);
-                prerollTimerInterval = null;
-            }
-
-            const container = document.querySelector('.video-container');
-            const layer = document.getElementById('preroll-layer');
-            const skipButton = document.getElementById('preroll-skip-button');
-            const playButton = document.getElementById('preroll-play-button');
-            const status = document.getElementById('preroll-status');
-
-            if (container) container.classList.remove('preroll-active');
-            if (layer) layer.classList.remove('active');
-            if (skipButton) skipButton.classList.remove('visible');
-            if (playButton) {
-                playButton.style.display = 'none';
-                playButton.disabled = false;
-            }
-            if (status) status.textContent = '';
-
-            pendingPrerollUrl = '';
-            prerollBusy = false;
-            prerollStarted = false;
-            prerollAdHasStarted = false;
-            try { if (imaManager) imaManager.destroy(); } catch (_) {}
-            imaManager = null;
-            imaLoader = null;
-            imaDisplayContainer = null;
-
             prepareIframeDirect(url);
-        }
-
-        function startPrerollFromUserGesture() {
-            if (prerollStarted || !pendingPrerollUrl) return;
-            prerollStarted = true;
-            prerollBusy = true;
-            prerollAdHasStarted = false;
-            const videoUrl = pendingPrerollUrl;
-            const container = document.querySelector('.video-container');
-            const adContainer = document.getElementById('ima-ad-container');
-            const video = document.getElementById('preroll-content-video');
-            const status = document.getElementById('preroll-status');
-            const playButton = document.getElementById('preroll-play-button');
-            if (!container || !adContainer || !video) {
-                finishPrerollAndLoadVideo(videoUrl);
-                return;
-            }
-            if (playButton) { playButton.disabled = true; playButton.style.display = 'none'; }
-            if (status) status.textContent = '';
-            clearPrerollLoadTimeout();
-            try {
-                // Initialize the display container once in the original user gesture;
-                // fallback requests reuse it so browsers don't block a second initialize().
-                imaDisplayContainer = new google.ima.AdDisplayContainer(adContainer, video);
-                imaDisplayContainer.initialize();
-            } catch (e) {
-                console.warn('IMA display container tidak tersedia:', e);
-                finishPrerollAndLoadVideo(videoUrl);
-                return;
-            }
-
-            function tryProvider(providerIndex) {
-                if (!prerollBusy || pendingPrerollUrl !== videoUrl) return;
-                const attemptId = ++prerollAttemptId;
-                const provider = PREROLL_VAST_TAGS[providerIndex];
-                if (!provider) { finishPrerollAndLoadVideo(videoUrl); return; }
-                const tag = provider.url;
-                const providerName = provider.name;
-                clearPrerollLoadTimeout();
-                try { if (imaManager) imaManager.destroy(); } catch (_) {}
-                imaManager = null;
-                imaLoader = null;
-                adContainer.replaceChildren();
-                try {
-                    imaLoader = new google.ima.AdsLoader(imaDisplayContainer);
-                    const isCurrentAttempt = () => attemptId === prerollAttemptId && prerollBusy && pendingPrerollUrl === videoUrl;
-                    const failAttempt = () => {
-                        if (!isCurrentAttempt()) return;
-                        clearPrerollLoadTimeout();
-                        if (providerIndex + 1 < PREROLL_VAST_TAGS.length && !prerollAdHasStarted) {
-                            console.warn(providerName + ' tidak tersedia; mencoba ' + PREROLL_VAST_TAGS[providerIndex + 1].name + ' sebagai cadangan.');
-                            tryProvider(providerIndex + 1);
-                        } else {
-                            finishPrerollAndLoadVideo(videoUrl);
-                        }
-                    };
-                    imaLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (event) => {
-                        if (!isCurrentAttempt()) {
-                            try { event.getAdsManager(video).destroy(); } catch (_) {}
-                            return;
-                        }
-                        try {
-                            imaManager = event.getAdsManager(video);
-                            imaManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, failAttempt);
-                            imaManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, () => {
-                                if (isCurrentAttempt()) finishPrerollAndLoadVideo(videoUrl);
-                            });
-                            imaManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, () => {
-                                if (isCurrentAttempt()) finishPrerollAndLoadVideo(videoUrl);
-                            });
-                            imaManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => {
-                                if (!isCurrentAttempt()) return;
-                                prerollAdHasStarted = true;
-                                clearPrerollLoadTimeout();
-                                updatePrerollTimer();
-                                updatePrerollSkipButton();
-                                if (prerollTimerInterval) clearInterval(prerollTimerInterval);
-                                prerollTimerInterval = setInterval(updatePrerollTimer, 500);
-                            });
-                            imaManager.addEventListener(google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED, updatePrerollSkipButton);
-                            imaManager.addEventListener(google.ima.AdEvent.Type.AD_PROGRESS, updatePrerollSkipButton);
-                            imaManager.init(container.clientWidth || 640, container.clientHeight || 360, google.ima.ViewMode.NORMAL);
-                            imaManager.start();
-                            if (playButton) playButton.style.display = 'none';
-                            if (status) status.textContent = 'Iklan';
-                        } catch (e) {
-                            console.warn(providerName + ' IMA gagal dimulai:', e);
-                            failAttempt();
-                        }
-                    });
-                    imaLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, failAttempt);
-                    const request = new google.ima.AdsRequest();
-                    request.adTagUrl = tag;
-                    request.linearAdSlotWidth = container.clientWidth || 640;
-                    request.linearAdSlotHeight = container.clientHeight || 360;
-                    request.nonLinearAdSlotWidth = container.clientWidth || 640;
-                    request.nonLinearAdSlotHeight = Math.max(80, Math.round((container.clientHeight || 360) / 3));
-                    const skipButton = document.getElementById('preroll-skip-button');
-                    if (skipButton) skipButton.onclick = () => {
-                        try {
-                            const ad = imaManager && imaManager.getCurrentAd();
-                            if (ad && ad.isSkippable && ad.isSkippable()) imaManager.skip();
-                        } catch (e) { console.warn('Iklan belum bisa dilewati:', e); }
-                    };
-                    // Give each provider up to 6 seconds to start; never block the film if both fail.
-                    prerollLoadTimeout = setTimeout(() => {
-                        if (!isCurrentAttempt()) return;
-                        console.warn(providerName + ' tidak mulai dalam 6 detik.');
-                        failAttempt();
-                    }, 6000);
-                    imaLoader.requestAds(request);
-                } catch (e) {
-                    console.warn(providerName + ' pre-roll tidak tersedia:', e);
-                    if (providerIndex + 1 < PREROLL_VAST_TAGS.length && !prerollAdHasStarted) tryProvider(providerIndex + 1);
-                    else finishPrerollAndLoadVideo(videoUrl);
-                }
-            }
-
-            tryProvider(0);
         }
 
         function prepareIframeDirect(url) {
@@ -3206,7 +2951,6 @@
                 updateEpisodeNavButtons(false, 1, 1);
             }
             // Pre-roll hanya sekali setiap membuka judul baru.
-            prerollConsumed = false;
             if (item.isLibraryItem || hasPlayablePlayerLink(item)) setupVideoSource(item);
             else clearDiscoveryPlayer();
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
