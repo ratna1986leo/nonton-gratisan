@@ -2519,9 +2519,40 @@
             prepareIframeDirect(url);
         }
 
-        // Mode stabilisasi: lewati semua iklan VAST/IMA dan muat player film langsung.
-        // Setelah player stabil, pre-roll bisa diaktifkan kembali dengan pengujian terpisah.
+        // Mode stabilisasi: lewati VAST/IMA, bersihkan seluruh overlay iklan,
+        // lalu muat URL player yang dipilih (termasuk link Server 1 dari Pustaka).
         function prepareIframe(url) {
+            clearPrerollTimer();
+            clearPrerollLoadTimeout();
+            if (prerollTimerInterval) {
+                clearInterval(prerollTimerInterval);
+                prerollTimerInterval = null;
+            }
+
+            const container = document.querySelector('.video-container');
+            const layer = document.getElementById('preroll-layer');
+            const skipButton = document.getElementById('preroll-skip-button');
+            const playButton = document.getElementById('preroll-play-button');
+            const status = document.getElementById('preroll-status');
+
+            if (container) container.classList.remove('preroll-active');
+            if (layer) layer.classList.remove('active');
+            if (skipButton) skipButton.classList.remove('visible');
+            if (playButton) {
+                playButton.style.display = 'none';
+                playButton.disabled = false;
+            }
+            if (status) status.textContent = '';
+
+            pendingPrerollUrl = '';
+            prerollBusy = false;
+            prerollStarted = false;
+            prerollAdHasStarted = false;
+            try { if (imaManager) imaManager.destroy(); } catch (_) {}
+            imaManager = null;
+            imaLoader = null;
+            imaDisplayContainer = null;
+
             prepareIframeDirect(url);
         }
 
