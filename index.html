@@ -2965,6 +2965,16 @@
             if (!url) return 'about:blank';
             let embedUrl = String(url).trim();
             if (!embedUrl || embedUrl === '#') return 'about:blank';
+
+            // Kolom Link Google Sheets boleh berisi URL langsung atau kode iframe.
+            // Contoh: <iframe src="https://vidsrc.to/embed/movie/1236045" ...></iframe>
+            // Ambil hanya src; jangan kirim seluruh tag HTML sebagai alamat iframe.
+            if (/^<iframe\b/i.test(embedUrl)) {
+                const match = embedUrl.match(/\bsrc\s*=\s*(?:"([^"]+)"|'([^']+)'|([^\s>]+))/i);
+                if (!match) return 'about:blank';
+                embedUrl = (match[1] || match[2] || match[3] || '').trim();
+            }
+
             embedUrl = enforceHttps(embedUrl);
 
             try {
