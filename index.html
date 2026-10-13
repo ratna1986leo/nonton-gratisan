@@ -3228,33 +3228,27 @@
 
             try {
                 const parsed = new URL(embedUrl);
-                const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
-                // Hanya izinkan host player yang memang resmi/berizin untuk di-embed.
-                // Tambahkan domain milik sendiri atau provider yang memberi izin embed.
-                const allowedHosts = new Set([
-                    'youtube.com', 'youtu.be', 'youtube-nocookie.com',
-                    'mxdrop.sx','vidsrc.sh','vidsrc.to','vinovo.to','vidsrc.me','vidsrc.cc','vidsrc.pro'
-                    // 'player.domain-resmi-kamu.com'
-                ]);
-                if (!allowedHosts.has(host)) {
-                    console.warn('Host video ditolak:', host);
-                    return 'about:blank';
-                }
+                if (!['http:', 'https:'].includes(parsed.protocol)) return 'about:blank';
 
+                const host = parsed.hostname.toLowerCase().replace(/^www\./, '');
+
+                // Link dari Google Sheets adalah sumber utama Pustaka.
+                // Provider pustaka bisa berbeda-beda, jadi jangan blokir host
+                // yang tidak ada di whitelist. Hanya URL HTTP(S) yang diterima.
                 if (host === 'youtube.com') {
                     const videoId = parsed.searchParams.get('v');
                     if (videoId) return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-                    if (!parsed.pathname.startsWith('/embed/')) return 'about:blank';
+                    if (!parsed.pathname.startsWith('/embed/')) return parsed.toString();
                 }
 
                 if (host === 'youtu.be') {
                     const videoId = parsed.pathname.replace(/^\/+/, '').split('/')[0];
                     if (videoId) return `https://www.youtube.com/embed/${encodeURIComponent(videoId)}`;
-                    return 'about:blank';
+                    return parsed.toString();
                 }
 
                 if (host === 'youtube-nocookie.com' && !parsed.pathname.startsWith('/embed/')) {
-                    return 'about:blank';
+                    return parsed.toString();
                 }
 
                 return parsed.toString();
