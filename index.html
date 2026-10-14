@@ -2397,8 +2397,8 @@
         }
 
         function prepareIframeDirect(url) {
-            const iframe = document.getElementById('video-iframe');
-            if (!iframe) return;
+            const oldIframe = document.getElementById('video-iframe');
+            if (!oldIframe) return;
 
             clearIframeTimers();
             removePlayerNotice();
@@ -2408,7 +2408,7 @@
 
             if (!url || url === 'about:blank') {
                 currentVideoUrl = '';
-                iframe.src = 'about:blank';
+                oldIframe.src = 'about:blank';
                 setPlayerLoading(false);
                 showPlayerNotice('URL video tidak tersedia.', '', {
                     title: 'Video tidak tersedia',
@@ -2429,18 +2429,26 @@
             }
 
             currentVideoUrl = safeUrl;
-            // Samakan pemuatan Vidsrc dengan hosting InfinityFree yang berfungsi.
-            // Hanya Vidsrc yang memakai no-referrer; TMDB, Vinovo dan MaxDrop tetap.
             const playerHost = new URL(safeUrl).hostname.toLowerCase();
             const isVidsrc = /(^|\.)vidsrc(?:\.[a-z0-9-]+)+$/.test(playerHost);
+
+            // Membuat browsing context baru untuk setiap film/server.
+            // Mengganti src pada iframe lama bisa mempertahankan state player
+            // sebelumnya dan menyebabkan film baru kosong sampai hard refresh.
+            const iframe = document.createElement('iframe');
+            iframe.id = 'video-iframe';
+            iframe.className = oldIframe.className;
+            iframe.title = 'Pemutar video';
+            iframe.loading = 'eager';
             iframe.referrerPolicy = isVidsrc ? 'no-referrer' : 'strict-origin-when-cross-origin';
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
-            iframe.setAttribute('title', 'Pemutar video');
-            iframe.removeAttribute('src');
+            iframe.setAttribute('fetchpriority', 'high');
 
+            let loaded = false;
             iframe.onload = () => {
-                if (token !== iframeLoadToken || iframe.src === 'about:blank' || iframe.src === window.location.href) return;
+                if (token !== iframeLoadToken) return;
+                loaded = true;
                 clearIframeTimers();
                 setPlayerLoading(false);
                 removePlayerNotice();
@@ -2457,19 +2465,24 @@
                 );
             };
 
-            // Navigasi saat container sudah terlihat; tidak perlu muat
-            // about:blank yang dapat memicu onload palsu.
-            requestAnimationFrame(() => {
-                if (token !== iframeLoadToken) return;
-                iframe.src = safeUrl;
+            oldIframe.replaceWith(iframe);
 
-                // Jangan menutup player dengan overlay hanya karena provider lambat.
-                // Setelah 15 detik spinner dihentikan, tetapi iframe tetap dibiarkan tampil.
-                iframeLoadTimer = setTimeout(() => {
-                    if (token !== iframeLoadToken) return;
-                    setPlayerLoading(false);
-                }, 15000);
-            });
+            // Pasang src sesudah iframe berada di DOM yang terlihat agar
+            // provider mendapat navigasi pertama dengan context yang bersih.
+            iframe.src = safeUrl;
+            iframeLoadTimer = setTimeout(() => {
+                if (token !== iframeLoadToken) return;
+                setPlayerLoading(false);
+                // Jangan reload player otomatis sesudah onload: video mungkin
+                // sedang diputar, meskipun browser membatasi inspeksi cross-origin.
+                if (!loaded) {
+                    showPlayerNotice(
+                        'Player terlalu lama merespons. Coba ulangi player tanpa refresh halaman.',
+                        safeUrl,
+                        { title: 'Player belum merespons' }
+                    );
+                }
+            }, 20000);
         }
 
         function retryCurrentPlayer() {
