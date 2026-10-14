@@ -1306,6 +1306,7 @@
         let libraryRefreshInFlight = false;
         let libraryLastSignature = '';
         let libraryLastSuccessAt = 0;
+        let libraryDeepLinkNeedsRetry = false;
 
         const VIDEO_PROVIDERS = [
             { name: 'Vidsrc', movie: (id) => `https://vidsrc.to/embed/movie/${id}`, tv: (id, season, episode) => `https://vidsrc.to/embed/tv/${id}/${season}/${episode}` },
@@ -1546,7 +1547,8 @@
 
                     // Jika deep-link dibuka sebelum Sheet siap, selesaikan pemuatan
                     // detail/player otomatis setelah katalog berhasil tersedia.
-                    if (!previousMedia && /^\/(movie|tv)\//i.test(window.location.pathname)) {
+                    if (libraryDeepLinkNeedsRetry && !previousMedia && /^\/(movie|tv)\//i.test(window.location.pathname)) {
+                        libraryDeepLinkNeedsRetry = false;
                         openSharedRoute().catch(error => console.warn('Retry deep-link Pustaka gagal:', error));
                     }
 
@@ -4048,6 +4050,7 @@
             document.getElementById('detail-poster').src = fallbackItem.poster_path;
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
             document.getElementById('detail-section').classList.remove('hidden');
+            libraryDeepLinkNeedsRetry = true;
             showToast('Data film belum tersedia dari sumber utama. Halaman SEO tetap dibuka.', 'ℹ️');
             return true;
         }
