@@ -1544,6 +1544,12 @@
                         }
                     }
 
+                    // Jika deep-link dibuka sebelum Sheet siap, selesaikan pemuatan
+                    // detail/player otomatis setelah katalog berhasil tersedia.
+                    if (!previousMedia && /^\/(movie|tv)\//i.test(window.location.pathname)) {
+                        openSharedRoute().catch(error => console.warn('Retry deep-link Pustaka gagal:', error));
+                    }
+
                     if (!silent) showToast('Pustaka Google Sheets berhasil diperbarui.', '✅');
                 }
                 return true;
@@ -2429,10 +2435,10 @@
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
             iframe.setAttribute('title', 'Pemutar video');
-            iframe.src = 'about:blank';
+            iframe.removeAttribute('src');
 
             iframe.onload = () => {
-                if (token !== iframeLoadToken) return;
+                if (token !== iframeLoadToken || iframe.src === 'about:blank' || iframe.src === window.location.href) return;
                 clearIframeTimers();
                 setPlayerLoading(false);
                 removePlayerNotice();
@@ -2449,7 +2455,8 @@
                 );
             };
 
-            // Navigasi setelah dokumen lama benar-benar dilepas.
+            // Navigasi saat container sudah terlihat; tidak perlu muat
+            // about:blank yang dapat memicu onload palsu.
             requestAnimationFrame(() => {
                 if (token !== iframeLoadToken) return;
                 iframe.src = safeUrl;
@@ -2920,11 +2927,12 @@
                 epContainer.classList.add('hidden');
                 updateEpisodeNavButtons(false, 1, 1);
             }
-            // Pre-roll hanya sekali setiap membuka judul baru.
-            if (item.isLibraryItem || hasPlayablePlayerLink(item)) setupVideoSource(item);
-            else clearDiscoveryPlayer();
+            // Tampilkan container sebelum navigasi iframe: provider video
+            // dapat menunda pemuatan ketika elemen masih display:none.
             document.querySelectorAll('#main-content > *:not(#detail-section)').forEach(s => s.classList.add('hidden'));
             document.getElementById('detail-section').classList.remove('hidden');
+            if (item.isLibraryItem || hasPlayablePlayerLink(item)) setupVideoSource(item);
+            else clearDiscoveryPlayer();
             if (!item.isLibraryItem) {
                 try {
                     await loadTMDBTrailer(item);
