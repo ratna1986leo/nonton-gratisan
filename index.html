@@ -4077,18 +4077,22 @@
 
             // Render data lokal terlebih dahulu. Sumber jaringan hanya memperkaya katalog.
             renderAllSections();
+            // Deep-link Pustaka tidak perlu menunggu seluruh permintaan TMDB.
+            // Proses katalog TMDB berjalan terpisah agar player bisa muncul lebih cepat.
+            const tmdbCatalogPromise = fetchTMDBCatalogs().catch(error => {
+                console.warn('Inisialisasi katalog TMDB gagal:', error);
+            });
             try {
-                await Promise.allSettled([
-                    loadLibraryFromGoogleSheets(),
-                    fetchTMDBCatalogs()
-                ]);
+                await loadLibraryFromGoogleSheets();
                 renderAllSections();
             } catch (e) {
-                console.warn('Inisialisasi katalog gagal:', e);
+                console.warn('Inisialisasi katalog Pustaka gagal:', e);
                 renderAllSections();
             }
 
             const handledSharedRoute = await openSharedRoute();
+            // Pastikan promise TMDB punya penanganan error tanpa menghambat player.
+            void tmdbCatalogPromise;
             if (!handledSharedRoute && !/^\/(movie|tv)\//i.test(window.location.pathname)) {
                 renderAllSections();
             }
