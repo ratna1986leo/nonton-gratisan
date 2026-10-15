@@ -139,6 +139,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Google Fonts -->
+    <link rel="preconnect" href="https://image.tmdb.org" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1698,60 +1699,90 @@
                 if (genreId) endpointAppend += '&with_genres=' + encodeURIComponent(genreId);
                 if (yearVal) endpointAppend += '&primary_release_year=' + encodeURIComponent(yearVal) + '&first_air_date_year=' + encodeURIComponent(yearVal);
 
-                // Hero/highlight diprioritaskan supaya tampil cepat.
-                try {
-                    const heroRes = await fetchWithRetry(
-                        '/api/tmdb?path=%2F3%2Ftrending%2Fall%2Fweek&language=id-ID' + endpointAppend,
-                        1,
-                        5000
-                    );
-                    if (heroRes.ok) {
-                        const data = await heroRes.json();
-                        const heroItems = Array.isArray(data?.results)
-                            ? data.results.map(normalizeTMDBItem).filter(Boolean)
-                            : [];
-                        if (heroItems.length) {
-                            store.setState({ trendingData: heroItems, heroItems: heroItems.slice(0, 5) });
-                            cacheTMDBData('trending', heroItems);
-                            setupHeroCarousel();
-                            renderAllSections();
-                        }
-                    }
-                } catch (heroErr) {
-                    console.warn('Highlight TMDB gagal dimuat cepat:', heroErr);
-                } finally {
-                    // Jangan tahan seluruh halaman hanya karena katalog discovery lain lambat.
+                // Cache key mengikuti filter agar hasil filter tidak tercampur dengan katalog default.
+                const cacheSuffix = (genreId || yearVal) ? '_' + (genreId || 'all') + '_' + (yearVal || 'all') : '';
+                // Tampilkan data tersimpan lebih dulu, lalu perbarui di latar belakang.
+                // Ini menghindari halaman kosong saat TMDB/Vercel sedang lambat.
+                const cachedTrending = loadTMDBFromCache('trending' + cacheSuffix);
+                const cachedMovies = loadTMDBFromCache('movies' + cacheSuffix);
+                const cachedSeries = loadTMDBFromCache('series' + cacheSuffix);
+                const cachedThriller = loadTMDBFromCache('thriller' + cacheSuffix);
+                const cachedState = {};
+                if (cachedTrending && cachedTrending.length) {
+                    cachedState.trendingData = cachedTrending;
+                    cachedState.heroItems = cachedTrending.slice(0, 5);
+                }
+                if (cachedMovies && cachedMovies.length) cachedState.moviesData = cachedMovies;
+                if (cachedSeries && cachedSeries.length) cachedState.seriesData = cachedSeries;
+                if (cachedThriller && cachedThriller.length) cachedState.thrillerData = cachedThriller;
+                if (Object.keys(cachedState).length) {
+                    store.setState(cachedState);
+                    renderAllSections();
+                    if (cachedTrending && cachedTrending.length) setupHeroCarousel();
                     hideLoading();
                 }
 
-                // Movie/Series/Thriller dimuat di belakang layar setelah hero sudah tampil.
-                const results = await Promise.allSettled([
-                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc' + endpointAppend, 1, 6000),
-                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Ftv&language=id-ID&sort_by=popularity.desc' + endpointAppend, 1, 6000),
-                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&with_genres=53&sort_by=popularity.desc' + endpointAppend, 1, 6000)
-                ]);
+                // Jalankan semua permintaan TMDB bersamaan agar satu endpoint lambat
+                // tidak menahan katalog lain.
+                const requests = [
+                    {
+                        key: 'trending',
+                        cacheKey: 'trending' + cacheSuffix,
+                        url: '/api/tmdb?path=%2F3%2Ftrending%2Fall%2Fweek&language=id-ID' + endpointAppend,
+                        timeout: 5000
+                    },
+                    {
+                        key: 'movies',
+                        cacheKey: 'movies' + cacheSuffix,
+                        url: '/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc' + endpointAppend,
+                        timeout: 6000
+                    },
+                    {
+                        key: 'series',
+                        cacheKey: 'series' + cacheSuffix,
+                        url: '/api/tmdb?path=%2F3%2Fdiscover%2Ftv&language=id-ID&sort_by=popularity.desc' + endpointAppend,
+                        timeout: 6000
+                    },
+                    {
+                        key: 'thriller',
+                        cacheKey: 'thriller' + cacheSuffix,
+                        url: '/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&with_genres=53&sort_by=popularity.desc' + endpointAppend,
+                        timeout: 6000
+                    }
+                ];
 
-                const cacheKeys = ['movies', 'series', 'thriller'];
-                results.forEach((result, index) => {
-                    if (result.status !== 'fulfilled' || !result.value.ok) return;
-                    result.value.json().then(data => {
-                        const normalized = Array.isArray(data?.results)
+                const jobs = requests.map(async request => {
+                    try {
+                        const response = await fetchWithRetry(request.url, 1, request.timeout);
+                        if (!response.ok) return;
+                        const data = await response.json();
+                        const items = Array.isArray(data?.results)
                             ? data.results.map(normalizeTMDBItem).filter(Boolean)
                             : [];
-                        if (!normalized.length) return;
-                        const key = cacheKeys[index];
-                        const patch = {};
-                        patch[key === 'movies' ? 'moviesData' : key === 'series' ? 'seriesData' : 'thrillerData'] = normalized;
-                        store.setState(patch);
-                        cacheTMDBData(key, normalized);
+                        if (!items.length) return;
+
+                        cacheTMDBData(request.cacheKey, items);
+                        if (request.key === 'trending') {
+                            store.setState({ trendingData: items, heroItems: items.slice(0, 5) });
+                            setupHeroCarousel();
+                        } else {
+                            const stateKey = request.key === 'movies'
+                                ? 'moviesData'
+                                : request.key === 'series'
+                                    ? 'seriesData'
+                                    : 'thrillerData';
+                            store.setState({ [stateKey]: items });
+                        }
                         renderAllSections();
-                    }).catch(err => console.warn('TMDB parse gagal:', err));
+                    } catch (error) {
+                        console.warn('TMDB ' + request.key + ' gagal dimuat:', error);
+                    } finally {
+                        if (request.key === 'trending') hideLoading();
+                    }
                 });
 
+                await Promise.allSettled(jobs);
                 safeStorageSet('last_tmdb_update', Date.now().toString());
-                results.forEach(result => {
-                    if (result.status === 'rejected') console.warn('TMDB discovery gagal:', result.reason);
-                });
             } catch (err) {
                 console.error('❌ Error fetching TMDB:', err);
                 renderAllSections();
@@ -1766,7 +1797,7 @@
             const year = releaseDate ? (releaseDate.split('-')[0] || new Date().getFullYear().toString()) : new Date().getFullYear().toString();
             const type = item.media_type || (item.title ? 'movie' : 'tv');
             const posterPath = item.poster_path ? enforceHttps(`https://image.tmdb.org/t/p/w500${item.poster_path}`) : 'https://placehold.co/400x600/18181b/ff5c00?text=No+Poster';
-            const backdropPath = item.backdrop_path ? enforceHttps(`https://image.tmdb.org/t/p/w1280${item.backdrop_path}`) : 'https://placehold.co/1200x600/18181b/ff5c00?text=No+Cover';
+            const backdropPath = item.backdrop_path ? enforceHttps(`https://image.tmdb.org/t/p/w780${item.backdrop_path}`) : 'https://placehold.co/1200x600/18181b/ff5c00?text=No+Cover';
             return {
                 id: item.id, title, type,
                 rating: item.vote_average ? item.vote_average.toFixed(1) : '8.0',
@@ -1785,12 +1816,35 @@
         }
 
         const tmdbMemoryCache = new Map();
+        const TMDB_CACHE_PREFIX = 'ng_tmdb_catalog_v1_';
+        // Keep the last successful discovery response on-device so a cold page
+        // load can paint posters immediately while fresh TMDB data revalidates.
         function cacheTMDBData(key, data) {
-            tmdbMemoryCache.set(key, { timestamp: Date.now(), data });
+            const entry = { timestamp: Date.now(), data };
+            tmdbMemoryCache.set(key, entry);
+            try {
+                localStorage.setItem(TMDB_CACHE_PREFIX + key, JSON.stringify(entry));
+            } catch (_) {
+                // Storage may be disabled/full; in-memory caching still works.
+            }
         }
 
-        function loadTMDBFromCache(key, maxAge = 2 * 60 * 1000) {
-            const cached = tmdbMemoryCache.get(key);
+        function loadTMDBFromCache(key, maxAge = 24 * 60 * 60 * 1000) {
+            let cached = tmdbMemoryCache.get(key) || null;
+            if (!cached) {
+                try {
+                    const raw = localStorage.getItem(TMDB_CACHE_PREFIX + key);
+                    if (raw) {
+                        const parsed = JSON.parse(raw);
+                        if (parsed && Array.isArray(parsed.data) && Number.isFinite(Number(parsed.timestamp))) {
+                            cached = { timestamp: Number(parsed.timestamp), data: parsed.data };
+                            tmdbMemoryCache.set(key, cached);
+                        }
+                    }
+                } catch (_) {
+                    // Ignore malformed or unavailable browser storage.
+                }
+            }
             if (!cached) return null;
             if (Date.now() - cached.timestamp >= maxAge) {
                 tmdbMemoryCache.delete(key);
@@ -2052,7 +2106,7 @@
             const key = getMediaKey(item.type, item.id);
             mediaCache.set(key, item);
             const slug = slugify(item.title);
-            const poster = getOptimizedImage(item.poster_path, 500);
+            const poster = getOptimizedImage(item.poster_path, 342);
             const sourceBadge = '';
             const episodeBadge = (item.type === 'tv' && item.isLibraryItem) ? `<div class="absolute bottom-1 sm:bottom-2 left-1 sm:left-2 bg-brand-500/90 text-white text-[7px] sm:text-[9px] font-bold px-1.5 py-0.5 rounded">EP 1</div>` : '';
             return `<a href="/${item.type}/${item.id}/${slug}" onclick="event.preventDefault(); navigateToDetail('${key}')" title="Buka halaman detail film" aria-label="Buka detail film" class="focusable poster-card shrink-0 w-24 sm:w-36 md:w-44 bg-zinc-900 rounded-lg sm:rounded-xl overflow-hidden border border-zinc-800/80 group cursor-pointer relative snap-start block"><div class="relative aspect-[2/3] overflow-hidden bg-zinc-950"><img src="${poster}" alt="Poster ${escapeHtml(item.title)}" loading="lazy" onerror="this.src='https://placehold.co/400x600/18181b/ff5c00?text=Gambar+N/A'" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"><div class="absolute top-1 sm:top-2 left-1 sm:left-2 bg-black/70 backdrop-blur-md text-amber-400 font-extrabold text-[8px] sm:text-[11px] px-1.5 sm:px-2 py-0.5 rounded border border-amber-500/20">★ ${item.rating}</div><div class="absolute top-1 sm:top-2 right-1 sm:right-2 z-10"><button onclick="event.preventDefault(); event.stopPropagation(); toggleFavoriteFromKey('${key}')" class="focusable p-2 sm:p-1.5 rounded-full bg-black/70 hover:bg-brand-500 text-white transition-all text-[8px] sm:text-xs touch-target" aria-label="Simpan Favorit">${isFav ? '⭐' : '☆'}</button></div>${episodeBadge}<div class="absolute inset-0 bg-brand-600/40 backdrop-blur-[2px] play-overlay flex flex-col items-center justify-center p-1 sm:p-3 text-center"><div class="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-xl shadow-brand-500/50 mb-1 sm:mb-2"><svg class="w-4 h-4 sm:w-6 sm:h-6 fill-current translate-x-0.5" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg></div><span class="text-white text-[8px] sm:text-xs font-black tracking-wide drop-shadow">TONTON</span></div></div><div class="p-2 sm:p-3 space-y-0.5 sm:space-y-1"><h3 class="text-[10px] sm:text-sm font-bold text-white truncate group-hover:text-brand-500 transition-colors">${escapeHtml(item.title)}</h3><div class="flex items-center justify-between text-[8px] sm:text-[10px] text-zinc-400"><span>${item.year}</span><span class="uppercase border border-zinc-700 px-0.5 sm:px-1 rounded text-[7px] sm:text-[9px]">${item.type === 'tv' ? 'Series' : 'HD'}</span></div></div></a>`;
@@ -2342,7 +2396,7 @@
                 return;
             }
             if (playBtn) playBtn.disabled = false;
-            document.getElementById('hero-backdrop').style.backgroundImage = `url('${getOptimizedImage(item.backdrop_path, 1280)}')`;
+            document.getElementById('hero-backdrop').style.backgroundImage = `url('${getOptimizedImage(item.backdrop_path, 780)}')`;
             document.getElementById('hero-title').textContent = item.title;
             document.getElementById('hero-overview').textContent = item.overview;
             document.getElementById('hero-rating').textContent = `★ ${item.rating}`;
