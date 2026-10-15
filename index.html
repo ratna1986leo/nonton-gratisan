@@ -4367,7 +4367,7 @@
         }
 
         // ================= INISIALISASI =================
-        window.onload = async function () {
+        document.addEventListener('DOMContentLoaded', async function () {
             updateFullscreenButton();
             const state = store.getState();
             document.getElementById('watchlist-count-badge').textContent = state.watchlist.length;
@@ -4419,7 +4419,7 @@
             }, 10000);
 
             hideLoading();
-};
+}, { once: true });
     </script>
 
     <script>
