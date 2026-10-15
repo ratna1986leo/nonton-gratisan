@@ -72,7 +72,7 @@
       "headers": [
         {
           "key": "Cache-Control",
-          "value": "no-store, no-cache, max-age=0, s-maxage=0, stale-while-revalidate=0, must-revalidate"
+          "value": "public, max-age=0, s-maxage=60, stale-while-revalidate=120"
         }
       ]
     },
