@@ -19,7 +19,7 @@ export default async function handler(req,res){
     const url='https://api.themoviedb.org'+path+'?'+params.toString();
     const r=await fetch(url,{cache:'no-store'});
     const body=await r.text();
-    res.setHeader('Cache-Control','public, s-maxage=300, stale-while-revalidate=600');
+    res.setHeader('Cache-Control','public, max-age=0, s-maxage=600, stale-while-revalidate=3600');
     res.setHeader('Content-Type','application/json; charset=utf-8');
     return res.status(r.status).send(body);
   }catch(e){
