@@ -2496,16 +2496,14 @@
             container.classList.add('preroll-active');
             layer.classList.add('active');
             adContainer.replaceChildren();
-            if (status) status.textContent = '';
+            if (status) status.textContent = 'Tekan tombol untuk memulai iklan sebelum film.';
             if (playButton) {
-                playButton.disabled = true;
-                playButton.style.display = 'none';
+                playButton.disabled = false;
+                playButton.style.display = 'block';
                 playButton.textContent = '▶ Putar Iklan';
-                playButton.onclick = null;
+                // Google IMA memerlukan aktivasi pengguna di banyak browser/mobile.
+                playButton.onclick = startPrerollFromUserGesture;
             }
-            // Coba putar iklan otomatis. Jika tidak tersedia atau tidak merespons,
-            // timeout akan membuka film tanpa menahan player.
-            startPrerollFromUserGesture();
         }
 
         function startPrerollFromUserGesture() {
