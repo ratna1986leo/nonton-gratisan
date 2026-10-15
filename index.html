@@ -1698,60 +1698,64 @@
                 if (genreId) endpointAppend += '&with_genres=' + encodeURIComponent(genreId);
                 if (yearVal) endpointAppend += '&primary_release_year=' + encodeURIComponent(yearVal) + '&first_air_date_year=' + encodeURIComponent(yearVal);
 
-                // Hero/highlight diprioritaskan supaya tampil cepat.
-                try {
-                    const heroRes = await fetchWithRetry(
-                        '/api/tmdb?path=%2F3%2Ftrending%2Fall%2Fweek&language=id-ID' + endpointAppend,
-                        1,
-                        5000
-                    );
-                    if (heroRes.ok) {
-                        const data = await heroRes.json();
-                        const heroItems = Array.isArray(data?.results)
-                            ? data.results.map(normalizeTMDBItem).filter(Boolean)
-                            : [];
-                        if (heroItems.length) {
-                            store.setState({ trendingData: heroItems, heroItems: heroItems.slice(0, 5) });
-                            cacheTMDBData('trending', heroItems);
-                            setupHeroCarousel();
-                            renderAllSections();
-                        }
+                // Jalankan semua permintaan TMDB bersamaan. Sebelumnya discovery
+                // menunggu trending selesai, sehingga katalog film/series ikut tertunda
+                // walau endpoint trending sedang lambat.
+                const requests = [
+                    {
+                        key: 'trending',
+                        url: '/api/tmdb?path=%2F3%2Ftrending%2Fall%2Fweek&language=id-ID' + endpointAppend,
+                        timeout: 5000
+                    },
+                    {
+                        key: 'movies',
+                        url: '/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc' + endpointAppend,
+                        timeout: 6000
+                    },
+                    {
+                        key: 'series',
+                        url: '/api/tmdb?path=%2F3%2Fdiscover%2Ftv&language=id-ID&sort_by=popularity.desc' + endpointAppend,
+                        timeout: 6000
+                    },
+                    {
+                        key: 'thriller',
+                        url: '/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&with_genres=53&sort_by=popularity.desc' + endpointAppend,
+                        timeout: 6000
                     }
-                } catch (heroErr) {
-                    console.warn('Highlight TMDB gagal dimuat cepat:', heroErr);
-                } finally {
-                    // Jangan tahan seluruh halaman hanya karena katalog discovery lain lambat.
-                    hideLoading();
-                }
+                ];
 
-                // Movie/Series/Thriller dimuat di belakang layar setelah hero sudah tampil.
-                const results = await Promise.allSettled([
-                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&sort_by=popularity.desc' + endpointAppend, 1, 6000),
-                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Ftv&language=id-ID&sort_by=popularity.desc' + endpointAppend, 1, 6000),
-                    fetchWithRetry('/api/tmdb?path=%2F3%2Fdiscover%2Fmovie&language=id-ID&with_genres=53&sort_by=popularity.desc' + endpointAppend, 1, 6000)
-                ]);
-
-                const cacheKeys = ['movies', 'series', 'thriller'];
-                results.forEach((result, index) => {
-                    if (result.status !== 'fulfilled' || !result.value.ok) return;
-                    result.value.json().then(data => {
-                        const normalized = Array.isArray(data?.results)
+                const jobs = requests.map(async request => {
+                    try {
+                        const response = await fetchWithRetry(request.url, 1, request.timeout);
+                        if (!response.ok) return;
+                        const data = await response.json();
+                        const items = Array.isArray(data?.results)
                             ? data.results.map(normalizeTMDBItem).filter(Boolean)
                             : [];
-                        if (!normalized.length) return;
-                        const key = cacheKeys[index];
-                        const patch = {};
-                        patch[key === 'movies' ? 'moviesData' : key === 'series' ? 'seriesData' : 'thrillerData'] = normalized;
-                        store.setState(patch);
-                        cacheTMDBData(key, normalized);
+                        if (!items.length) return;
+
+                        cacheTMDBData(request.key, items);
+                        if (request.key === 'trending') {
+                            store.setState({ trendingData: items, heroItems: items.slice(0, 5) });
+                            setupHeroCarousel();
+                        } else {
+                            const stateKey = request.key === 'movies'
+                                ? 'moviesData'
+                                : request.key === 'series'
+                                    ? 'seriesData'
+                                    : 'thrillerData';
+                            store.setState({ [stateKey]: items });
+                        }
                         renderAllSections();
-                    }).catch(err => console.warn('TMDB parse gagal:', err));
+                    } catch (error) {
+                        console.warn('TMDB ' + request.key + ' gagal dimuat:', error);
+                    } finally {
+                        if (request.key === 'trending') hideLoading();
+                    }
                 });
 
+                await Promise.allSettled(jobs);
                 safeStorageSet('last_tmdb_update', Date.now().toString());
-                results.forEach(result => {
-                    if (result.status === 'rejected') console.warn('TMDB discovery gagal:', result.reason);
-                });
             } catch (err) {
                 console.error('❌ Error fetching TMDB:', err);
                 renderAllSections();
