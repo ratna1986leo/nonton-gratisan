@@ -1,4 +1,4 @@
-const ALLOWED_PATH=/^\/3\/(trending\/all\/week|discover\/(movie|tv)|search\/(movie|tv|multi)|(?:movie|tv)\/\d+(?:\/videos)?)$/;
+const ALLOWED_PATH=/^\/3\/(trending\/all\/week|discover\/(movie|tv)|search\/(movie|tv|multi)|(?:movie|tv)\/\d+(?:\/(?:videos|watch\/providers))?)$/;
 
 export default async function handler(req,res){
   try{

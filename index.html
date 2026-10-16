@@ -3153,7 +3153,7 @@
 
             try {
                 const endpointType = item.type === 'tv' ? 'tv' : 'movie';
-                const url = `https://api.themoviedb.org/3/${endpointType}/${encodeURIComponent(item.id)}/watch/providers?api_key=${DEFAULT_API_KEY}`;
+                const url = `https://api.themoviedb.org/3/${endpointType}/${encodeURIComponent(item.id)}/watch/providers`;
                 const res = await fetchWithRetry(url, 2, 10000);
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 const data = await res.json();
