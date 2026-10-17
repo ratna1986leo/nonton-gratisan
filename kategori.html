@@ -18,6 +18,16 @@ function libraryMatches(data){const seen=new Set();return data.filter(x=>{const 
 function render(){const start=(page-1)*24,end=start+24;list.innerHTML='';allItems.slice(start,end).forEach(m=>{const a=document.createElement('a');a.className='movie';a.href='/'+m.type+'/'+m.id+'/'+encodeURIComponent(m.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,''));const p=m.poster||'';a.innerHTML='<img class="poster" src="'+esc(p||'https://placehold.co/400x600/122238/6ee7ff?text=No+Poster')+'" alt="'+esc(m.title)+'" loading="lazy"><div class="info"><div class="title">'+esc(m.title)+'</div><div class="year">'+esc(m.year)+'</div><div class="source">'+esc(m.source)+'</div></div>';list.appendChild(a)})
  totalPages=Math.max(1,Math.ceil(allItems.length/24));pageInfo.textContent='Halaman '+page+' dari '+totalPages;prev.disabled=page<=1;next.disabled=page>=totalPages;status.style.display=allItems.length?'none':'block';if(!allItems.length)status.textContent='Belum ada tontonan untuk kategori ini.'}
 async function load(){status.style.display='block';status.textContent='Memuat TMDB + Pustaka Film...';try{let url=cfg.type==='movie'?'https://api.themoviedb.org/3/discover/movie?api_key='+API_KEY+'&language=id-ID&sort_by=popularity.desc&include_adult=false&with_genres='+cfg.genre+'&page=1':'https://api.themoviedb.org/3/discover/tv?api_key='+API_KEY+'&language=id-ID&sort_by=popularity.desc&include_adult=false&page=1';const r=await fetch(url);const d=await r.json();let tmdb=(d.results||[]).filter(x=>x.poster_path).map(x=>({id:x.id,title:x.title||x.name,year:(x.release_date||x.first_air_date||'').slice(0,4)||'—',poster:IMG+x.poster_path,type:cfg.type,source:'TMDB',origin:(x.origin_country||[]).join('|')}));if(cfg.type==='tv'){if(slug==='series-korea')tmdb=tmdb.filter(x=>x.origin.includes('KR'));else if(slug==='series-indonesia')tmdb=tmdb.filter(x=>x.origin.includes('ID'));else if(slug==='series-barat')tmdb=tmdb.filter(x=>['US','GB','CA','AU'].some(c=>x.origin.includes(c)))}let lib=[];try{const cr=await fetch(CSV_URL);if(cr.ok)lib=libraryMatches(parseCSV(await cr.text()))}catch(e){}const seen=new Set(tmdb.map(x=>normTitle(x.title)+'-'+x.year));lib=lib.filter(x=>{const k=normTitle(x.title)+'-'+x.year;if(seen.has(k))return false;seen.add(k);return true});allItems=[...tmdb,...lib];render()}catch(e){console.error(e);try{const cr=await fetch(CSV_URL);allItems=libraryMatches(parseCSV(await cr.text()));render()}catch(e2){status.textContent='Gagal memuat katalog. Coba refresh lagi.';status.style.display='block'}}}
-prev.onclick=()=>{if(page>1){page--;render();window.scrollTo({top:0,behavior:'smooth'})}};next.onclick=()=>{if(page<totalPages){page++;render();window.scrollTo({top:0,behavior:'smooth'})}};load();})();</script><script async="async" data-cfasync="false" src="https://thrillingdeepcutlery.com/14265da1f50076fa1b06c7f09c88e333/invoke.js"></script>
-<div id="native-banner-bottom" style="width:100%;max-width:1200px;margin:32px auto 24px;padding:0 16px;box-sizing:border-box;text-align:center;clear:both"><div id="container-14265da1f50076fa1b06c7f09c88e333"></div></div>
+prev.onclick=()=>{if(page>1){page--;render();window.scrollTo({top:0,behavior:'smooth'})}};next.onclick=()=>{if(page<totalPages){page++;render();window.scrollTo({top:0,behavior:'smooth'})}};load();})();</script><script>
+(function(iwpb){
+var d = document,
+    s = d.createElement('script'),
+    l = d.currentScript || d.scripts[d.scripts.length - 1];
+s.settings = iwpb || {};
+s.src = "//prizefamily.com/bWXNVbs.dbG/ly0/Y/W/cT/ce/mU9tu/Z/UdlbkLP-Tac/1XM/jHAs4nMwDBkDttNyzDU/ySM/DrgcxiMNwS";
+s.async = true;
+s.referrerPolicy = 'no-referrer-when-downgrade';
+l.parentNode.insertBefore(s, l);
+})({})
+</script>
 </body></html>
