@@ -3395,10 +3395,10 @@
             const item = state.currentMedia;
             const linkedPlayerUrl = item?.link || item?.Link || item?.playerLink || item?.playerUrl || item?.player_url || '';
             const linkedHost = (() => {
-                try { return new URL(enforceHttps(String(linkedPlayerUrl).trim())).hostname.toLowerCase().replace(/^www\\./, ''); }
+                try { return new URL(enforceHttps(String(linkedPlayerUrl).trim())).hostname.toLowerCase().replace(/^www\./, ''); }
                 catch (_) { return ''; }
             })();
-            const directProviderName = /^(mxdrop\\.sx|mixdrop\\.(?:co|to|ag|bz|ch|club|is|nu|ps|vc))$/.test(linkedHost)
+            const directProviderName = /^(mxdrop\.sx|mixdrop\.(?:co|to|ag|bz|ch|club|is|nu|ps|vc))$/.test(linkedHost)
                 ? 'MixDrop'
                 : (linkedHost ? 'Link Langsung' : 'Vidsrc');
             const serverNames = [`Server 1 · ${item?.isLibraryItem ? directProviderName : 'Vidsrc'}`, 'Server 2 · Pustaka', 'Server 3 · Live'];
@@ -3440,8 +3440,8 @@
             const rawLink = item.link || item.Link || item.playerLink || item.playerUrl || item.player_url || '';
             let directProviderLabel = 'Link Langsung';
             try {
-                const host = new URL(enforceHttps(String(rawLink).trim())).hostname.toLowerCase().replace(/^www\\./, '');
-                if (/^(mxdrop\\.sx|mixdrop\\.(?:co|to|ag|bz|ch|club|is|nu|ps|vc))$/.test(host)) directProviderLabel = 'MixDrop';
+                const host = new URL(enforceHttps(String(rawLink).trim())).hostname.toLowerCase().replace(/^www\./, '');
+                if (/^(mxdrop\.sx|mixdrop\.(?:co|to|ag|bz|ch|club|is|nu|ps|vc))$/.test(host)) directProviderLabel = 'MixDrop';
             } catch (_) {}
             const label = serverNum === 1
                 ? (!item.isLibraryItem && !rawLink
