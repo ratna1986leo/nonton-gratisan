@@ -3361,9 +3361,9 @@
                     currentVideoUrl = getPustakaVideoUrl(1, item);
                     prepareIframe(currentVideoUrl);
                 } else {
-                    // Pakai link langsung dari Google Sheets bila tersedia (termasuk MixDrop);
-                    // jika tidak ada, getPlayablePlayerLink kembali ke sumber TMDB terpilih.
-                    const playerUrl = getPlayablePlayerLink(item);
+                    // Katalog TMDB tetap memakai provider TMDB yang dipilih.
+                    // Link MixDrop langsung ditangani oleh jalur Pustaka di atas.
+                    const playerUrl = getTMDBPlayerUrl(item, state.currentTMDBPlayerSource || 0);
                     if (!playerUrl) {
                         clearDiscoveryPlayer();
                         updateServerButtons();
