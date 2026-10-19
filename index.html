@@ -2728,6 +2728,9 @@
             currentVideoUrl = safeUrl;
             const playerHost = new URL(safeUrl).hostname.toLowerCase();
             const isVidsrc = /(^|\.)vidsrc(?:\.[a-z0-9-]+)+$/.test(playerHost);
+            // MixDrop dapat menolak pemuatan embed jika browser mengirim referrer situs asal.
+            // Terapkan no-referrer khusus untuk tautan MixDrop dari katalog Pustaka.
+            const isMixDrop = /(^|\.)mxdrop\.[a-z0-9-]+$/.test(playerHost) || /(^|\.)mixdrop\.[a-z0-9-]+$/.test(playerHost);
 
             // Membuat browsing context baru untuk setiap film/server.
             // Mengganti src pada iframe lama bisa mempertahankan state player
@@ -2737,7 +2740,7 @@
             iframe.className = oldIframe.className;
             iframe.title = 'Pemutar video';
             iframe.loading = 'eager';
-            iframe.referrerPolicy = isVidsrc ? 'no-referrer' : 'strict-origin-when-cross-origin';
+            iframe.referrerPolicy = (isVidsrc || isMixDrop) ? 'no-referrer' : 'strict-origin-when-cross-origin';
             iframe.setAttribute('allowfullscreen', '');
             iframe.setAttribute('allow', 'autoplay; encrypted-media; picture-in-picture; fullscreen; web-share');
             iframe.setAttribute('fetchpriority', 'high');
