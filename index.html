@@ -3280,6 +3280,13 @@
 
         function getPustakaVideoUrl(serverNum, item) {
             if (serverNum === 1) {
+                // Fallback khusus untuk Captain America: The Winter Soldier
+                // karena tautan MixDrop katalog sebelumnya gagal dimuat.
+                // Server 2 dan 3 serta film lain tidak diubah.
+                const title = String(item?.title || item?.Judul || '').toLowerCase();
+                if (item?.isLibraryItem && title.includes('captain america') && title.includes('winter soldier')) {
+                    return 'https://vidsrc.sh/embed/movie/100402';
+                }
                 if (item.link && item.link !== '#') return formatEmbedUrl(item.link);
                 return 'about:blank';
             }
