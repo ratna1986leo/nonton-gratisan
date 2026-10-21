@@ -2732,25 +2732,6 @@
             // Terapkan no-referrer khusus untuk tautan MixDrop dari katalog Pustaka.
             const isMixDrop = /(^|\.)mxdrop\.[a-z0-9-]+$/.test(playerHost) || /(^|\.)mixdrop\.[a-z0-9-]+$/.test(playerHost);
 
-            // Penolakan embed MixDrop terjadi di halaman lintas-domain dan tidak
-            // bisa dideteksi langsung dari parent page. Sediakan tombol alternatif
-            // non-blocking agar pengguna tetap bisa membuka sumber aslinya.
-            const oldMixDropLink = document.getElementById('mixdrop-direct-link');
-            if (oldMixDropLink) oldMixDropLink.remove();
-            if (isMixDrop) {
-                const directLink = document.createElement('a');
-                directLink.id = 'mixdrop-direct-link';
-                directLink.href = safeUrl;
-                directLink.target = '_blank';
-                directLink.rel = 'noopener noreferrer';
-                directLink.className = 'absolute top-3 right-3 z-30 inline-flex items-center gap-2 rounded-lg border border-white/20 bg-zinc-900/95 px-3 py-2 text-xs font-bold text-white shadow-lg hover:bg-zinc-800';
-                directLink.style.maxWidth = 'calc(100% - 24px)';
-                directLink.textContent = '↗ Buka langsung di MixDrop';
-                directLink.setAttribute('aria-label', 'Buka sumber video MixDrop di tab baru');
-                const { container } = getPlayerElements();
-                if (container) container.appendChild(directLink);
-            }
-
             // Membuat browsing context baru untuk setiap film/server.
             // Mengganti src pada iframe lama bisa mempertahankan state player
             // sebelumnya dan menyebabkan film baru kosong sampai hard refresh.
