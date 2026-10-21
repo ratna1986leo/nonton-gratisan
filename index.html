@@ -3444,7 +3444,7 @@
             let directProviderLabel = 'Link Langsung';
             try {
                 const host = new URL(enforceHttps(String(rawLink).trim())).hostname.toLowerCase().replace(/^www\./, '');
-                if (/^(mxdrop\.sx|mixdrop\.(?:co|to|ag|bz|ch|club|is|nu|ps|vc))$/.test(host)) directProviderLabel = 'MixDrop';
+                if (/^(?:mxdrop\.[a-z0-9-]+|mixdrop\.[a-z0-9-]+)$/.test(host)) directProviderLabel = 'MixDrop';
             } catch (_) {}
             const label = serverNum === 1
                 ? (!item.isLibraryItem && !rawLink
