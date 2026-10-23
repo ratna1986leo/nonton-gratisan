@@ -1,4 +1,4 @@
-const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbwkSryiL98ofeLE13KhjqrzD8NtgxwVUEu6dvLiNAgO-i9O8bphnxy-bQ0yc6KXlyHV/exec';
+const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbxYo5Qu0Hd4hMKRJczxYdaYQ1huW0hlacSZTLTHxyKusH4glfmK52KuWXsnfy9nslwp/exec';
 
 async function forward(url, options={}){
   const r=await fetch(url,{...options,redirect:'follow',cache:'no-store'});
