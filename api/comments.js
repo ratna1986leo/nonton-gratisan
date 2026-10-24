@@ -1,4 +1,4 @@
-const COMMENTS_API_URL=process.env.COMMENTS_APPS_SCRIPT_URL||'https://script.google.com/macros/s/AKfycbwkSryiL98ofeLE13KhjqrzD8NtgxwVUEu6dvLiNAgO-i9O8bphnxy-bQ0yc6KXlyHV/exec';
+const COMMENTS_API_URL=String(process.env.COMMENTS_APPS_SCRIPT_URL||'').trim();
 
 async function forward(url, options={}){
   const r=await fetch(url,{...options,redirect:'follow',cache:'no-store'});
@@ -15,6 +15,7 @@ async function forward(url, options={}){
 
 export default async function handler(req,res){
   try{
+    if(!COMMENTS_API_URL) return res.status(500).json({ok:false,error:'COMMENTS_APPS_SCRIPT_URL belum disetel di Vercel'});
     if(req.method==='GET'){
       const u=new URL(COMMENTS_API_URL);
       for(const [k,v] of Object.entries(req.query||{})){
