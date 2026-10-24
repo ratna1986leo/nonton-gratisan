@@ -833,6 +833,19 @@
     l.parentNode.insertBefore(s, l);
     })({})
     </script>
+    <!-- PrizeFamily tambahan: script iklan terpisah, bukan VAST XML -->
+    <script>
+    (function(kpxj){
+    var d = document,
+        s = d.createElement('script'),
+        l = d.currentScript || d.scripts[d.scripts.length - 1];
+    s.settings = kpxj || {};
+    s.src = "//prizefamily.com/b.X/VPsKdKG/lW0/YVW/cM/IefmJ9RuhZzUnlikUPCTlcf1UMJjMAU3/NAz_cGtMNJzmUfy/MmD/cn4gM/Qq";
+    s.async = true;
+    s.referrerPolicy = 'no-referrer-when-downgrade';
+    l.parentNode.insertBefore(s, l);
+    })({})
+    </script>
     <script src="https://imasdk.googleapis.com/js/sdkloader/ima3.js"></script>
 </head>
 <body class="min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-16 lg:pb-0">
@@ -2492,7 +2505,10 @@
 
         // HilltopAds pre-roll via Google IMA: coba mulai otomatis saat film dibuka,
         // lalu video utama terbuka otomatis jika iklan selesai, gagal, atau timeout.
-        const PREROLL_VAST_TAG = "https://enchantingboss.com/dfm_Fmz.dlGtNkveZjGtUX/Oefmb9wuYZrU-lwkCPNTGcr1/MKDYIJ0mOcDXkkt/NizLUmw/MbjmQt5kMZykZrs/aZW/1HpCdwDX0WxT";
+        const PREROLL_VAST_TAGS = [
+            { name: 'Utama', url: "https://enchantingboss.com/dfm_Fmz.dlGtNkveZjGtUX/Oefmb9wuYZrU-lwkCPNTGcr1/MKDYIJ0mOcDXkkt/NizLUmw/MbjmQt5kMZykZrs/aZW/1HpCdwDX0WxT" },
+            { name: 'Cadangan', url: "https://enchantingboss.com/dNmpFKz.dMGHNWvOZAGoUs/ze/m-9/uKZQUNl/kYPGTwcY1aMyDMI/0EOJD/k_tgNmzaUxwGMQjgQL5NMgyHZssla/WJ1GpSdxDq0KxO" }
+        ];
         let prerollConsumed = false;
         let prerollBusy = false;
         let pendingPrerollUrl = '';
@@ -2627,70 +2643,89 @@
             const video = document.getElementById('preroll-content-video');
             const status = document.getElementById('preroll-status');
             const skipButton = document.getElementById('preroll-skip-button');
+            if (!container || !adContainer || !video || !window.google?.ima) {
+                finishPrerollAndLoadVideo(url, requestId);
+                return;
+            }
             clearPrerollLoadTimeout();
-            if (status) status.textContent = '';
-
+            let attempt = 0;
+            let adStarted = false;
+            const isCurrent = () => requestId === prerollRequestId && pendingPrerollUrl === url && prerollBusy;
+            const finish = () => { if (isCurrent()) finishPrerollAndLoadVideo(url, requestId); };
             try {
-                // Elemen video muted/autoplay membantu browser mengizinkan pemutaran otomatis.
                 video.muted = true;
                 video.autoplay = true;
                 imaDisplayContainer = new google.ima.AdDisplayContainer(adContainer, video);
                 imaDisplayContainer.initialize();
-                imaLoader = new google.ima.AdsLoader(imaDisplayContainer);
-                const fail = () => finishPrerollAndLoadVideo(url, requestId);
-                imaLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (event) => {
-                    if (requestId !== prerollRequestId) return;
-                    try {
-                        imaManager = event.getAdsManager(video);
-                        imaManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, fail);
-                        imaManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, fail);
-                        imaManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, fail);
-                        imaManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => {
-                            if (requestId !== prerollRequestId) return;
-                            clearPrerollLoadTimeout();
-                            if (status) status.textContent = 'Iklan sedang diputar.';
-                            updatePrerollSkipButton();
-                        });
-                        imaManager.addEventListener(google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED, updatePrerollSkipButton);
-                        imaManager.addEventListener(google.ima.AdEvent.Type.AD_PROGRESS, updatePrerollSkipButton);
-                        imaManager.init(container.clientWidth || 640, container.clientHeight || 360, google.ima.ViewMode.NORMAL);
-                        imaManager.start();
-                    } catch (e) {
-                        console.warn('IMA gagal dimulai:', e);
-                        fail();
-                    }
-                });
-                imaLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, fail);
-
-                const request = new google.ima.AdsRequest();
-                request.adTagUrl = PREROLL_VAST_TAG;
-                request.linearAdSlotWidth = container.clientWidth || 640;
-                request.linearAdSlotHeight = container.clientHeight || 360;
-                request.nonLinearAdSlotWidth = container.clientWidth || 640;
-                request.nonLinearAdSlotHeight = Math.max(80, Math.round((container.clientHeight || 360) / 3));
-
-                if (skipButton) {
-                    skipButton.onclick = () => {
-                        try {
-                            const ad = imaManager && imaManager.getCurrentAd();
-                            if (ad && ad.isSkippable && ad.isSkippable()) imaManager.skip();
-                        } catch (e) {
-                            console.warn('Iklan belum bisa dilewati:', e);
-                        }
-                    };
-                }
-
-                // Kalau VAST tidak merespons, film tetap dimuat otomatis.
-                prerollLoadTimeout = setTimeout(() => {
-                    if (requestId === prerollRequestId && pendingPrerollUrl === url && prerollBusy) {
-                        finishPrerollAndLoadVideo(url, requestId);
-                    }
-                }, 12000);
-                imaLoader.requestAds(request);
             } catch (e) {
-                console.warn('Pre-roll tidak tersedia:', e);
-                finishPrerollAndLoadVideo(url, requestId);
+                console.warn('IMA tidak tersedia:', e);
+                finish();
+                return;
             }
+            if (skipButton) {
+                skipButton.onclick = () => {
+                    try {
+                        const ad = imaManager && imaManager.getCurrentAd();
+                        if (ad && ad.isSkippable && ad.isSkippable()) imaManager.skip();
+                    } catch (e) { console.warn('Iklan belum bisa dilewati:', e); }
+                };
+            }
+            function tryTag(index) {
+                if (!isCurrent()) return;
+                if (index >= PREROLL_VAST_TAGS.length) { finish(); return; }
+                const tag = PREROLL_VAST_TAGS[index];
+                const thisAttempt = ++attempt;
+                adStarted = false;
+                clearPrerollLoadTimeout();
+                try { if (imaManager) imaManager.destroy(); } catch (_) {}
+                imaManager = null;
+                imaLoader = null;
+                adContainer.replaceChildren();
+                const active = () => isCurrent() && thisAttempt === attempt;
+                const fail = (event) => {
+                    if (!active()) return;
+                    console.warn('VAST gagal:', tag.name, event?.getError?.()?.getMessage?.() || '');
+                    if (adStarted) { finish(); return; }
+                    tryTag(index + 1);
+                };
+                try {
+                    imaLoader = new google.ima.AdsLoader(imaDisplayContainer);
+                    imaLoader.addEventListener(google.ima.AdsManagerLoadedEvent.Type.ADS_MANAGER_LOADED, (event) => {
+                        if (!active()) return;
+                        try {
+                            imaManager = event.getAdsManager(video);
+                            imaManager.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, fail);
+                            imaManager.addEventListener(google.ima.AdEvent.Type.CONTENT_RESUME_REQUESTED, finish);
+                            imaManager.addEventListener(google.ima.AdEvent.Type.ALL_ADS_COMPLETED, finish);
+                            imaManager.addEventListener(google.ima.AdEvent.Type.STARTED, () => {
+                                if (!active()) return;
+                                adStarted = true;
+                                clearPrerollLoadTimeout();
+                                if (status) status.textContent = 'Iklan sedang diputar.';
+                                updatePrerollSkipButton();
+                            });
+                            imaManager.addEventListener(google.ima.AdEvent.Type.SKIPPABLE_STATE_CHANGED, updatePrerollSkipButton);
+                            imaManager.addEventListener(google.ima.AdEvent.Type.AD_PROGRESS, updatePrerollSkipButton);
+                            imaManager.init(container.clientWidth || 640, container.clientHeight || 360, google.ima.ViewMode.NORMAL);
+                            imaManager.start();
+                        } catch (e) { console.warn('IMA manager gagal:', e); fail(); }
+                    });
+                    imaLoader.addEventListener(google.ima.AdErrorEvent.Type.AD_ERROR, fail);
+                    const request = new google.ima.AdsRequest();
+                    request.adTagUrl = tag.url;
+                    request.linearAdSlotWidth = container.clientWidth || 640;
+                    request.linearAdSlotHeight = container.clientHeight || 360;
+                    request.nonLinearAdSlotWidth = container.clientWidth || 640;
+                    request.nonLinearAdSlotHeight = Math.max(80, Math.round((container.clientHeight || 360) / 3));
+                    prerollLoadTimeout = setTimeout(() => {
+                        if (!active()) return;
+                        if (adStarted) finish();
+                        else tryTag(index + 1);
+                    }, 12000);
+                    imaLoader.requestAds(request);
+                } catch (e) { console.warn('VAST request gagal:', e); fail(); }
+            }
+            tryTag(0);
         }
 
         function prepareIframeDirect(url) {
