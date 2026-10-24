@@ -1,4 +1,3 @@
-const DEFAULT_CSV='https://docs.google.com/spreadsheets/d/e/2PACX-1vTdLZAQVdfGSSB2qO076v43C7Gxwe0WWLYG46pELaAYgOeM30fGPQWFJBHdla_FSmN4ki_v3yqG3OvN/pub?output=csv';
 const BASE_URL='https://nonton-gratisan.vercel.app';
 
 function parseCSV(text){
@@ -98,8 +97,12 @@ export default async function handler(req,res){
   }
   if(req.method!=='GET') return res.status(405).json({error:'Method not allowed'});
   try{
-    const source=String(process.env.GOOGLE_SHEETS_CSV_URL||DEFAULT_CSV).trim();
+    const source=String(process.env.GOOGLE_SHEETS_CSV_URL||'').trim();
+    if(!source) return res.status(500).json({error:'GOOGLE_SHEETS_CSV_URL belum disetel di Vercel'});
     const sourceUrl=new URL(source);
+    if(sourceUrl.protocol!=='https:' || sourceUrl.hostname!=='docs.google.com' || !/^\/spreadsheets\/d\/e\//.test(sourceUrl.pathname)) {
+      return res.status(500).json({error:'Sumber katalog Google Sheets tidak valid'});
+    }
     sourceUrl.searchParams.set('_ts', String(Date.now()));
     const r=await fetch(sourceUrl.toString(),{cache:'no-store'});
     const body=await r.text();
