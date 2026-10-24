@@ -4547,6 +4547,32 @@
         window.addEventListener('popstate', () => setTimeout(() => sendAnalytics('page_view', false), 0));
         setTimeout(() => sendAnalytics('page_view', false), 1200);
 
+        // Player iframe berasal dari provider eksternal; kita bisa mengukur load
+        // dan interaksi, tetapi tidak bisa memastikan video benar-benar mulai
+        // diputar lintas domain tanpa dukungan API dari provider.
+        const videoIframe = document.getElementById('video-iframe');
+        let lastPlayerInteractionAt = 0;
+        function hasActiveMediaPlayer() {
+            const info = routeInfo();
+            if (!info.media_id || !videoIframe) return false;
+            const src = String(videoIframe.getAttribute('src') || videoIframe.src || '').trim();
+            return !!src && !/about:blank$/i.test(src);
+        }
+        if (videoIframe) {
+            videoIframe.addEventListener('load', () => {
+                if (hasActiveMediaPlayer()) sendAnalytics('player_loaded', true);
+            });
+            const trackPlayerInteraction = () => {
+                if (!hasActiveMediaPlayer()) return;
+                const now = Date.now();
+                if (now - lastPlayerInteractionAt < 20000) return;
+                lastPlayerInteractionAt = now;
+                sendAnalytics('player_interaction', true);
+            };
+            videoIframe.addEventListener('pointerdown', trackPlayerInteraction, { passive: true });
+            videoIframe.addEventListener('click', trackPlayerInteraction, { passive: true });
+        }
+
         // Heartbeat terpisah: dipakai hanya untuk menentukan "Aktif Sekarang".
         // Jadi pindah film tidak menambah page view, dan user yang menutup halaman
         // akan hilang dari status aktif maksimal sekitar 2 menit.
