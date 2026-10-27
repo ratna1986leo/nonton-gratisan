@@ -5,10 +5,6 @@
       "destination": "/artikel/:slug.html"
     },
     {
-      "source": "/sitemap.xml",
-      "destination": "/api/catalog?format=sitemap"
-    },
-    {
       "source": "/sitemap-pustaka.xml",
       "destination": "/api/catalog?format=sitemap-pustaka"
     },
