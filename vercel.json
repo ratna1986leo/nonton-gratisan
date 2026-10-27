@@ -9,6 +9,10 @@
       "destination": "/api/catalog?format=sitemap"
     },
     {
+      "source": "/sitemap-pustaka.xml",
+      "destination": "/api/catalog?format=sitemap-pustaka"
+    },
+    {
       "source": "/api/nova-catalog-fix-preview",
       "destination": "/api/nova-catalog-actions?mode=fix-preview"
     },
