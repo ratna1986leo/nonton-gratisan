@@ -113,45 +113,13 @@ export default async function handler(req,res){
         const headers=rows[0].map(x=>String(x||'').trim());
         return Object.fromEntries(headers.map((h,i)=>[h,String(row[i]??'').trim()]));
       }):[];
-      const urls=[
-        {loc:BASE_URL+'/',changefreq:'daily',priority:'1.0'},
-        {loc:BASE_URL+'/artikel/neagley-2026',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/artikel/our-sticky-love-2026',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/artikel/four-hands-two-sonatas-2026',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/artikel/one-high-school-heroes-2025',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/artikel/coven-academy-2026',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/artikel/verity-2026',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/artikel/reacher-4-2026',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/artikel/avengers-doomsday-2026',changefreq:'weekly',priority:'0.7'},
-    {loc:BASE_URL+'/artikel/a-shop-for-killers-season-2-2026',changefreq:'weekly',priority:'0.7'},
-    {loc:BASE_URL+'/artikel/monster-the-lizzie-borden-story-2026',changefreq:'weekly',priority:'0.7'},
-    {loc:BASE_URL+'/artikel/monster-pabrik-rambut',changefreq:'weekly',priority:'0.7'},
-        {loc:BASE_URL+'/movies',changefreq:'daily',priority:'0.9'},
-        {loc:BASE_URL+'/tv',changefreq:'daily',priority:'0.9'},
-        {loc:BASE_URL+'/search',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=action',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=horror',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=comedy',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=thriller',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=drama',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=romance',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=sci-fi',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=animation',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=series-korea',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=series-barat',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/kategori.php?slug=series-indonesia',changefreq:'weekly',priority:'0.6'},
-        {loc:BASE_URL+'/dukung.html',changefreq:'monthly',priority:'0.3'},
-        {loc:BASE_URL+'/contact.html',changefreq:'monthly',priority:'0.3'},
-        {loc:BASE_URL+'/privacy-policy.html',changefreq:'monthly',priority:'0.2'},
-        {loc:BASE_URL+'/terms.html',changefreq:'monthly',priority:'0.2'},
-        {loc:BASE_URL+'/copyright.html',changefreq:'monthly',priority:'0.2'}
-      ];
+      const urls=[];
       const seen=new Set(urls.map(x=>x.loc));
       for(const row of objects){
         const title=row.Judul||row.judul||row.Title||row.title||'';
         const link=row.Link||row.link||'';
-        if(!title || (isSeries(row)&&episodeNumber(title)>1)) continue;
-        const type=isSeries(row)?'tv':'movie';
+        if(!title || isSeries(row) || !String(link).trim()) continue;
+        const type='movie';
         // Samakan slug sitemap dengan URL canonical yang dibuat index.html:
         // buang prefix "Nonton" dan label "Sub Indo", tetapi pertahankan tahun
         // agar tidak terjadi sitemap -> canonical mismatch (contoh: colony-2026).
