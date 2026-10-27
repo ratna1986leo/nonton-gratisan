@@ -107,7 +107,7 @@ export default async function handler(req,res){
     const r=await fetch(sourceUrl.toString(),{cache:'no-store'});
     const body=await r.text();
 
-    if(String(req.query?.format||'').toLowerCase()==='sitemap'){
+    if(['sitemap','sitemap-pustaka'].includes(String(req.query?.format||'').toLowerCase())){
       const rows=parseCSV(body);
       const objects=rows.length?rows.slice(1).filter(row=>row.some(v=>String(v||'').trim()!=='')).map(row=>{
         const headers=rows[0].map(x=>String(x||'').trim());
