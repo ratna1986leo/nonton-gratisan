@@ -107,7 +107,17 @@ export default async function handler(req,res){
     const r=await fetch(sourceUrl.toString(),{cache:'no-store'});
     const body=await r.text();
 
-    if(['sitemap','sitemap-pustaka'].includes(String(req.query?.format||'').toLowerCase())){
+    const sitemapFormat=String(req.query?.format||'').toLowerCase();
+    if(sitemapFormat==='sitemap-index'){
+      const xml='<?xml version="1.0" encoding="UTF-8"?>\n'+
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+
+        '  <sitemap><loc>'+BASE_URL+'/api/sitemap-pustaka</loc></sitemap>\n'+
+        '</sitemapindex>';
+      res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
+      res.setHeader('Content-Type','application/xml; charset=utf-8');
+      return res.status(200).send(xml);
+    }
+    if(['sitemap','sitemap-pustaka','sitemap-all'].includes(sitemapFormat)){
       const rows=parseCSV(body);
       const objects=rows.length?rows.slice(1).filter(row=>row.some(v=>String(v||'').trim()!=='')).map(row=>{
         const headers=rows[0].map(x=>String(x||'').trim());
@@ -118,8 +128,10 @@ export default async function handler(req,res){
       for(const row of objects){
         const title=row.Judul||row.judul||row.Title||row.title||'';
         const link=row.Link||row.link||'';
-        if(!title || isSeries(row) || !String(link).trim()) continue;
-        const type='movie';
+        if(!title || !String(link).trim()) continue;
+        const series=isSeries(row);
+        if(sitemapFormat!=='sitemap-all' && series) continue;
+        const type=series?'tv':'movie';
         // Samakan slug sitemap dengan URL canonical yang dibuat index.html:
         // buang prefix "Nonton" dan label "Sub Indo", tetapi pertahankan tahun
         // agar tidak terjadi sitemap -> canonical mismatch (contoh: colony-2026).
@@ -131,7 +143,7 @@ export default async function handler(req,res){
         if(!seen.has(loc)){seen.add(loc);urls.push({loc,changefreq:'weekly',priority:'0.8'})}
       }
       const sitemapText=urls.map(u=>u.loc).join('\n')+'\n';
-      if(String(req.query?.format||'').toLowerCase()==='sitemap-text'){
+      if(sitemapFormat==='sitemap-text'){
         res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
         res.setHeader('Content-Type','text/plain; charset=utf-8');
         return res.status(200).send(sitemapText);

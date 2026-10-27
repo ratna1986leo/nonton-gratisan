@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/sitemap.xml",
+      "destination": "/api/catalog?format=sitemap-index"
+    },
+    {
+      "source": "/api/sitemap-pustaka",
+      "destination": "/api/catalog?format=sitemap-all"
+    },
+    {
       "source": "/artikel/:slug",
       "destination": "/artikel/:slug.html"
     },
