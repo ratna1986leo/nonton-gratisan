@@ -109,9 +109,9 @@ export default async function handler(req,res){
 
     const sitemapFormat=String(req.query?.format||'').toLowerCase();
     if(sitemapFormat==='sitemap-index'){
-      const xml='<?xml version="1.0" encoding="UTF-8"?>\\n'+
-        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\\n'+
-        '  <sitemap><loc>'+BASE_URL+'/api/sitemap-pustaka</loc></sitemap>\\n'+
+      const xml='<?xml version="1.0" encoding="UTF-8"?>\n'+
+        '<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'+
+        '  <sitemap><loc>'+BASE_URL+'/api/sitemap-pustaka</loc></sitemap>\n'+
         '</sitemapindex>';
       res.setHeader('Cache-Control','public, max-age=0, s-maxage=3600, stale-while-revalidate=86400');
       res.setHeader('Content-Type','application/xml; charset=utf-8');
