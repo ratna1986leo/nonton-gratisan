@@ -1,14 +1,6 @@
 {
   "rewrites": [
     {
-      "source": "/movie/:id/:slug",
-      "destination": "/api/catalog?format=seo-page&type=movie&id=:id&slug=:slug"
-    },
-    {
-      "source": "/tv/:id/:slug",
-      "destination": "/api/catalog?format=seo-page&type=tv&id=:id&slug=:slug"
-    },
-    {
       "source": "/sitemap.xml",
       "destination": "/api/catalog?format=sitemap-index"
     },
