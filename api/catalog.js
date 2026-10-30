@@ -101,10 +101,10 @@ export default async function handler(req,res){
     const type=String(req.query?.type||'').toLowerCase();
     const id=String(req.query?.id||'').trim();
     const slug=String(req.query?.slug||'').trim();
-    if(!['movie','tv'].includes(type)||!/^\\d+$/.test(id)||!slug||slug.includes('/')||slug.includes('\\\\')){
+    if(!['movie','tv'].includes(type)||!/^\d+$/.test(id)||!slug||slug.includes('/')||slug.includes('\\')){
       return res.status(400).send('Invalid media route');
     }
-    const humanTitle=slug.replace(/[-_]+/g,' ').replace(/\\s+/g,' ').trim().replace(/\\b\\w/g,ch=>ch.toUpperCase());
+    const humanTitle=slug.replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim().replace(/\b\w/g,ch=>ch.toUpperCase());
     const mediaLabel=type==='tv'?'Series':'Film';
     const canonical=BASE_URL+'/'+type+'/'+id+'/'+encodeURIComponent(slug);
     const pageTitle=('Nonton '+humanTitle+' Sub Indo | NontonGratisan').slice(0,60);
@@ -117,16 +117,16 @@ export default async function handler(req,res){
       let html=await shell.text();
       const safeTitle=escapeHtml(pageTitle),safeDescription=escapeHtml(description),safeCanonical=escapeHtml(canonical);
       const replacements=[
-        [/<title>[^<]*<\\/title>/i,'<title>'+safeTitle+'</title>'],
-        [/<meta\\s+name="description"[^>]*>/i,'<meta name="description" content="'+safeDescription+'">'],
-        [/<link\\s+rel="canonical"[^>]*>/i,'<link rel="canonical" href="'+safeCanonical+'">'],
-        [/<link\\s+rel="alternate"\\s+hreflang="id-ID"[^>]*>/i,'<link rel="alternate" hreflang="id-ID" href="'+safeCanonical+'">'],
-        [/<meta\\s+property="og:title"[^>]*>/i,'<meta property="og:title" content="'+safeTitle+'">'],
-        [/<meta\\s+property="og:description"[^>]*>/i,'<meta property="og:description" content="'+safeDescription+'">'],
-        [/<meta\\s+property="og:url"[^>]*>/i,'<meta property="og:url" content="'+safeCanonical+'">'],
-        [/<meta\\s+property="og:type"[^>]*>/i,'<meta property="og:type" content="'+(type==='tv'?'video.tv_show':'video.movie')+'">'],
-        [/<meta\\s+name="twitter:title"[^>]*>/i,'<meta name="twitter:title" content="'+safeTitle+'">'],
-        [/<meta\\s+name="twitter:description"[^>]*>/i,'<meta name="twitter:description" content="'+safeDescription+'">']
+        [/<title>[^<]*<\/title>/i,'<title>'+safeTitle+'</title>'],
+        [/<meta\s+name="description"[^>]*>/i,'<meta name="description" content="'+safeDescription+'">'],
+        [/<link\s+rel="canonical"[^>]*>/i,'<link rel="canonical" href="'+safeCanonical+'">'],
+        [/<link\s+rel="alternate"\s+hreflang="id-ID"[^>]*>/i,'<link rel="alternate" hreflang="id-ID" href="'+safeCanonical+'">'],
+        [/<meta\s+property="og:title"[^>]*>/i,'<meta property="og:title" content="'+safeTitle+'">'],
+        [/<meta\s+property="og:description"[^>]*>/i,'<meta property="og:description" content="'+safeDescription+'">'],
+        [/<meta\s+property="og:url"[^>]*>/i,'<meta property="og:url" content="'+safeCanonical+'">'],
+        [/<meta\s+property="og:type"[^>]*>/i,'<meta property="og:type" content="'+(type==='tv'?'video.tv_show':'video.movie')+'">'],
+        [/<meta\s+name="twitter:title"[^>]*>/i,'<meta name="twitter:title" content="'+safeTitle+'">'],
+        [/<meta\s+name="twitter:description"[^>]*>/i,'<meta name="twitter:description" content="'+safeDescription+'">']
       ];
       for(const [pattern,replacement] of replacements)html=html.replace(pattern,replacement);
       res.setHeader('Content-Type','text/html; charset=utf-8');
