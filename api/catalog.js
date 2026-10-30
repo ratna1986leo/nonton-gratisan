@@ -96,48 +96,6 @@ export default async function handler(req,res){
     }
   }
   if(req.method!=='GET') return res.status(405).json({error:'Method not allowed'});
-  const requestedFormat=String(req.query?.format||'').toLowerCase();
-  if(requestedFormat==='seo-page'){
-    const type=String(req.query?.type||'').toLowerCase();
-    const id=String(req.query?.id||'').trim();
-    const slug=String(req.query?.slug||'').trim();
-    if(!['movie','tv'].includes(type)||!/^\d+$/.test(id)||!slug||slug.includes('/')||slug.includes('\\')){
-      return res.status(400).send('Invalid media route');
-    }
-    const humanTitle=slug.replace(/[-_]+/g,' ').replace(/\s+/g,' ').trim().replace(/\b\w/g,ch=>ch.toUpperCase());
-    const mediaLabel=type==='tv'?'Series':'Film';
-    const canonical=BASE_URL+'/'+type+'/'+id+'/'+encodeURIComponent(slug);
-    const pageTitle=('Nonton '+humanTitle+' Sub Indo | NontonGratisan').slice(0,60);
-    const description=(humanTitle+' — informasi '+mediaLabel.toLowerCase()+' subtitle Indonesia di NontonGratisan.').slice(0,155);
-    const escapeHtml=value=>String(value||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/'/g,'&#39;');
-    const host=String(req.headers['x-forwarded-host']||req.headers.host||'nonton-gratisan.vercel.app').split(',')[0].trim();
-    try{
-      const shell=await fetch('https://'+host+'/index.html',{headers:{Accept:'text/html'},redirect:'manual'});
-      if(!shell.ok)return res.status(502).send('Unable to load application shell');
-      let html=await shell.text();
-      const safeTitle=escapeHtml(pageTitle),safeDescription=escapeHtml(description),safeCanonical=escapeHtml(canonical);
-      const replacements=[
-        [/<title>[^<]*<\/title>/i,'<title>'+safeTitle+'</title>'],
-        [/<meta\s+name="description"[^>]*>/i,'<meta name="description" content="'+safeDescription+'">'],
-        [/<link\s+rel="canonical"[^>]*>/i,'<link rel="canonical" href="'+safeCanonical+'">'],
-        [/<link\s+rel="alternate"\s+hreflang="id-ID"[^>]*>/i,'<link rel="alternate" hreflang="id-ID" href="'+safeCanonical+'">'],
-        [/<meta\s+property="og:title"[^>]*>/i,'<meta property="og:title" content="'+safeTitle+'">'],
-        [/<meta\s+property="og:description"[^>]*>/i,'<meta property="og:description" content="'+safeDescription+'">'],
-        [/<meta\s+property="og:url"[^>]*>/i,'<meta property="og:url" content="'+safeCanonical+'">'],
-        [/<meta\s+property="og:type"[^>]*>/i,'<meta property="og:type" content="'+(type==='tv'?'video.tv_show':'video.movie')+'">'],
-        [/<meta\s+name="twitter:title"[^>]*>/i,'<meta name="twitter:title" content="'+safeTitle+'">'],
-        [/<meta\s+name="twitter:description"[^>]*>/i,'<meta name="twitter:description" content="'+safeDescription+'">']
-      ];
-      for(const [pattern,replacement] of replacements)html=html.replace(pattern,replacement);
-      res.setHeader('Content-Type','text/html; charset=utf-8');
-      res.setHeader('Cache-Control','public, max-age=0, s-maxage=300, stale-while-revalidate=900');
-      res.setHeader('X-Robots-Tag','index, follow');
-      return res.status(200).send(html);
-    }catch(error){
-      console.error('SEO shell rendering failed:',error);
-      return res.status(502).send('SEO page temporarily unavailable');
-    }
-  }
   try{
     const source=String(process.env.GOOGLE_SHEETS_CSV_URL||'').trim();
     if(!source) return res.status(500).json({error:'GOOGLE_SHEETS_CSV_URL belum disetel di Vercel'});
