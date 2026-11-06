@@ -2,3 +2,4 @@ User-agent: *
 Allow: /
 
 Sitemap: https://nonton-gratisan.vercel.app/sitemap.xml
+Sitemap: https://nonton-gratisan.vercel.app/sitemap-kategori.xml
