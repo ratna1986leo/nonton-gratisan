@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/film-terbaru",
+      "destination": "/seo/film-terbaru.html"
+    },
+    {
+      "source": "/drama-korea",
+      "destination": "/seo/drama-korea.html"
+    },
+    {
+      "source": "/film-horor",
+      "destination": "/seo/film-horor.html"
+    },
+    {
+      "source": "/film-action",
+      "destination": "/seo/film-action.html"
+    },
+    {
       "source": "/sitemap.xml",
       "destination": "/api/catalog?format=sitemap-index"
     },
